@@ -1,0 +1,23 @@
+export type Question={id:string;q:string;answers:string[];correct:number;explain?:string;};
+export const QUESTIONS:Question[]=[
+  {id:'q1',q:'CySEC nadzoruje…',answers:['banki w całej UE','CIF na Cyprze','wyłącznie giełdę londyńską','tylko AML'],correct:1},
+  {id:'q2',q:'CIF działa w UE dzięki…',answers:['paszportowaniu MiFID','zgodzie ECB','FATCA','PSD2'],correct:0},
+  {id:'q3',q:'Marketing CFD musi być…',answers:['zrównoważony + ostrzeżenia','agresywny na zasięg','bez ostrzeżeń','z gwarancją zysków'],correct:0},
+  {id:'q4',q:'Kto zatwierdza materiały marketingowe?',answers:['dział sprzedaży','Compliance','dowolny pracownik','partner IB'],correct:1},
+  {id:'q5',q:'Negative balance protection oznacza…',answers:['brak swapów','brak strat > depozyt','gwarancję zysku','zerowe koszty'],correct:1},
+  {id:'q6',q:'Outsourcing wymaga…',answers:['braku umów','due diligence, SLA, monitoringu','wyłącznie ustnych ustaleń','zgody klienta detalicznego'],correct:1},
+  {id:'q7',q:'Skargi klientów…',answers:['nie wymagają rejestru','muszą być rejestrowane i analizowane','zawsze ignorujemy','wysyłamy do ESMA'],correct:1},
+  {id:'q8',q:'Partner IB publikuje reklamę – odpowiada…',answers:['wyłącznie IB','również CIF (odpowiedzialny za przekaz)','tylko platforma społecznościowa','nikt'],correct:1},
+  {id:'q9',q:'Limity dźwigni dla detalicznych wynikają z…',answers:['ESMA','CySEC','MiFID','MAR'],correct:0},
+  {id:'q10',q:'Record-keeping obejmuje…',answers:['rozmowy i instrukcje klientów','wyłącznie faktury','tylko e-maile','nic'],correct:0},
+  {id:'q11',q:'KID/KIID dotyczy…',answers:['wewnętrznych procedur','informowania klienta o ryzykach i kosztach','ustaw podatkowych','LEI'],correct:1},
+  {id:'q12',q:'Cross-border wymaga…',answers:['powiadomień i zgodności z prawem lokalnym','niczego','zgody ECB','tylko marketingu'],correct:0},
+  {id:'q13',q:'Za governance odpowiada…',answers:['tylko producent','producent i dystrybutor','tylko dystrybutor','nikt'],correct:1},
+  {id:'q14',q:'Ostrzeżenia o ryzyku dla CFD…',answers:['są opcjonalne','muszą mieć standardową treść/format','nie dotyczą Cypru','wystarczą przy rejestracji'],correct:1},
+  {id:'q15',q:'Case: baner „0 strat, wysoki zysk”. To…',answers:['ok','miss-selling/zakazany przekaz','wymaga tylko małego disclaimera','zgodne z ESMA'],correct:1},
+  {id:'q16',q:'Kto w CIF odpowiada za niezależny nadzór wewnętrzny?',answers:['HR','Compliance/Risk/IA','dział IT','marketing'],correct:1},
+  {id:'q17',q:'Reklama w social media partnera…',answers:['nie podlega zasadom','musi spełniać wytyczne, CIF odpowiada za nadzór','wystarczy logo CySEC','wystarczy duży zasięg'],correct:1},
+  {id:'q18',q:'Margin close-out…',answers:['gdy equity spadnie do 50% depozytu','przy 10% depozytu','na życzenie klienta','nie dotyczy CFD'],correct:0},
+  {id:'q19',q:'Wyniki historyczne w reklamie…',answers:['zawsze zakazane','dopuszczalne z jasnym disclaimerem','gwarantują przyszłe','bez zasad'],correct:1},
+  {id:'q20',q:'Circulars CySEC to…',answers:['ustawa','okólniki/wytyczne operacyjne','raport GPW','przepisy FATCA'],correct:1},
+];

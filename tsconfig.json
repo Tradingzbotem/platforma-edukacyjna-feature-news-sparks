@@ -1,0 +1,82 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@/app/*": [
+        "./app/*"
+      ],
+      "@app/*": [
+        "./app/*"
+      ],
+      "@/components/*": [
+        "./app/components/*",
+        "./components/*"
+      ],
+      "@components/*": [
+        "./app/components/*",
+        "./components/*"
+      ],
+      "@/data/*": [
+        "./data/*",
+        "./app/data/*"
+      ],
+      "@data/*": [
+        "./data/*",
+        "./app/data/*"
+      ],
+      "@/lib/*": [
+        "./lib/*",
+        "./app/lib/*"
+      ],
+      "@lib/*": [
+        "./lib/*",
+        "./app/lib/*"
+      ],
+      "@/ui/*": [
+        "./app/ui/*",
+        "./ui/*"
+      ],
+      "@ui/*": [
+        "./app/ui/*",
+        "./ui/*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
+}
