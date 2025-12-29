@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { Lang } from '@/lib/i18n-client';
+import { t } from "@/lib/i18n";
 
 function setLangCookie(lang: Lang) {
   const maxAge = 60 * 60 * 24 * 365;
@@ -32,8 +33,8 @@ export default function LangSwitch() {
         router.refresh();
       }}
       className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/90 hover:bg-white/10"
-      aria-label="Zmień język"
-      title="Zmień język"
+      aria-label={t(lang === 'en' ? 'en' : 'pl', 'change_language')}
+      title={t(lang === 'en' ? 'en' : 'pl', 'change_language')}
     >
       <span className={lang === 'pl' ? 'text-white' : 'text-white/50'}>PL</span>
       <span className="text-white/30">/</span>

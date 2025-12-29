@@ -4,6 +4,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
 	pl: {
 		brand: 'FX EduLab',
 		skip_to_content: 'Przejdź do treści',
+		change_language: 'Zmień język',
 		login: 'Zaloguj',
 		join_free: 'Dołącz za darmo',
 		courses: 'Kursy',
@@ -17,6 +18,7 @@ export const dictionaries: Record<Lang, Record<string, string>> = {
 	en: {
 		brand: 'FX EduLab',
 		skip_to_content: 'Skip to content',
+		change_language: 'Change language',
 		login: 'Log in',
 		join_free: 'Join for free',
 		courses: 'Courses',
