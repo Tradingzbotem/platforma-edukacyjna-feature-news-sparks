@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
+import { cookies } from "next/headers";
 import "./globals.css";
 
 import AiChatClient from "./AiChatClient";
 import ClientRoot from "./ClientRoot";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import LangSwitch from "@/app/components/LangSwitch";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,8 +31,12 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = cookies();
+  const cookieLang = cookieStore.get("lang")?.value;
+  const htmlLang = cookieLang === "en" ? "en" : "pl";
+
   return (
-    <html lang="pl">
+    <html lang={htmlLang}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950 text-white selection:bg-white/20`}>
         {/* Link dostępności: przeskocz do treści */}
         <a
@@ -40,12 +46,23 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           Przejdź do treści
         </a>
 
-        {/* Globalny selektor języka (zawsze widoczny) */}
-        <div className="fixed right-3 bottom-3 md:top-3 md:bottom-auto z-[30]">
-          <LanguageSwitcher />
-        </div>
+        {/* Globalny topbar */}
+        <header className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 bg-slate-900/60 border-b border-white/10">
+          <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            {/* Logo / lewa strona */}
+            <Link
+              href="/"
+              className="font-semibold tracking-wide hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md"
+            >
+              <span>FX</span> <span className="text-white/60">EduLab</span>
+            </Link>
 
-        {/* WSZYSTKO poniżej jest tłumaczone (w tym widżet AI) */}
+            {/* Prawa strona: język */}
+            <LangSwitch />
+          </nav>
+        </header>
+
+        {/* Główna zawartość aplikacji i klienty */}
         <ClientRoot>
           {children}
           <AiChatClient />
