@@ -7,6 +7,7 @@ import "./globals.css";
 import AiChatClient from "./AiChatClient";
 import ClientRoot from "./ClientRoot";
 import LangSwitch from "@/app/components/LangSwitch";
+import { t } from "@/lib/i18n";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,7 +44,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           href="#content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-3 focus:py-2 focus:rounded-lg focus:bg-white focus:text-slate-900"
         >
-          Przejdź do treści
+          {t(htmlLang, 'skip_to_content')}
         </a>
 
         {/* Globalny topbar */}
@@ -54,7 +55,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               href="/"
               className="font-semibold tracking-wide hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md"
             >
-              <span>FX</span> <span className="text-white/60">EduLab</span>
+              {t(htmlLang, 'brand')}
             </Link>
 
             {/* Prawa strona: język */}
