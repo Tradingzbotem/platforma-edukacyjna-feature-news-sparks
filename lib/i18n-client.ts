@@ -40,10 +40,7 @@ export function useLang(defaultLang: Lang = 'pl'): Lang {
   return lang;
 }
 
-// Kept for import compatibility; now a no-op
-export async function autoTranslateContainer(_container: HTMLElement, _lang: Lang) {
-  return;
-}
+// Kept for import compatibility; now implemented below
 
 function getCache(lang: string, orig: string): string | null {
   try {
