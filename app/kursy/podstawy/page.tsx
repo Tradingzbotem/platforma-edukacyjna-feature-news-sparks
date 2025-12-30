@@ -60,7 +60,7 @@ export default function Page() {
                 className="rounded-2xl p-6 bg-white/5 border border-white/10 hover:bg-white/10 transition"
               >
                 <div className="flex items-center justify-between">
-                  <div className="text-xs text-white/60">Lekcja {idx + 1}</div>
+                  <div className="text-xs text-white/60"><span>Lekcja</span> <span>{idx + 1}</span></div>
                   <div className={`text-xs ${finished ? "text-green-300" : "text-white/60"}`}>
                     {finished ? "✓ Ukończono" : "• Nieukończona"}
                   </div>

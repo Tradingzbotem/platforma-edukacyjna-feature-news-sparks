@@ -486,13 +486,13 @@ export default function QuizRunner({
         <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>
           <p className="mt-2 text-lg">
-            Twój wynik: <b>{correctCount}</b> / {total} (<b>{pct}%</b>)
+            <span>Twój wynik:</span> <b>{correctCount}</b> / <span>{total}</span> (<b>{pct}%</b>)
           </p>
           {exam.enabled && (
             <p className="mt-1 text-sm opacity-70">
-              Tryb egzaminu: {Math.round(exam.durationMs / 60000)} min
+              <span>Tryb egzaminu:</span> <span>{Math.round(exam.durationMs / 60000)}</span> <span>min</span>
               {exam.startedAt && exam.finishAt && (
-                <> · czas wykorzystany: {formatTime(exam.finishAt - (exam.startedAt || 0))} </>
+                <> · <span>czas wykorzystany:</span> <span>{formatTime(exam.finishAt - (exam.startedAt || 0))}</span> </>
               )}
             </p>
           )}
@@ -639,7 +639,7 @@ export default function QuizRunner({
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>
             <p className="mt-1 opacity-80">
-              {total} pytań jednokrotnego wyboru. Skróty: ← → oraz A/B/C/D.
+              <span>{total}</span> <span>pytań jednokrotnego wyboru. Skróty: ← → oraz A/B/C/D.</span>
             </p>
             {(cfg.shuffleQ || cfg.shuffleO) && (
               <p className="mt-1 text-xs opacity-70">
@@ -657,7 +657,7 @@ export default function QuizRunner({
               ].join(" ")}
               aria-live="polite"
             >
-              ⏳ Pozostało: {formatTime(timeLeftMs)}
+              <span>⏳ </span><span>Pozostało:</span> <span>{formatTime(timeLeftMs)}</span>
             </div>
           )}
         </div>
@@ -666,7 +666,7 @@ export default function QuizRunner({
           <div className="h-2 rounded-full bg-white" style={{ width: `${progressPct}%` }} />
         </div>
         <div className="mt-1 text-xs opacity-70">
-          Pytanie {idx + 1} / {total} {exam.enabled && "· Tryb egzaminu"}
+          <span>Pytanie</span> <span>{idx + 1}</span> / <span>{total}</span> {exam.enabled && <span>· <span>Tryb egzaminu</span></span>}
         </div>
       </header>
 

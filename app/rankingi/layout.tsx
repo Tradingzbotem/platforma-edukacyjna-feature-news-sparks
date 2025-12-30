@@ -16,7 +16,6 @@ export default function RankingsLayout({ children }: { children: React.ReactNode
           <p className="text-white/70">Wybierz zestawienie poniżej.</p>
           <div className="mt-4 inline-flex rounded-xl border border-white/10 overflow-hidden">
             <Link href="/rankingi/brokerzy" className={`px-4 py-2 text-sm ${active("/rankingi/brokerzy")}`}>Brokerzy</Link>
-            <Link href="/rankingi/uzytkownicy" className={`px-4 py-2 text-sm ${active("/rankingi/uzytkownicy")}`}>Użytkownicy</Link>
           </div>
         </header>
         {children}

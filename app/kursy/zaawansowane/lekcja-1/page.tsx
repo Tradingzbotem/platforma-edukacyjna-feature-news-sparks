@@ -18,7 +18,13 @@ function LessonLayout({
     <main className="mx-auto max-w-4xl p-6 md:p-8 space-y-6">
       <Link href={`/kursy/${coursePath}`} className="text-sm underline">← Wróć do spisu</Link>
       <header className="space-y-1">
-        <p className="text-slate-400 text-sm">{courseTitle} — Lekcja {lessonNumber} • ⏱ {minutes} min</p>
+        <p className="text-slate-400 text-sm">
+          <span>{courseTitle}</span>
+          <span> — </span>
+          <span>Lekcja</span> <span>{lessonNumber}</span>
+          <span> • ⏱ </span>
+          <span>{minutes}</span> <span>min</span>
+        </p>
         <h1 className="text-3xl font-semibold">{title}</h1>
       </header>
       <article className="rounded-2xl bg-[#0b1220] border border-white/10 p-6 space-y-8">{children}</article>

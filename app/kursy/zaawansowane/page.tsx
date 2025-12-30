@@ -38,7 +38,7 @@ function CourseIndex({
         {lessons.map((l, i) => (
           <article key={l.slug} className="rounded-2xl bg-[#0b1220] border border-white/10 p-5 flex flex-col justify-between">
             <div>
-              <div className="text-slate-400 text-sm mb-1">Lekcja {i + 1}</div>
+              <div className="text-slate-400 text-sm mb-1"><span>Lekcja</span> <span>{i + 1}</span></div>
               <h3 className="text-lg font-semibold">{l.title}</h3>
               <p className="mt-2 text-slate-300">{l.blurb}</p>
               <div className="mt-3 text-sm text-slate-400 flex items-center gap-4">

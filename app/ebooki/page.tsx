@@ -1,332 +1,211 @@
-// app/ebooki/page.tsx
+// app/ebooki/page.tsx — Panel rynkowy (EDU)
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-
-/* ──────────────────────────────────────────────────────────────
-   Marketplace ebooków (publiczna strona, bez logowania)
-   - zapis zakupów w localStorage: "ebooks:owned" -> string[]
-   - wrzuć PDF-y do public/ebooks/<slug>(-sample).pdf
-   ────────────────────────────────────────────────────────────── */
-
-type Ebook = {
-  slug: string;
-  title: string;
-  blurb: string;
-  pages: number;
-  level: 'Podstawy' | 'Średniozaawansowany' | 'Zaawansowany';
-  price: number; // PLN
-  sampleUrl: string; // /ebooks/<slug>-sample.pdf
-  fullUrl: string;   // /ebooks/<slug>.pdf
-  tags?: string[];
-};
-
-const BASE_EBOOKS: Ebook[] = [
-  {
-    slug: 'podstawy-inwestowania',
-    title: 'Podstawy inwestowania',
-    blurb:
-      'Ryzyko vs. zwrot, dźwignia, typy zleceń, czytanie świec. Solidne fundamenty, dzięki którym rozumiesz wykres i instrument.',
-    pages: 132,
-    level: 'Podstawy',
-    price: 49,
-    sampleUrl: '/ebooks/podstawy-inwestowania-sample.pdf',
-    fullUrl: '/ebooks/podstawy-inwestowania.pdf',
-    tags: ['Fundamenty', 'Zlecenia', 'Świece'],
-  },
-  {
-    slug: 'forex',
-    title: 'Forex – praktyczny przewodnik',
-    blurb:
-      'Pary walutowe, pipsy i loty, sesje, wpływ makro i stóp procentowych, praktyczne aspekty handlu na FX.',
-    pages: 138,
-    level: 'Podstawy',
-    price: 49,
-    sampleUrl: '/ebooks/forex-sample.pdf',
-    fullUrl: '/ebooks/forex.pdf',
-    tags: ['FX', 'Sesje', 'Makro'],
-  },
-  {
-    slug: 'cfd',
-    title: 'CFD – mechanika i praktyka',
-    blurb:
-      'Kontrakty CFD na indeksy i surowce, finansowanie overnight, poślizgi, rolki, specyfika wykonania zleceń.',
-    pages: 140,
-    level: 'Średniozaawansowany',
-    price: 49,
-    sampleUrl: '/ebooks/cfd-sample.pdf',
-    fullUrl: '/ebooks/cfd.pdf',
-    tags: ['Indeksy', 'Surowce', 'Funding'],
-  },
-  {
-    slug: 'zaawansowane',
-    title: 'Zaawansowane: statystyka, OOS, psychologia',
-    blurb:
-      'Edge/EV, sizing (Kelly), testy out-of-sample i walk-forward, błędy poznawcze i higiena procesu decyzyjnego.',
-    pages: 168,
-    level: 'Zaawansowany',
-    price: 89,
-    sampleUrl: '/ebooks/zaawansowane-sample.pdf',
-    fullUrl: '/ebooks/zaawansowane.pdf',
-    tags: ['EV', 'Kelly', 'OOS', 'Psychologia'],
-  },
-];
-
-// Pakiet wszystkich e-booków (199 PLN)
-const BUNDLE = {
-  slug: 'pakiet-wszystko',
-  title: 'Pakiet: wszystkie e-booki',
-  desc: 'Kup wszystkie e-booki jednocześnie w obniżonej cenie.',
-  price: 199,
-};
-
-const fmt = (pln: number) =>
-  pln.toLocaleString('pl-PL', { style: 'currency', currency: 'PLN', maximumFractionDigits: 0 });
+import { useLang } from '@/lib/i18n-client';
+import { t, type Lang as DictLang } from '@/lib/i18n';
 
 export default function EbookiPage() {
-  const [owned, setOwned] = useState<string[]>([]);
-  const [filter, setFilter] = useState<'all' | 'owned' | 'notowned'>('all');
-  const [q, setQ] = useState('');
-
-  // wczytaj posiadane ebooki (demo)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const raw = localStorage.getItem('ebooks:owned');
-      setOwned(raw ? JSON.parse(raw) : []);
-    } catch {
-      setOwned([]);
-    }
-  }, []);
-
-  const saveOwned = (list: string[]) => {
-    setOwned(list);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ebooks:owned', JSON.stringify(list));
-    }
-  };
-
-  const isOwned = (slug: string) => owned.includes(slug);
-  const ownedAll = BASE_EBOOKS.every((e) => isOwned(e.slug));
-
-  const filtered = useMemo(() => {
-    return BASE_EBOOKS.filter((e) => {
-      if (filter === 'owned' && !isOwned(e.slug)) return false;
-      if (filter === 'notowned' && isOwned(e.slug)) return false;
-      if (q.trim()) {
-        const needle = q.trim().toLowerCase();
-        const hay =
-          `${e.title} ${e.blurb} ${e.level} ${e.tags?.join(' ') ?? ''}`.toLowerCase();
-        if (!hay.includes(needle)) return false;
-      }
-      return true;
-    });
-  }, [filter, q, owned]);
-
-  const handleBuy = (slug: string) => {
-    if (isOwned(slug)) return;
-    const next = [...new Set([...owned, slug])];
-    saveOwned(next);
-  };
-
-  const handleBuyBundle = () => {
-    if (ownedAll) return;
-    const missing = BASE_EBOOKS.map((e) => e.slug).filter((s) => !owned.includes(s));
-    saveOwned([...owned, ...missing]);
-  };
-
-  const normalSum = BASE_EBOOKS.reduce((a, b) => a + b.price, 0); // 49+49+49+89 = 236
-  const saving = normalSum - BUNDLE.price; // 37
+  const lang = useLang('pl');
+  const dictLang: DictLang = lang === 'en' ? 'en' : 'pl';
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      {/* Topbar */}
-      <div className="sticky top-0 z-10 bg-slate-950/80 backdrop-blur border-b border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-lg bg-white/10 hover:bg-white/20 px-3 py-1.5 text-sm"
-            >
-              ← Strona główna
-            </Link>
-            <span className="text-sm text-white/60 hidden sm:inline">
-              E-booki: profesjonalne materiały PDF (platforma pozostaje darmowa)
-            </span>
-          </div>
+      {/* Hero */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14">
+        {/* Back to home */}
+        <div className="mb-3">
           <Link
-            href="/konto"
-            className="rounded-lg bg-white text-slate-900 font-semibold px-3 py-1.5 hover:opacity-90"
+            href="/"
+            className="inline-flex items-center text-sm text-white/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40 rounded"
           >
-            Moje konto
+            ← Wróć do strony głównej
           </Link>
         </div>
-      </div>
-
-      {/* Hero / nagłówek */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        <h1 className="text-3xl md:text-4xl font-bold">Ebooki</h1>
-        <p className="mt-2 text-white/70 max-w-2xl">
-          Kursy i dostęp do platformy są darmowe. Płatne są tylko e-booki (PDF): podstawy, Forex, CFD
-          i moduł zaawansowany. Możesz też kupić cały pakiet taniej.
-        </p>
-
-        {/* Filtry */}
-        <div className="mt-6 flex flex-wrap gap-3 items-center">
-          <div className="inline-flex rounded-xl border border-white/10 overflow-hidden">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-7 md:p-12">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-300" />
+            <span className="tracking-wide">{t(dictLang, 'badge_edu')}</span>
+          </div>
+          <h1 className="mt-4 text-3xl md:text-5xl font-extrabold leading-tight tracking-tight">
+            {t(dictLang, 'market_panel_title')}
+          </h1>
+          <p className="mt-4 text-white/80 max-w-2xl text-base md:text-lg leading-relaxed">
+            {t(dictLang, 'market_panel_lead')}
+          </p>
+          <div className="mt-7">
             <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-2 text-sm ${filter === 'all' ? 'bg-white/10' : 'hover:bg-white/5'}`}
+              type="button"
+              onClick={() =>
+                document.getElementById('plany')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              className="inline-flex items-center justify-center rounded-xl bg-white text-slate-900 font-semibold px-5 py-3 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
             >
-              Wszystkie
-            </button>
-            <button
-              onClick={() => setFilter('notowned')}
-              className={`px-3 py-2 text-sm ${
-                filter === 'notowned' ? 'bg-white/10' : 'hover:bg-white/5'
-              }`}
-            >
-              Do kupienia
-            </button>
-            <button
-              onClick={() => setFilter('owned')}
-              className={`px-3 py-2 text-sm ${
-                filter === 'owned' ? 'bg-white/10' : 'hover:bg-white/5'
-              }`}
-            >
-              Posiadane
+              {t(dictLang, 'choose_plan')}
             </button>
           </div>
 
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Szukaj (np. MiFID, risk, KNF)…"
-            className="w-full sm:w-72 rounded-xl bg-white/5 border border-white/10 px-3 py-2 outline-none focus:border-white/30"
-          />
+          {/* subtle glow */}
+          <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl" />
+          <div className="pointer-events-none absolute -left-24 -bottom-24 h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
         </div>
+      </section>
 
-        {/* Karta PAKIETU */}
-        <div className="mt-6">
-          <div className="rounded-2xl p-5 bg-gradient-to-r from-indigo-700/40 via-cyan-700/30 to-teal-700/30 border border-white/10">
-            <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
-              <div>
-                <div className="text-xs font-semibold tracking-widest text-white/80">PAKIET</div>
-                <h3 className="mt-1 text-xl font-bold">{BUNDLE.title}</h3>
-                <p className="mt-1 text-white/80 max-w-2xl">{BUNDLE.desc}</p>
-                <ul className="mt-2 text-sm text-white/80 list-disc pl-5 space-y-1">
-                  <li>Podstawy inwestowania (49 PLN)</li>
-                  <li>Forex – praktyczny przewodnik (49 PLN)</li>
-                  <li>CFD – mechanika i praktyka (49 PLN)</li>
-                  <li>Zaawansowane: statystyka, OOS, psychologia (89 PLN)</li>
-                </ul>
+      {/* Co dostajesz w Panelu (EDU) */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
+          <h2 className="text-xl md:text-2xl font-bold">Co dostajesz w Panelu (EDU)</h2>
+          <p className="mt-2 text-white/80 text-sm md:text-base leading-relaxed">
+            Zebrane w jednym miejscu kluczowe elementy analizy rynku, żeby szybciej budować własną decyzję na podstawie wielu niezależnych potwierdzeń.
+          </p>
+          <ul className="mt-4 list-disc pl-5 text-white/80 space-y-1.5">
+            <li>Przeskanowany rynek pod kątem trendów i kontekstu (co „prowadzi” ruch, gdzie jest momentum, gdzie rynek zwalnia).</li>
+            <li>Mapa techniczna: kluczowe poziomy, struktura trendu, strefy reakcji oraz zmienność (ATR).</li>
+            <li>Wskaźniki techniczne jako kontekst (np. trend/impuls/wyczerpanie) — bez „sygnałów kup/sprzedaj”.</li>
+            <li>Kalendarz makro + interpretacja: co jest dziś/jutro ważne, jakie scenariusze zwykle rynek rozgrywa.</li>
+            <li>Scenariusze warunkowe A/B/C: „jeśli–to” (warunki, unieważnienie, ryzyka), żeby działać planowo.</li>
+            <li>Checklista ryzyka: wielkość pozycji, poziomy obronne, maksymalna strata, plan na zmienność.</li>
+          </ul>
+          <p className="mt-3 text-xs text-white/70">Materiały mają charakter edukacyjny. Brak rekomendacji inwestycyjnych i „sygnałów” — decyzję podejmujesz samodzielnie.</p>
+        </div>
+      </section>
+
+      {/* Co dostajesz */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
+          <h2 className="text-xl md:text-2xl font-bold">{t(dictLang, 'whats_included_title')}</h2>
+          <ul className="mt-5 grid gap-3 md:grid-cols-2">
+            {[
+              t(dictLang, 'included_1'),
+              t(dictLang, 'included_2'),
+              t(dictLang, 'included_3'),
+              t(dictLang, 'included_4'),
+              t(dictLang, 'included_5'),
+            ].map((item, i) => (
+              <li key={i} className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
+                <div className="flex items-start gap-3 leading-relaxed">
+                  <span className="mt-1 inline-block h-2 w-2 flex-shrink-0 rounded-full bg-white/70" />
+                  <span className="text-white/80">{item}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="plany" className="scroll-mt-24 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+        <h3 className="text-xl md:text-2xl font-bold">{t(dictLang, 'plans_title')}</h3>
+        <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {[
+            {
+              name: t(dictLang, 'plan_starter_name'),
+              price: '59',
+              features: [
+                t(dictLang, 'plan_starter_1'),
+                t(dictLang, 'plan_starter_2'),
+                t(dictLang, 'plan_starter_3'),
+              ],
+              accent: 'white/70',
+              popular: false,
+            },
+            {
+              name: t(dictLang, 'plan_pro_name'),
+              price: '99',
+              features: [
+                t(dictLang, 'plan_pro_1'),
+                t(dictLang, 'plan_pro_2'),
+                t(dictLang, 'plan_pro_3'),
+              ],
+              accent: 'emerald-300',
+              popular: true,
+            },
+            {
+              name: t(dictLang, 'plan_elite_name'),
+              price: '199',
+              features: [
+                t(dictLang, 'plan_elite_1'),
+                t(dictLang, 'plan_elite_2'),
+                t(dictLang, 'plan_elite_3'),
+              ],
+              accent: 'cyan-300',
+              popular: false,
+            },
+          ].map((plan, i) => (
+            <div
+              key={i}
+              className={`relative flex flex-col rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-6 transition ${
+                plan.popular ? 'ring-1 ring-emerald-300/40' : ''
+              }`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 right-4 inline-flex items-center rounded-full bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 ring-1 ring-emerald-300/30">
+                  {t(dictLang, 'plan_most_popular')}
+                </div>
+              )}
+              <div className={`text-xs font-semibold tracking-widest text-${plan.accent}`}>
+                {plan.name}
               </div>
-              <div className="shrink-0 w-full lg:w-auto">
-                <div className="text-sm text-white/70">Cena łączna: <s>{fmt(normalSum)}</s></div>
-                <div className="text-3xl font-extrabold">{fmt(BUNDLE.price)}</div>
-                <div className="text-xs text-emerald-300">Oszczędzasz {fmt(saving)}</div>
-                {ownedAll ? (
-                  <button
-                    className="mt-3 w-full lg:w-auto px-4 py-2 rounded-lg bg-white/10 border border-white/20 hover:bg-white/20"
-                    title="Masz już wszystkie e-booki"
-                  >
-                    Masz cały pakiet ✔
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleBuyBundle}
-                    className="mt-3 w-full lg:w-auto px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90"
-                  >
-                    Kup pakiet
-                  </button>
-                )}
+              <div className="mt-2 text-3xl font-extrabold">
+                {plan.price} {t(dictLang, 'currency_pln')}
+                <span className="text-base font-semibold text-white/60">{t(dictLang, 'per_month')}</span>
+              </div>
+              <ul className="mt-4 space-y-2 text-sm text-white/80">
+                {plan.features.map((f, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="mt-1 inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-white/70" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6">
+                <Link
+                  href="/konto/upgrade"
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-white text-slate-900 font-semibold px-4 py-2.5 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
+                >
+                  {t(dictLang, 'choose_plan')}
+                </Link>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-10">
+        <h3 className="text-xl md:text-2xl font-bold">{t(dictLang, 'faq_title')}</h3>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h4 className="font-semibold">{t(dictLang, 'faq_q1')}</h4>
+            <p className="mt-1 text-white/70 text-sm">
+              {t(dictLang, 'faq_a1')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <h4 className="font-semibold">{t(dictLang, 'faq_q2')}</h4>
+            <p className="mt-1 text-white/70 text-sm">
+              {t(dictLang, 'faq_a2')}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 md:col-span-2">
+            <h4 className="font-semibold">{t(dictLang, 'faq_q3')}</h4>
+            <p className="mt-1 text-white/70 text-sm">
+              {t(dictLang, 'faq_a3')}
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Lista pojedynczych e-booków */}
+      {/* Disclaimer */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filtered.map((e) => {
-            const owned = isOwned(e.slug);
-            return (
-              <article
-                key={e.slug}
-                className="group rounded-2xl p-5 bg-gradient-to-b from-slate-800 to-slate-900 border border-white/10 hover:shadow-2xl hover:shadow-black/40 transition flex flex-col"
-              >
-                <div className="text-xs font-semibold tracking-widest text-white/60">
-                  {e.level} · {e.pages} stron
-                </div>
-                <h3 className="mt-2 text-lg font-semibold leading-snug">{e.title}</h3>
-                <p className="mt-2 text-sm text-white/70 flex-1">{e.blurb}</p>
-
-                {e.tags && e.tags.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {e.tags.map((t) => (
-                      <span
-                        key={t}
-                        className="text-[11px] px-2 py-1 rounded-full bg-white/10 border border-white/10"
-                      >
-                        #{t}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-5 flex items-center justify-between">
-                  <div className="text-xl font-bold">{fmt(e.price)}</div>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={e.sampleUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm"
-                    >
-                      Podgląd PDF
-                    </a>
-
-                    {owned ? (
-                      <a
-                        href={e.fullUrl}
-                        download
-                        className="px-3 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90 text-sm"
-                      >
-                        Pobierz
-                      </a>
-                    ) : (
-                      <button
-                        onClick={() => handleBuy(e.slug)}
-                        className="px-3 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90 text-sm"
-                      >
-                        Kup
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-
-        {filtered.length === 0 && (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-white/70 text-sm">
-            Brak wyników dla zastosowanych filtrów.
-          </div>
-        )}
-      </section>
-
-      {/* Stopka info */}
-      <footer className="border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-xs text-white/60">
-          <p>
-            Uwaga: to wersja demonstracyjna – koszyk i zakup zapisywane są lokalnie w przeglądarce
-            (localStorage). Pliki PDF powinny znajdować się w <code>public/ebooks/</code>.
+        <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-6">
+          <p className="text-amber-200 text-sm">
+            {t(dictLang, 'disclaimer_short')}
           </p>
         </div>
-      </footer>
+      </section>
     </main>
   );
 }
+
+

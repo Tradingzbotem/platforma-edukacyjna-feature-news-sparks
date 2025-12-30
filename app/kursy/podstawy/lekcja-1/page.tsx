@@ -19,7 +19,13 @@ function LessonLayout({
       <Link href={`/kursy/${coursePath}`} className="text-sm underline">← Wróć do spisu</Link>
 
       <header className="space-y-1">
-        <p className="text-slate-400 text-sm">{courseTitle} — Lekcja {lessonNumber} • ⏱ {minutes} min</p>
+        <p className="text-slate-400 text-sm">
+          <span>{courseTitle}</span>
+          <span> — </span>
+          <span>Lekcja</span> <span>{lessonNumber}</span>
+          <span> • ⏱ </span>
+          <span>{minutes}</span> <span>min</span>
+        </p>
         <h1 className="text-3xl font-semibold">{title}</h1>
       </header>
 

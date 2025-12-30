@@ -6,7 +6,7 @@ import "./globals.css";
 
 import AiChatClient from "./AiChatClient";
 import ClientRoot from "./ClientRoot";
-import LangSwitch from "@/app/components/LangSwitch";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { t } from "@/lib/i18n";
 
 const geistSans = Geist({
@@ -59,7 +59,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </Link>
 
             {/* Prawa strona: język */}
-            <LangSwitch />
+            <LanguageSwitcher />
           </nav>
         </header>
 

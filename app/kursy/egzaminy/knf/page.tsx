@@ -201,7 +201,7 @@ export default function Page() {
               <div>
                 <h2 className="text-xl font-semibold">{activeLesson.title}</h2>
                 <p className="text-slate-400 text-sm">
-                  Szacowany czas: {activeLesson.minutes ?? 0} min
+                  <span>Szacowany czas:</span> <span>{activeLesson.minutes ?? 0}</span> <span>min</span>
                 </p>
               </div>
               <button
