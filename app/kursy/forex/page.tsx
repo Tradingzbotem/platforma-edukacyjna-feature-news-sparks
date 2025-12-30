@@ -62,7 +62,7 @@ function CourseIndex({
             className="rounded-2xl border border-white/10 bg-[#0c1322] p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset]"
           >
             <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="text-slate-300">Lekcja {i + 1}</span>
+              <span className="text-slate-300"><span>Lekcja</span> <span>{i + 1}</span></span>
               {l.completed ? (
                 <span className="text-emerald-400">✓ Ukończono</span>
               ) : (

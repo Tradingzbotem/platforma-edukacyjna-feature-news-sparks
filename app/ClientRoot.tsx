@@ -1,22 +1,24 @@
 'use client';
 
+import { useLang } from '@/lib/i18n-client';
 import { useRef } from 'react';
-import { useLang, useAutoTranslate } from '@/lib/i18n-client';
-import { usePathname } from 'next/navigation';
 import ProgressSync from './components/ProgressSync';
 
-/** Klientowy wrapper: tłumaczy wszystko w środku na podstawie cookie `lang`. */
+/**
+ * ClientRoot – wrapper aplikacji.
+ * Cel: trzymać wybór języka (cookie) i ew. udostępniać go UI,
+ * bez automatycznego tłumaczenia DOM (to psuje SEO, stabilność i testowalność).
+ */
 export default function ClientRoot({ children }: { children: React.ReactNode }) {
-  // Używamy ogólnego HTMLElement, żeby pasował do hooka (bez konfliktu typów)
-  const containerRef = useRef<HTMLElement | null>(null);
+  // Lang trzymamy jako stan (na razie tylko odczyt cookie).
+  // Docelowo UI będzie czytał lang i renderował teksty z i18n słowników.
   const lang = useLang('pl');
-  const pathname = usePathname(); // „bump” przy każdej zmianie trasy
 
-  // Automatyczna translacja całego kontenera po wejściu / zmianie języka / zmianie trasy
-  useAutoTranslate(containerRef, lang, pathname);
+  // Ref zostawiamy na przyszłość (np. do a11y/focus trap), ale nie tłumaczymy DOM.
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   return (
-    <div id="app-content" ref={containerRef as any}>
+    <div id="app-content" ref={containerRef} data-lang={lang}>
       {children}
       <ProgressSync />
     </div>

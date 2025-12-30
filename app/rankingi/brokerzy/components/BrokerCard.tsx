@@ -9,6 +9,8 @@ export type Broker = {
   pros: string[];                 // atuty
   cons: string[];                 // uwagi
   ticker?: string;                // opcjonalnie
+  trusted?: boolean;              // zaufany broker
+  links?: { label: string; href: string }[]; // opcjonalne linki (np. e-booki)
 };
 
 export default function BrokerCard({ broker }: { broker: Broker }) {
@@ -16,7 +18,14 @@ export default function BrokerCard({ broker }: { broker: Broker }) {
     <article className="group relative h-full rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-sm transition hover:border-blue-400/30 hover:shadow-blue-500/10 motion-reduce:transition-none">
       {/* nagłówek */}
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="text-lg font-semibold text-white/90">{broker.name}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-white/90">{broker.name}</h3>
+          {broker.trusted && (
+            <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-300 border border-emerald-400/30">
+              Zaufany
+            </span>
+          )}
+        </div>
         <div className="rounded-lg bg-yellow-500/15 px-2 py-1 text-sm text-yellow-300">
           ★ {broker.rating.toFixed(1)}
         </div>
@@ -47,6 +56,23 @@ export default function BrokerCard({ broker }: { broker: Broker }) {
           </ul>
         </div>
       </div>
+
+      {/* linki (np. e-booki) */}
+      {broker.links && broker.links.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {broker.links.map(link => (
+            <a
+              key={link.href}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-lg bg-white text-slate-900 text-sm font-semibold hover:opacity-90"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+      )}
     </article>
   );
 }

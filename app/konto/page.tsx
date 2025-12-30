@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { getSession } from "@/lib/session";
 import { getProgressSummary } from "@/lib/db";
+import { cookies } from "next/headers";
+import { resolveTierFromCookiesAndSession, type Tier } from "@/lib/panel/access";
 import FeaturedAIQuick from "@/components/dashboard/FeaturedAIQuick";
 import EmotionsGauge from "@/components/dashboard/EmotionsGauge";
 import MobileStickyBar from "@/components/dashboard/MobileStickyBar";
@@ -62,6 +64,7 @@ function Pill({ children }: { children: ReactNode }) {
 export default async function Page() {
   // 1) pobierz sesję z iron-session (SSR)
   const session = await getSession();
+  const c = await cookies();
 
   // 2) jeśli nie zalogowany → przekieruj na logowanie z powrotem na /konto
   if (!session.userId) {
@@ -90,6 +93,11 @@ export default async function Page() {
   const deadline = new Date();
   deadline.setUTCHours(23, 59, 0, 0);
   const deadlineLabel = `${String(deadline.getUTCHours()).padStart(2, '0')}:${String(deadline.getUTCMinutes()).padStart(2, '0')} Zulu`;
+
+  // Panel (EDU) — pokaż aktualny tier i CTA wyboru pakietu w obrębie konta
+  const tier = resolveTierFromCookiesAndSession(c, session);
+  const tierLabel: 'FREE' | 'STARTER' | 'PRO' | 'ELITE' =
+    tier === 'elite' ? 'ELITE' : tier === 'pro' ? 'PRO' : tier === 'starter' ? 'STARTER' : 'FREE';
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -151,6 +159,31 @@ export default async function Page() {
             <div className="mt-4 text-sm text-white/60">
               Tip: zacznij od modułu <b>Podstawy</b>, a potem sprawdź się w
               10-pytaniowym quizie.
+            </div>
+          </Card>
+
+          {/* Panel Rynkowy (EDU) — integracja wyboru pakietu w koncie */}
+          <Card
+            title="Panel rynkowy (EDU)"
+            subtitle={`Twój plan: ${tierLabel}`}
+            right={<Pill>{tierLabel}</Pill>}
+          >
+            <p className="text-sm text-white/70">
+              Moduły: kalendarz 7 dni, mapy techniczne, playbooki eventowe i więcej.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href="/konto/panel-rynkowy"
+                className="px-4 py-2 rounded-xl bg-white text-slate-900 font-semibold hover:opacity-90"
+              >
+                Wejdź do panelu
+              </Link>
+              <Link
+                href="/konto/upgrade"
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20"
+              >
+                Wybierz/ulepsz pakiet
+              </Link>
             </div>
           </Card>
 

@@ -31,11 +31,14 @@ type Broker = {
   pros: string[];
   cons: string[];
   note?: string;
+  trusted?: boolean;
+  links?: { label: string; href: string }[];
 };
 
 const BROKERS: Broker[] = [
   {
     name: "XTB",
+    trusted: true,
     rating: 4.5,
     platforms: ["xStation"],
     markets: ["Forex", "Indeksy", "Surowce", "Akcje/ETF (CFD i/lub spot)"],
@@ -49,14 +52,31 @@ const BROKERS: Broker[] = [
       "Niektóre opłaty zależne od aktywności – sprawdź tabelę opłat",
     ],
     note: "Krótki komentarz: sprawdź, czy dostępne jest oprocentowanie środków/lokata, konto profesjonalne oraz handel na akcjach syntetycznych; dostępność i warunki zależą od regionu.",
+    links: [
+      { label: "Strona", href: "https://www.xtb.com" },
+    ],
   },
   {
-    name: "IG",
-    rating: 4.6,
-    platforms: ["IG platform", "ProRealTime", "MT4 (wybrane oferty)"],
-    markets: ["Forex", "Indeksy", "Akcje/ETF (CFD)", "Obligacje", "Towary"],
-    pros: ["Bardzo szeroki wybór rynków", "Stabilna infrastruktura, rozbudowane narzędzia"],
-    cons: ["Opłaty i prowizje zależne od rynku i rodzaju rachunku"],
+    name: "XGLOBAL Markets",
+    trusted: true,
+    rating: 4.3,
+    platforms: ["MT4", "MT5"],
+    markets: ["Forex", "Indeksy", "Towary", "Akcje (CFD)"],
+    pros: [
+      "Popularne platformy MT4/MT5 i prosty onboarding",
+      "Konkurencyjne koszty transakcyjne na wybranych rachunkach",
+      "Szybka egzekucja na głównych parach FX",
+    ],
+    cons: [
+      "Dostępność instrumentów i opłat zależna od regionu i typu konta",
+      "Ograniczona oferta akcji spot — głównie CFD",
+    ],
+    note: "Zweryfikuj szczegóły oferty, jurysdykcję i wymagania regulacyjne na stronie brokera przed otwarciem rachunku.",
+    links: [
+      { label: "Strona", href: "https://www.xglobalmarkets.com" },
+      { label: "Pobierz e-book (W)", href: "https://lp.xglobalmarkets.com/e-book-w" },
+      { label: "Pobierz e-book (B)", href: "https://lp.xglobalmarkets.com/e-book-b" },
+    ],
   },
   {
     name: "CMC Markets",
@@ -65,6 +85,9 @@ const BROKERS: Broker[] = [
     markets: ["Forex", "Indeksy", "Towary", "Akcje (CFD)"],
     pros: ["Dobra realizacja i narzędzia analityczne", "Szerokie spektrum indeksów"],
     cons: ["Krzywe opłat mogą się różnić w zależności od regionu"],
+    links: [
+      { label: "Strona", href: "https://www.cmcmarkets.com" },
+    ],
   },
   {
     name: "Saxo Bank",
@@ -74,6 +97,9 @@ const BROKERS: Broker[] = [
     markets: ["Forex", "CFD", "Akcje/ETF", "Obligacje", "Futures", "Opcje"],
     pros: ["Bogata oferta instrumentów poza CFD", "Zaawansowana platforma"],
     cons: ["Zwykle wyższy próg depozytu i/lub opłaty nieaktywności"],
+    links: [
+      { label: "Strona", href: "https://www.saxo.com" },
+    ],
   },
   {
     name: "Pepperstone",
@@ -82,6 +108,9 @@ const BROKERS: Broker[] = [
     markets: ["Forex", "Indeksy", "Towary", "Krypto (CFD)"],
     pros: ["Popularne platformy (MT4/5, cTrader)", "Konkurencyjne spready na FX"],
     cons: ["Oferta akcji spot bywa ograniczona – głównie CFD"],
+    links: [
+      { label: "Strona", href: "https://pepperstone.com" },
+    ],
   },
   {
     name: "IC Markets",
@@ -90,6 +119,9 @@ const BROKERS: Broker[] = [
     markets: ["Forex", "Indeksy", "Towary", "Obligacje (CFD)"],
     pros: ["Bardzo szeroka oferta par FX", "Niskie koszty transakcyjne na wybranych typach rachunków"],
     cons: ["W godzinach publikacji danych możliwe większe rozszerzenia spreadu"],
+    links: [
+      { label: "Strona", href: "https://www.icmarkets.com" },
+    ],
   },
   {
     name: "OANDA",
@@ -98,6 +130,9 @@ const BROKERS: Broker[] = [
     markets: ["Forex", "Indeksy", "Towary", "Krypto (CFD)"],
     pros: ["Przejrzysta platforma własna", "Dobre API / integracje (na wybranych rynkach)"],
     cons: ["Zakres instrumentów zależny od regionu"],
+    links: [
+      { label: "Strona", href: "https://www.oanda.com" },
+    ],
   },
   {
     name: "AvaTrade",
@@ -106,6 +141,9 @@ const BROKERS: Broker[] = [
     markets: ["Forex", "Indeksy", "Towary", "Akcje (CFD)", "Krypto (CFD)"],
     pros: ["Proste w obsłudze aplikacje mobilne", "Szeroka oferta CFD"],
     cons: ["Model kosztów zależny od typu rachunku – weryfikuj przed startem"],
+    links: [
+      { label: "Strona", href: "https://www.avatrade.com" },
+    ],
   },
   {
     name: "XM",
@@ -114,6 +152,9 @@ const BROKERS: Broker[] = [
     markets: ["Forex", "Indeksy", "Towary", "Akcje (CFD)"],
     pros: ["Duża baza materiałów edukacyjnych", "Rachunki z małymi wolumenami (np. mikro)"],
     cons: ["Prowizje/spready zależne od konta i regionu"],
+    links: [
+      { label: "Strona", href: "https://www.xm.com" },
+    ],
   },
   {
     name: "Admirals (dawniej Admiral Markets)",
@@ -122,6 +163,9 @@ const BROKERS: Broker[] = [
     markets: ["Forex", "Indeksy", "Towary", "Akcje/ETF (CFD i/lub spot – w zależności od oferty)"],
     pros: ["Dobre materiały edukacyjne i analizy rynkowe", "Szeroka gama indeksów i towarów"],
     cons: ["Warunki różnią się między regionami i klasami aktywów – sprawdź lokalną ofertę"],
+    links: [
+      { label: "Strona", href: "https://www.admirals.com" },
+    ],
   },
 ];
 

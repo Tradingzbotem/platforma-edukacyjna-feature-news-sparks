@@ -178,7 +178,9 @@ export default function Page() {
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-xl font-semibold">{l.title}</h2>
-                <p className="text-slate-400 text-sm">Szacowany czas: {l.minutes ?? 0} min</p>
+                <p className="text-slate-400 text-sm">
+                  <span>Szacowany czas:</span> <span>{l.minutes ?? 0}</span> <span>min</span>
+                </p>
               </div>
               <button
                 onClick={toggleDone}

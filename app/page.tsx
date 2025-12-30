@@ -3,6 +3,9 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useLang } from '@/lib/i18n-client';
+import { t } from '@/lib/i18n';
 
 const TickerFinnhubNoSSR = dynamic(() => import('@/components/TickerFinnhub'), { ssr: false });
 
@@ -72,6 +75,7 @@ export default function HomePage() {
   const [activeQuestions, setActiveQuestions] = useState<Q[]>([]);
   const [answers, setAnswers] = useState<number[]>([]);
   const [checked, setChecked] = useState(false);
+  const lang = useLang('pl');
 
   // ref do okna modala dla autofocusu
   const modalRef = useRef<HTMLDivElement | null>(null);
@@ -139,19 +143,19 @@ export default function HomePage() {
 
           {/* ŚRODEK: menu */}
             <ul className="hidden md:flex items-center gap-6 text-sm text-white/80">
-            <li><Link href="/kursy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">Kursy</Link></li>
-            <li><Link href="/symulator" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">Kalkulator</Link></li>
-            <li><Link href="/quizy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">Quizy</Link></li>
-            <li><Link href="/ebooki" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">Ebooki</Link></li>
-            <li><Link href="/rankingi/brokerzy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">Rankingi brokerów</Link></li>
+            <li><Link href="/kursy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">{t(lang, 'courses')}</Link></li>
+            <li><Link href="/symulator" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">{t(lang, 'calculator')}</Link></li>
+            <li><Link href="/quizy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">{t(lang, 'quizzes')}</Link></li>
+            <li><Link href="/ebooki" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">{t(lang, 'ebooks')}</Link></li>
+            <li><Link href="/rankingi/brokerzy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">{t(lang, 'broker_rankings')}</Link></li>
             <li>
               <Link href="/challenge" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">
-                Challenge
+                {t(lang, 'challenge')}
               </Link>
             </li>
             <li>
               <Link href="/news" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">
-                News
+                {t(lang, 'news')}
               </Link>
             </li>
           </ul>
@@ -159,11 +163,12 @@ export default function HomePage() {
           {/* PRAWO: auth */}
           <div className="flex items-center gap-3">
             <Link href="/logowanie" className="hidden sm:inline-flex px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition focus:outline-none focus:ring-2 focus:ring-white/50">
-              Zaloguj
+              {t(lang, 'login')}
             </Link>
             <Link href="/rejestracja" className="px-4 py-2 rounded-xl bg-white text-slate-900 font-semibold hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-white/50">
-              Dołącz za darmo
+              {t(lang, 'join_free')}
             </Link>
+            <LanguageSwitcher />
           </div>
         </nav>
 
@@ -281,7 +286,11 @@ export default function HomePage() {
                 <h3 className="mt-2 text-lg font-semibold leading-snug">{['Wprowadzenie do rynku Forex','Zarządzanie ryzykiem i wielkość pozycji','CFD na indeksy i surowce – praktyka','Testowanie strategii: od hipotezy do wyników'][i]}</h3>
                 <p className="mt-2 text-sm text-white/70">{['Poznaj strukturę rynku, uczestników, płynność i interwały.','Obliczaj wielkość pozycji w pips/lot i trzymaj się R-multiple.','Finansowanie overnight, poślizg, sesje – praktyczne przykłady.','Stabilność statystyczna, out-of-sample, walk-forward (koncepcje).'][i]}</p>
                 <div className="mt-4 flex items-center gap-4 text-xs text-white/60">
-                  <span>🎥 {[8,6,9,7][i]} lekcji</span>
+                  <span className="inline-flex items-center gap-1">
+                    <span aria-hidden="true">🎥</span>
+                    <span>{[8,6,9,7][i]}</span>
+                    <span>Lekcje</span>
+                  </span>
                   <span>⏱ {['2h 15m','1h 40m','2h 05m','2h 30m'][i]}</span>
                   <span>📈 {['Początkujący','Średniozaawansowany','Średniozaawansowany','Zaawansowany'][i]}</span>
                 </div>

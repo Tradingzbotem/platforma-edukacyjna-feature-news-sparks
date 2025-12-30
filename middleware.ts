@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Lista wspieranych języków
-const SUPPORTED = ['pl', 'en', 'de'];
+const SUPPORTED = ['pl', 'en'];
 const DEFAULT_LANG = 'pl';
 
 export function middleware(req: NextRequest) {

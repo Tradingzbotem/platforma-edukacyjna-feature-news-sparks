@@ -93,7 +93,7 @@ export default function ExamRunner({
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">{title}</h2>
         <div className="text-sm text-slate-300">
-          Pytanie {idx + 1} / {visibleQuestions.length}
+          <span>Pytanie</span> <span>{idx + 1}</span> / <span>{visibleQuestions.length}</span>
         </div>
       </div>
 
@@ -101,7 +101,9 @@ export default function ExamRunner({
         <div className="mt-4 rounded-xl border border-yellow-400/30 bg-yellow-500/10 p-4">
           <div className="font-semibold">Tryb DEMO</div>
           <div className="text-sm text-slate-900/90">
-            Odpowiadasz na pierwsze {demoLimit} pytań. Włącz plan PRO (w „Konto”) albo użyj przycisku „Pełny test (PRO)”.
+            <span>Odpowiadasz na pierwsze </span>
+            <span>{demoLimit}</span>
+            <span> pytań. Włącz plan PRO (w „Konto”) albo użyj przycisku „Pełny test (PRO)”.</span>
           </div>
         </div>
       )}

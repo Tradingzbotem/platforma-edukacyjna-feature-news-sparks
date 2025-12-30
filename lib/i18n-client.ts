@@ -8,7 +8,7 @@ export type Lang =
   | 'sv' | 'no' | 'da' | 'fi' | 'cs' | 'sk' | 'ro' | 'hu'
   | 'uk' | 'ru' | 'tr' | 'ar' | 'zh' | 'ja' | 'ko' | 'el' | 'bg';
 
-/* ───────── cookie & cache ───────── */
+/* ───────── cookie ───────── */
 
 function readCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
@@ -17,19 +17,30 @@ function readCookie(name: string): string | null {
 }
 
 export function useLang(defaultLang: Lang = 'pl'): Lang {
-  const [lang, setLang] = useState<Lang>(defaultLang);
+  const normalize = (v: Lang | null | undefined): Lang => (v === 'en' ? 'en' : 'pl');
+  const [lang, setLang] = useState<Lang>(normalize(defaultLang));
   useEffect(() => {
-    const v = readCookie('lang') as Lang | null;
-    setLang(v || defaultLang);
+    const readAndSet = () => {
+      const v = readCookie('lang') as Lang | null;
+      setLang(v === 'en' ? 'en' : 'pl');
+    };
+    // initial read
+    readAndSet();
+    // react to global language change events
+    const onLangChange = () => readAndSet();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('langchange', onLangChange);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('langchange', onLangChange);
+      }
+    };
   }, [defaultLang]);
   return lang;
 }
 
-function hash(s: string) {
-  let h = 0, i = 0;
-  while (i < s.length) h = ((h << 5) - h + s.charCodeAt(i++)) | 0;
-  return h.toString(36);
-}
+// Kept for import compatibility; now implemented below
 
 function getCache(lang: string, orig: string): string | null {
   try {
@@ -44,6 +55,16 @@ function setCache(lang: string, orig: string, translated: string) {
     const key = `tr:${lang}:${hash(orig)}`;
     localStorage.setItem(key, JSON.stringify(translated));
   } catch {}
+}
+
+// Lightweight string hash for cache keys
+function hash(str: string): string {
+  let h = 2166136261 >>> 0; // FNV-1a basis
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36);
 }
 
 /* ───────── zbieranie tekstów ───────── */
@@ -94,24 +115,52 @@ function isVisibleTextNode(n: Text, pad = 120): boolean {
 }
 
 /* ───────── transport ───────── */
+import { LOCAL_DICTIONARIES } from './i18n-dict';
 
 async function translateBatch(texts: string[], target: Lang): Promise<string[]> {
-  const res = await fetch('/api/translate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ texts, target }),
-  });
-  if (!res.ok) {
-    console.warn('i18n translate error HTTP', res.status);
-    return texts;
+  // Prefer local static dictionary; fallback to server translator for missing entries
+  if (!target || target === 'pl') return texts;
+
+  const dict = LOCAL_DICTIONARIES[target] || {};
+
+  // First pass: try local dict
+  const initial = texts.map((t) => (dict[t] ?? ''));
+  const missingIdx: number[] = [];
+  for (let i = 0; i < initial.length; i++) {
+    if (!initial[i]) missingIdx.push(i);
   }
-  const data = await res.json();
-  const arr: string[] = Array.isArray(data?.translations) ? data.translations : [];
-  if (arr.length !== texts.length) {
-    console.warn('i18n translate mismatch', arr.length, texts.length);
-    return texts;
+
+  // If everything covered locally, return filled values (or originals)
+  if (missingIdx.length === 0) {
+    return texts.map((t) => dict[t] ?? t);
   }
-  return arr;
+
+  // Fallback: call server translator for the missing subset
+  try {
+    const inputs = missingIdx.map((i) => texts[i]);
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texts: inputs, target }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const translations: string[] = Array.isArray(data?.translations) ? data.translations as string[] : inputs;
+      missingIdx.forEach((idx, j) => {
+        initial[idx] = (translations[j] ?? inputs[j]) || inputs[j];
+      });
+    } else {
+      // Server not available — use originals for missing slots
+      missingIdx.forEach((idx) => { initial[idx] = texts[idx]; });
+    }
+  } catch {
+    // Network/other error — use originals for missing slots
+    missingIdx.forEach((idx) => { initial[idx] = texts[idx]; });
+  }
+
+  // Merge local + server translations; ensure no empty strings remain
+  return initial.map((v, i) => v || texts[i]);
 }
 
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -226,28 +275,9 @@ export async function autoTranslateContainer(container: HTMLElement, lang: Lang)
 /* ───────── hook ───────── */
 
 export function useAutoTranslate(
-  rootRef: RefObject<HTMLElement | null>,
-  lang: Lang,
-  bump?: any
+  _rootRef: RefObject<HTMLElement | null>,
+  _lang: Lang,
+  _bump?: any
 ) {
-  useEffect(() => {
-    const el = rootRef.current;
-    if (!el) return;
-
-    let timer: any;
-    const run = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => autoTranslateContainer(el, lang), 25);
-    };
-
-    run();
-
-    const mo = new MutationObserver(() => run());
-    mo.observe(el, { childList: true, subtree: true, characterData: true });
-
-    return () => {
-      clearTimeout(timer);
-      mo.disconnect();
-    };
-  }, [rootRef, lang, bump]);
+  /* no-op */
 }

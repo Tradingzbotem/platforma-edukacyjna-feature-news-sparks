@@ -178,14 +178,6 @@ export default function Page() {
                   postaci zaszyfrowanej.
                 </p>
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <h3 className="font-semibold">Tryb demo</h3>
-                <p className="mt-2 text-slate-300 text-sm">
-                  Rejestracja działa w trybie <b>mock</b>: po wysłaniu formularza zapisujemy sesję w
-                  cookies i przekierowujemy do <code>/konto</code>. Później łatwo podmienimy to na
-                  prawdziwą autoryzację (Auth.js / Supabase).
-                </p>
-              </div>
             </div>
           </section>
 
