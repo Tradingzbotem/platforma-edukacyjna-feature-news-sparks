@@ -13,10 +13,10 @@ jobs:
         run: |
           curl -fsS \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
-            "https://platforma-edukacyjna-feature-news-sparks-gi91udn40.vercel.app/api/jobs/news/ingest" >/dev/null
+            "https://platforma-edukacyjna-feature-news-s.vercel.app/api/jobs/news/ingest" >/dev/null
 
       - name: Ping enrich
         run: |
           curl -fsS \
             -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
-            "https://platforma-edukacyjna-feature-news-sparks-gi91udn40.vercel.app/api/jobs/news/enrich" >/dev/null
+            "https://platforma-edukacyjna-feature-news-s.vercel.app/api/jobs/news/enrich" >/dev/null
