@@ -1,0 +1,15 @@
+name: News jobs (ping)
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping ingest
+        run: curl -fsS "https://platforma-edukacyjna-feature-news-sparks-gi91udn40.vercel.app/api/jobs/news/ingest" >/dev/null
+      - name: Ping enrich
+        run: curl -fsS "https://platforma-edukacyjna-feature-news-sparks-gi91udn40.vercel.app/api/jobs/news/enrich" >/dev/null
