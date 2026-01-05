@@ -1,7 +1,10 @@
 {
   "crons": [
-    { "path": "/api/brief/daily", "schedule": "0 6 * * *" }
+    { "path": "/api/brief/daily", "schedule": "0 6 * * *" },
+    { "path": "/api/news/articles?bucket=24h&lang=pl", "schedule": "5 6 * * *" },
+    { "path": "/api/panel/tech-maps/refresh", "schedule": "10 6 * * *" },
+    { "path": "/api/jobs/news/ingest", "schedule": "15 6 * * *" },
+    { "path": "/api/jobs/news/enrich", "schedule": "30 6 * * *" },
+    { "path": "/api/jobs/brief/generate", "schedule": "0 7 * * *" }
   ]
 }
-
-
