@@ -7,20 +7,28 @@ export type CookieGetter = {
 };
 
 // Minimalne zależności: przyjmujemy obiekt cookies z metodą get(name) -> { value } | undefined
-// oraz session z polem plan: 'free' | 'pro' | undefined
+// oraz session z polem plan: 'free' | 'pro' | 'starter' | 'elite' | undefined
 export function resolveTierFromCookiesAndSession(
   c: CookieGetter,
-  session?: { plan?: 'free' | 'pro' }
+  session?: { plan?: 'free' | 'starter' | 'pro' | 'elite' }
 ): Tier {
   try {
+    // Source of truth for logged-in users is the session (synced with DB in getSession)
+    const sessPlan = session?.plan;
+    if (sessPlan === 'elite' || sessPlan === 'pro' || sessPlan === 'starter' || sessPlan === 'free') {
+      return sessPlan;
+    }
+
+    // Fallbacks for guests / dev-mocks
     const cookieTier = (c.get('tier')?.value || '') as Tier | '';
     if (cookieTier === 'starter' || cookieTier === 'pro' || cookieTier === 'elite' || cookieTier === 'free') {
       return cookieTier;
     }
-    const sessPlan = session?.plan;
-    const cookiePlan = (c.get('plan')?.value || '') as 'free' | 'pro' | '';
-    const anyPro = sessPlan === 'pro' || cookiePlan === 'pro';
-    return anyPro ? 'pro' : 'free';
+    const cookiePlan = (c.get('plan')?.value || '') as 'free' | 'starter' | 'pro' | 'elite' | '';
+    if (cookiePlan === 'elite' || cookiePlan === 'pro' || cookiePlan === 'starter' || cookiePlan === 'free') {
+      return cookiePlan;
+    }
+    return 'free';
   } catch {
     return 'free';
   }

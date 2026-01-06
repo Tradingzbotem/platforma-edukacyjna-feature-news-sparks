@@ -130,6 +130,11 @@ async function translateBatch(texts: string[], target: Lang): Promise<string[]> 
     if (!initial[i]) missingIdx.push(i);
   }
 
+  // For English we render instantly using local dictionary only (no slow server fallback)
+  if (target === 'en') {
+    return texts.map((t) => dict[t] ?? t);
+  }
+
   // If everything covered locally, return filled values (or originals)
   if (missingIdx.length === 0) {
     return texts.map((t) => dict[t] ?? t);

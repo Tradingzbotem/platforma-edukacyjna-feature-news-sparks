@@ -13,16 +13,20 @@ const QA = [
     a: "Nie, treści otwarte (kursy/quizy demo/glosariusz) są dostępne bez logowania. Konto może być wymagane dla zapisu postępów."
   },
   {
+    q: "Czy cała platforma jest darmowa?",
+    a: "Część treści jest bezpłatna (np. moduł „Podstawy”, wybrane quizy demo, glosariusz). Dodatkowe sekcje i narzędzia (w tym panel rynkowy) są dostępne w płatnych planach (Starter/Pro/Elite). E‑booki (PDF) są płatne."
+  },
+  {
+    q: "Mam pytania – gdzie napisać?",
+    a: "Skorzystaj z formularza na stronie Kontakt — odpowiadamy możliwie szybko."
+  },
+  {
     q: "Jak liczone są wyniki w quizach?",
     a: "Za każdą poprawną odpowiedź otrzymujesz 1 punkt. W wynikach pokazujemy liczbę punktów oraz procent poprawnych odpowiedzi."
   },
   {
     q: "Czy kalkulator obsługuje różne instrumenty?",
     a: "Tak. W kalkulatorze znajdziesz m.in. margin dla FX/indeksów/surowców oraz kalkulator wielkości pozycji z parametrami SL/ryzyko."
-  },
-  {
-    q: "Jak dodać wątek na forum?",
-    a: "Wejdź na /forum, kliknij „+ Nowy wątek”, wybierz kategorię, dodaj tytuł i treść. Pamiętaj o kulturze wypowiedzi."
   },
   {
     q: "Czy przechowujecie moje dane?",
@@ -58,7 +62,15 @@ export default function Page() {
           {QA.map((item) => (
             <details key={item.q} className="rounded-xl bg-white/5 border border-white/10 p-4">
               <summary className="cursor-pointer font-semibold">{item.q}</summary>
-              <p className="mt-2 text-sm text-white/80">{item.a}</p>
+              <p className="mt-2 text-sm text-white/80">
+                {item.a}
+                {item.q.includes("Kontakt") || item.q.includes("pytania") ? (
+                  <>
+                    {" "}
+                    <Link href="/kontakt" className="underline hover:no-underline">Przejdź do kontaktu</Link>.
+                  </>
+                ) : null}
+              </p>
             </details>
           ))}
         </div>

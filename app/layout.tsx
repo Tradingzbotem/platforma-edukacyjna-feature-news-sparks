@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
 import { cookies } from "next/headers";
 import "./globals.css";
 
 import AiChatClient from "./AiChatClient";
 import ClientRoot from "./ClientRoot";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { t } from "@/lib/i18n";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
+import { getSession } from "@/lib/session";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,10 +32,19 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const cookieStore = cookies();
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
   const cookieLang = cookieStore.get("lang")?.value;
   const htmlLang = cookieLang === "en" ? "en" : "pl";
+  // SSR: ustal stan zalogowania (iron-session + legacy cookie)
+  let initialIsLoggedIn: boolean | null = null;
+  try {
+    const session = await getSession();
+    const legacyAuth = cookieStore.get('auth')?.value === '1';
+    initialIsLoggedIn = Boolean(session.userId) || legacyAuth;
+  } catch {
+    initialIsLoggedIn = null;
+  }
 
   return (
     <html lang={htmlLang}>
@@ -48,26 +58,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </a>
 
         {/* Globalny topbar */}
-        <header className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 bg-slate-900/60 border-b border-white/10">
-          <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-            {/* Logo / lewa strona */}
-            <Link
-              href="/"
-              className="font-semibold tracking-wide hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md"
-            >
-              {t(htmlLang, 'brand')}
-            </Link>
-
-            {/* Prawa strona: język */}
-            <LanguageSwitcher />
-          </nav>
-        </header>
+        <SiteHeader initialIsLoggedIn={initialIsLoggedIn} />
 
         {/* Główna zawartość aplikacji i klienty */}
         <ClientRoot>
           {children}
           <AiChatClient />
         </ClientRoot>
+        <SiteFooter />
       </body>
     </html>
   );

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import BackButton from "@/components/BackButton";
 
 type Entry = { name: string; points: number; streak: number; quizzes: number; courses: number; };
 const ALL: Entry[] = [
@@ -31,6 +32,9 @@ export default function UsersRankingPage() {
 
   return (
     <>
+      <div className="mb-4">
+        <BackButton fallbackHref="/rankingi" label="← Wróć do rankingów" />
+      </div>
       <div className="rounded-2xl bg-[#0b1220] border border-white/10 p-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="inline-flex rounded-xl border border-white/10 overflow-hidden">

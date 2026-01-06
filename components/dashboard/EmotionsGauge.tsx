@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 type Sentiment = 'bullish' | 'bearish' | 'neutral' | 'Pozytywny' | 'Negatywny' | 'Neutralny' | string;
+type Trend = 'up' | 'down' | 'neutral';
 
 type Brief = {
   ts_iso: string;
@@ -15,7 +16,20 @@ const LS_KEY_LAST = 'fxedu:emotions:last';
 const LS_KEY_SERIES = 'fxedu:emotions:series';
 const POLL_MS = 60_000;
 const LS_KEY_LAST_AT = 'fxedu:emotions:lastAt';
-// (Price integration removed from UI per request)
+
+// US100-relative baseline storage
+const BASE_KEY_PRICE = 'fxedu:emotions:us100:basePrice';
+const BASE_KEY_AT = 'fxedu:emotions:us100:baseAt';
+const US100_SYMBOL = 'OANDA:NAS100_USD'; // Finnhub forex symbol for NAS100 CFD
+// Sensitivity: changePct of ±3% maps to 0..100 extremes
+const SENSITIVITY_PCT = 3;
+
+function isMarketOpenNow(date = new Date()): boolean {
+  // Proste założenie: CFD 24/5 — zamknięte w weekend (sob-niedz).
+  // Jeśli weekend → zamroź wskaźnik.
+  const day = date.getUTCDay(); // 0=Sunday, 6=Saturday
+  return day !== 0 && day !== 6;
+}
 
 function toBasicSentiment(s?: Sentiment): 'bullish' | 'bearish' | 'neutral' {
   const v = String(s || '').toLowerCase();
@@ -58,50 +72,128 @@ export default function EmotionsGauge() {
   // Fixed initial value for SSR/CSR parity
   const [score, setScore] = useState<number>(50);
   const [ts, setTs] = useState<string | null>(null);
+  const [basePrice, setBasePrice] = useState<number | null>(null);
+  const [baseAt, setBaseAt] = useState<number | null>(null);
+  const [settingBase, setSettingBase] = useState<boolean>(false);
+  const [trend, setTrend] = useState<Trend>('neutral');
+
+  // Helpers
+  const publicToken =
+    process.env.NEXT_PUBLIC_FINNHUB_KEY ||
+    process.env.NEXT_PUBLIC_FINNHUB_TOKEN ||
+    '';
+
+  async function fetchUs100Price(): Promise<number | null> {
+    try {
+      if (publicToken) {
+        const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(US100_SYMBOL)}&token=${publicToken}`;
+        const r = await fetch(url, { cache: 'no-store' });
+        if (!r.ok) throw new Error(String(r.status));
+        const j = await r.json() as any;
+        const price = typeof j?.c === 'number' ? j.c : null;
+        return price != null && Number.isFinite(price) ? price : null;
+      }
+      // Fallback: synthetic last value from sparkline demo endpoint
+      const r = await fetch(`/api/quotes/sparkline?symbols=US100&range=7d&interval=1h`, { cache: 'no-store' });
+      const j = await r.json();
+      const arr: Array<{ symbol: string; series: Array<[number, number]> }> = Array.isArray(j?.data) ? j.data : [];
+      const s = arr.find(x => x.symbol === 'US100')?.series ?? [];
+      const last = s.length ? s[s.length - 1][1] : null;
+      return last != null && Number.isFinite(last) ? last : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function pctToScore(changePct: number): number {
+    const clamped = Math.max(-SENSITIVITY_PCT, Math.min(SENSITIVITY_PCT, changePct));
+    const ratio = clamped / SENSITIVITY_PCT; // -1..1
+    const raw = 50 + ratio * 50;
+    return Math.max(0, Math.min(100, Math.round(raw)));
+  }
+
+  // Load baseline from LS (or set on first successful price fetch)
+  useEffect(() => {
+    try {
+      const baseRaw = localStorage.getItem(BASE_KEY_PRICE);
+      const atRaw = localStorage.getItem(BASE_KEY_AT);
+      const bp = baseRaw ? Number(JSON.parse(baseRaw)) : null;
+      const ba = atRaw ? Number(atRaw) : null;
+      setBasePrice(bp && Number.isFinite(bp) ? bp : null);
+      setBaseAt(ba && Number.isFinite(ba) ? ba : null);
+    } catch {}
+  }, []);
 
   // Polling (guarded for Strict Mode and throttled across tabs)
   useEffect(() => {
     let alive = true;
-    const startedRef = { current: false } as { current: boolean };
     const busyRef = { current: false } as { current: boolean };
 
     async function pull(force = false) {
+      // Jeśli rynek nieczynny (weekend) – nie aktualizuj wskazania
+      if (!isMarketOpenNow()) {
+        setTs(new Date().toISOString());
+        return;
+      }
       if (!alive || busyRef.current) return;
-      // cross-tab throttle
+
+      // cross-tab throttle for gauge updates
       try {
         const lastAtRaw = localStorage.getItem(LS_KEY_LAST_AT);
         const lastAt = lastAtRaw ? Number(lastAtRaw) : 0;
         const now = Date.now();
         if (!force && now - lastAt < POLL_MS - 2500) {
-          // use cached value if present
           const raw = localStorage.getItem(LS_KEY_LAST);
           const v = raw ? Number(JSON.parse(raw)) : 50;
           setScore(Number.isFinite(v) ? v : 50);
           setTs(new Date(now).toISOString());
-          // clear previous errors implicitly by refreshing TS
           return;
         }
       } catch {}
 
       busyRef.current = true;
-      const items = await fetchBrief24h();
+
+      // 1) Read latest US100 price
+      const price = await fetchUs100Price();
       if (!alive) { busyRef.current = false; return; }
-      if (items) {
-        const s = calcScore(items);
-        setScore(s);
-        try {
-          localStorage.setItem(LS_KEY_LAST, JSON.stringify(s));
-          localStorage.setItem(LS_KEY_LAST_AT, String(Date.now()));
-        } catch {}
-        setTs(new Date().toISOString());
-      } else {
-        // fallback to last stored
-        try {
-          const raw = localStorage.getItem(LS_KEY_LAST);
-          const v = raw ? Number(JSON.parse(raw)) : 50;
-          setScore(Number.isFinite(v) ? v : 50);
-        } catch { setScore(50); }
+
+      let nextScore: number | null = null;
+
+      if (price != null) {
+        let bp = basePrice;
+        if (bp == null) {
+          // initialize baseline
+          bp = price;
+          setBasePrice(bp);
+          setBaseAt(Date.now());
+          try {
+            localStorage.setItem(BASE_KEY_PRICE, JSON.stringify(bp));
+            localStorage.setItem(BASE_KEY_AT, String(Date.now()));
+          } catch {}
+        }
+        if (bp != null && bp !== 0) {
+          const changePct = ((price - bp) / bp) * 100;
+          setTrend(changePct > 0 ? 'up' : changePct < 0 ? 'down' : 'neutral');
+          nextScore = pctToScore(changePct);
+        }
       }
+
+      // 2) Fallback to brief sentiment score if price unavailable
+      if (nextScore == null) {
+        const items = await fetchBrief24h();
+        if (items) nextScore = calcScore(items);
+        setTrend('neutral');
+      }
+
+      if (nextScore == null) nextScore = 50;
+
+      setScore(nextScore);
+      setTs(new Date().toISOString());
+      try {
+        localStorage.setItem(LS_KEY_LAST, JSON.stringify(nextScore));
+        localStorage.setItem(LS_KEY_LAST_AT, String(Date.now()));
+      } catch {}
+
       busyRef.current = false;
     }
 
@@ -109,22 +201,71 @@ export default function EmotionsGauge() {
     void pull(true);
     const id = setInterval(() => void pull(), POLL_MS);
     return () => { alive = false; clearInterval(id); };
-  }, []);
-
-  // Price fetching removed from UI per request
+  }, [basePrice]);
 
   const arc = useMemo(() => buildArcPath(score), [score]);
 
+  async function handleSetBaselineNow() {
+    try {
+      setSettingBase(true);
+      const price = await fetchUs100Price();
+      if (price != null) {
+        const now = Date.now();
+        setBasePrice(price);
+        setBaseAt(now);
+        try {
+          localStorage.setItem(BASE_KEY_PRICE, JSON.stringify(price));
+          localStorage.setItem(BASE_KEY_AT, String(now));
+        } catch {}
+        // Reset gauge to neutral immediately after setting baseline
+        setScore(50);
+        setTrend('neutral');
+        setTs(new Date(now).toISOString());
+        try {
+          localStorage.setItem(LS_KEY_LAST, JSON.stringify(50));
+          localStorage.setItem(LS_KEY_LAST_AT, String(now));
+        } catch {}
+      }
+    } finally {
+      setSettingBase(false);
+    }
+  }
+
   return (
-    <section aria-label="Emocje inwestorów" className="rounded-2xl p-5 sm:p-6 bg-white/5 border border-white/10">
+    <section aria-label="Emocje inwestorów" className="rounded-2xl p-5 sm:p-6 bg-white border border-slate-200 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold">Emocje inwestorów</h3>
-          <p className="text-white/60 text-sm">Skala 0–100 (Fear → Greed)</p>
+          <h3 className="text-lg font-semibold text-slate-900">Emocje inwestorów</h3>
+          <p className="text-slate-500 text-sm">Skala 0–100 (Fear → Greed)</p>
+          <div className="mt-1 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleSetBaselineNow}
+              disabled={settingBase}
+              className="text-[11px] text-slate-600 underline underline-offset-4 hover:text-slate-800 disabled:opacity-50"
+              aria-label="Ustaw bazę na teraz (US100)"
+            >
+              {settingBase ? 'Ustawianie…' : 'Ustaw bazę na teraz'}
+            </button>
+            <span
+              className={
+                `text-[11px] ` +
+                (trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-rose-600' : 'text-slate-500')
+              }
+              aria-live="polite"
+            >
+              {trend === 'up' ? 'wzrost' : trend === 'down' ? 'spadek' : 'neutral'}
+            </span>
+            {baseAt != null && (
+              <span className="text-[11px] text-slate-400">
+                Baza: {new Date(baseAt).toLocaleTimeString()}
+              </span>
+            )}
+          </div>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold" aria-live="polite" aria-atomic="true">{score}</div>
-          <div className="text-[11px] text-white/60">{ts ? new Date(ts).toLocaleTimeString() : '—'}</div>
+          <div className="text-2xl font-bold text-slate-900" aria-live="polite" aria-atomic="true">{score}</div>
+          <div className="text-[11px] text-slate-500">{ts ? new Date(ts).toLocaleTimeString() : '—'}</div>
         </div>
       </div>
 
@@ -136,7 +277,7 @@ export default function EmotionsGauge() {
             role="img" aria-label={`Gauge emocji ${score} na 100`}
           >
             {/* background arc */}
-            <path d={buildArcPath(100)} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth={14} />
+            <path d={buildArcPath(100)} fill="none" stroke="rgba(15,23,42,0.15)" strokeWidth={14} />
             {/* active arc */}
             <path d={arc} fill="none" stroke="url(#grad)" strokeWidth={14} strokeLinecap="round" />
             <defs>
@@ -180,8 +321,8 @@ function renderNeedle(value: number) {
   const y = cy - r * Math.sin(angle);
   return (
     <g>
-      <circle cx={cx} cy={cy} r={4} fill="#fff" fillOpacity="0.9" />
-      <line x1={cx} y1={cy} x2={x} y2={y} stroke="#fff" strokeOpacity="0.9" strokeWidth={2} />
+      <circle cx={cx} cy={cy} r={4} fill="#0f172a" fillOpacity="0.9" />
+      <line x1={cx} y1={cy} x2={x} y2={y} stroke="#0f172a" strokeOpacity="0.9" strokeWidth={2} />
     </g>
   );
 }

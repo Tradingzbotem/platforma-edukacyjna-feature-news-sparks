@@ -75,18 +75,18 @@ export default function AssistantAI() {
       {/* FAB – przycisk w prawym dolnym rogu */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 rounded-full bg-white text-slate-900 font-semibold shadow-xl px-5 py-3 hover:opacity-90"
+        className="fixed bottom-6 right-6 z-50 rounded-full bg-white border border-slate-200 text-slate-900 font-semibold shadow-md px-5 py-3 hover:bg-slate-50"
       >
         Zapytaj AI
       </button>
 
       {/* Panel */}
       {open && (
-        <div className="fixed inset-0 z-50 bg-black/50 p-4 flex items-end sm:items-center justify-center">
-          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-white/10 shadow-2xl flex flex-col">
-            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-              <div className="font-semibold">Asystent edukacyjny (AI)</div>
-              <button className="text-white/70 hover:text-white" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-50 bg-black/20 p-4 flex items-end sm:items-center justify-center">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-2xl flex flex-col text-slate-900">
+            <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+              <div className="font-semibold text-slate-900">Asystent edukacyjny (AI)</div>
+              <button className="text-slate-600 hover:text-slate-900" onClick={() => setOpen(false)}>
                 Wyczyść
               </button>
             </div>
@@ -98,15 +98,15 @@ export default function AssistantAI() {
                   className={
                     m.role === 'user'
                       ? 'text-right'
-                      : 'text-left text-white/90'
+                      : 'text-left text-slate-900'
                   }
                 >
                   <div
                     className={
                       'inline-block rounded-xl px-3 py-2 ' +
                       (m.role === 'user'
-                        ? 'bg-white text-slate-900'
-                        : 'bg-white/10 border border-white/10')
+                        ? 'bg-white text-slate-900 border border-slate-200'
+                        : 'bg-slate-100 border border-slate-200')
                     }
                   >
                     {m.content}
@@ -116,7 +116,7 @@ export default function AssistantAI() {
             </div>
 
             <div className="px-3 pb-3">
-              <div className="text-xs text-white/60 px-1 pb-2">
+              <div className="text-xs text-slate-500 px-1 pb-2">
                 Odpowiadam tylko w zakresie treści tego serwisu (kursy, quizy, kalkulator, pojęcia rynkowe).
               </div>
               <form
@@ -130,11 +130,11 @@ export default function AssistantAI() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Zadaj pytanie (np. pips, Kelly, MiFID)…"
-                  className="flex-1 rounded-lg bg-white/10 border border-white/10 px-3 py-2 outline-none focus:ring-1 focus:ring-white/30"
+                  className="flex-1 rounded-lg bg-white border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-200 text-slate-900 placeholder:text-slate-400"
                 />
                 <button
                   disabled={loading}
-                  className="rounded-lg bg-white text-slate-900 font-semibold px-4 py-2 disabled:opacity-50"
+                  className="rounded-lg bg-blue-600 text-white font-semibold px-4 py-2 disabled:opacity-50 hover:bg-blue-700"
                 >
                   Wyślij
                 </button>

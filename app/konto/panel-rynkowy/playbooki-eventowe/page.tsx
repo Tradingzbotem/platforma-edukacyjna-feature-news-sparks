@@ -2,8 +2,9 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getSession } from '@/lib/session';
-import { EVENT_PLAYBOOKS } from '@/lib/panel/eventPlaybooks';
 import { resolveTierFromCookiesAndSession, isTierAtLeast } from '@/lib/panel/access';
+import { PLAYBOOKS } from '@/lib/panel/playbooks';
+import PlaybooksListClient from './PlaybooksListClient';
 
 export default async function Page() {
   const session = await getSession();
@@ -41,10 +42,45 @@ export default async function Page() {
         {/* header */}
         <div className="mt-4">
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Playbooki eventowe (EDU)</h1>
-          <p className="mt-2 text-white/80 max-w-3xl">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 font-semibold text-white/70">EDU</span>
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 font-semibold text-white/70">Premium</span>
+            <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 font-semibold text-white/70">Bez sygnałów</span>
+          </div>
+          <p className="mt-3 text-white/80 max-w-3xl">
             Zestaw edukacyjnych schematów interpretacji wydarzeń makro: na co patrzeć, typowe mechanizmy reakcji,
             kiedy reakcja bywa odwracana oraz jakie ryzyka warto brać pod uwagę. Bez rekomendacji i bez „sygnałów”.
           </p>
+        </div>
+
+        {/* intro info cards */}
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5">
+            <div className="text-sm font-semibold text-white">Po co są playbooki?</div>
+            <p className="mt-2 text-sm text-white/80">
+              Porządkują proces: co sprawdzać przed, w trakcie i po publikacji. Uczą mechanizmów, nie „co robić”.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5">
+            <div className="text-sm font-semibold text-white">Dlaczego to ważne?</div>
+            <p className="mt-2 text-sm text-white/80">
+              Duże publikacje kształtują narrację i zmienność. Świadome czytanie danych redukuje chaos i błędy interpretacji.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5">
+            <div className="text-sm font-semibold text-white">AI na żądanie</div>
+            <p className="mt-2 text-sm text-white/80">
+              Każda zakładka generuje treść na żywo (EDU). Zawsze bez „sygnałów”. Możesz odświeżyć w dowolnym momencie.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5">
+            <div className="text-sm font-semibold text-white">Jak korzystać?</div>
+            <ul className="mt-2 list-disc pl-5 space-y-1 text-sm text-white/80">
+              <li>Wybierz event i sekcję (TL;DR, Przed, W trakcie…).</li>
+              <li>Odhaczaj checklistę — śledź postęp.</li>
+              <li>Użyj quizu i słownika, by utrwalić wiedzę.</li>
+            </ul>
+          </div>
         </div>
 
         {!unlocked ? (
@@ -55,7 +91,7 @@ export default async function Page() {
                 <div className="text-sm text-white/70 mt-1">Ten moduł jest dostępny w PRO/ELITE.</div>
               </div>
               <Link
-                href="/konto/upgrade"
+                href="/kontakt?topic=zakup-pakietu"
                 className="inline-flex items-center justify-center rounded-lg bg-white text-slate-900 font-semibold px-4 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
               >
                 Ulepsz plan
@@ -63,55 +99,7 @@ export default async function Page() {
             </div>
           </div>
         ) : (
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {EVENT_PLAYBOOKS.map(pb => (
-              <article key={pb.id} className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm text-white/70">
-                    <div className="font-semibold text-white/80">{pb.eventName} · {pb.region}</div>
-                    <div className="mt-0.5">Aktualizacja: {new Date(pb.updatedAt).toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw' })}</div>
-                  </div>
-                  <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${
-                    pb.importance === 'high'
-                      ? 'text-red-300 border-red-400/30 bg-red-500/10'
-                      : pb.importance === 'medium'
-                      ? 'text-amber-300 border-amber-400/30 bg-amber-500/10'
-                      : 'text-white/70 border-white/20 bg-white/5'
-                  }`}>
-                    Ważność: {pb.importance === 'high' ? 'wysoka' : pb.importance === 'medium' ? 'średnia' : 'niska'}
-                  </span>
-                </div>
-
-                <div className="mt-3 text-sm text-white/80">
-                  <div className="font-semibold">Na co patrzeć</div>
-                  <ul className="mt-1 list-disc pl-5 space-y-0.5">
-                    {pb.whatToWatch.map((t, i) => <li key={i}>{t}</li>)}
-                  </ul>
-                </div>
-
-                <div className="mt-3 text-sm text-white/80">
-                  <div className="font-semibold">Typowe mechanizmy reakcji</div>
-                  <ul className="mt-1 list-disc pl-5 space-y-0.5">
-                    {pb.typicalPatterns.map((t, i) => <li key={i}>{t}</li>)}
-                  </ul>
-                </div>
-
-                <div className="mt-3 text-sm text-white/80">
-                  <div className="font-semibold">Kiedy reakcja bywa myląca / odwracana</div>
-                  <ul className="mt-1 list-disc pl-5 space-y-0.5">
-                    {pb.invalidationClues.map((t, i) => <li key={i}>{t}</li>)}
-                  </ul>
-                </div>
-
-                <div className="mt-3 text-sm text-white/80">
-                  <div className="font-semibold">Ryzyka</div>
-                  <ul className="mt-1 list-disc pl-5 space-y-0.5">
-                    {pb.riskNotes.map((t, i) => <li key={i}>{t}</li>)}
-                  </ul>
-                </div>
-              </article>
-            ))}
-          </div>
+          <PlaybooksListClient items={PLAYBOOKS} />
         )}
 
         {/* disclaimer */}

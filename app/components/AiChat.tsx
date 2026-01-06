@@ -165,6 +165,18 @@ export default function AiChat() {
     }
   }
 
+  function cleanContent(text: string) {
+    // Usuń nagłówki markdown i nadmiarowe znaki formatowania
+    return text
+      // usuń linie zaczynające się od ###, ##, #
+      .replace(/^\s*#{1,6}\s*/gm, "")
+      // zamień wiele pustych linii na jedną
+      .replace(/\n{3,}/g, "\n\n")
+      // opcjonalnie usuń gwiazdki markdown dla pogrubień
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .trim();
+  }
+
   return (
     <>
       <button
@@ -212,19 +224,19 @@ export default function AiChat() {
 
           <div
             ref={listRef}
-            className="px-4 py-3 h-[360px] overflow-y-auto space-y-3 text-sm"
+            className="px-4 py-3 h-[360px] overflow-y-auto space-y-3 text-[13px] leading-6 antialiased"
             aria-live="polite"
           >
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`max-w-[85%] rounded-xl px-3 py-2 whitespace-pre-wrap leading-relaxed ${
+                className={`max-w-[85%] rounded-xl px-3 py-2 whitespace-pre-wrap leading-relaxed tracking-[.005em] ${
                   m.role === "user"
-                    ? "ml-auto bg-white text-slate-900"
-                    : "mr-auto bg-white/5 border border-white/10"
+                    ? "ml-auto bg-white text-slate-900 shadow"
+                    : "mr-auto bg-white/5 text-white/90 border border-white/10 backdrop-blur-sm"
                 }`}
               >
-                {m.content}
+                {cleanContent(m.content)}
               </div>
             ))}
 

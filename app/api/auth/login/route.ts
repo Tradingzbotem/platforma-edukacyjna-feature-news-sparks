@@ -1,6 +1,7 @@
 // app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
+import { ensureUsersTable, findUserByEmail, isDatabaseConfigured, verifyPassword } from '@/lib/db';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,7 @@ const LoginSchema = z.object({
 export async function POST(req: NextRequest) {
   // Cel przekierowania, np. /konto (domyślnie)
   const url = new URL(req.url);
-  const next = url.searchParams.get('next') || '/konto';
+  const next = url.searchParams.get('next') || '/client';
 
   // Obsługa application/json i form-urlencoded
   const ct = req.headers.get('content-type') || '';
@@ -48,10 +49,27 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Wymagamy bazy danych – logowanie tylko dla zarejestrowanych
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ ok: false, error: 'DB_NOT_CONFIGURED' }, { status: 503 });
+  }
+
+  await ensureUsersTable();
+
+  const user = await findUserByEmail(parsed.email);
+  if (!user) {
+    return NextResponse.json({ ok: false, error: 'INVALID_CREDENTIALS' }, { status: 401 });
+  }
+
+  const valid = await verifyPassword(parsed.password, user.password_hash);
+  if (!valid) {
+    return NextResponse.json({ ok: false, error: 'INVALID_CREDENTIALS' }, { status: 401 });
+  }
+
   const session = await getSession();
-  session.userId = `u_${Buffer.from(parsed.email).toString('hex').slice(0, 12)}`;
-  session.email = parsed.email;
-  session.plan = 'free';
+  session.userId = user.id;
+  session.email = user.email;
+  session.plan = (user.plan === 'elite' || user.plan === 'pro' || user.plan === 'starter' || user.plan === 'free') ? user.plan : 'free';
   await session.save();
 
   return NextResponse.json({ ok: true, redirect: next }, { status: 200 });
@@ -61,3 +79,5 @@ export function GET() {
   // Blokujemy przypadkowe wejście GET /api/auth/login
   return new NextResponse('Method Not Allowed', { status: 405 });
 }
+
+

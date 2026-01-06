@@ -10,6 +10,9 @@ const DICT: Dict = {
     change_language: 'Zmień język',
     login: 'Zaloguj',
     join_free: 'Dołącz za darmo',
+    logout: 'Wyloguj',
+    account: 'Konto',
+    home: 'Strona główna',
     courses: 'Kursy',
     calculator: 'Kalkulator',
     quizzes: 'Quizy',
@@ -20,6 +23,8 @@ const DICT: Dict = {
 
     // Nav
     market_panel_nav: 'Panel rynkowy',
+    learn_nav: 'Nauka',
+    about_nav: 'O nas',
 
     // Hero
     badge_edu: 'EDU',
@@ -52,7 +57,12 @@ const DICT: Dict = {
     plan_elite_3: 'Raport miesięczny',
     plan_most_popular: 'Najczęściej wybierany',
     per_month: '/mies',
+    per_year: '/rok',
     currency_pln: 'PLN',
+    billing_monthly: 'Miesięcznie',
+    billing_yearly_2mo: 'Rocznie (2 mies. gratis)',
+    elite_plus_badge: 'ELITE = PRO + Coach AI + Raport',
+    trial_starter: 'Wypróbuj 7 dni (trial)',
 
     // FAQ
     faq_title: 'FAQ',
@@ -70,6 +80,21 @@ const DICT: Dict = {
     faq_title_short: 'FAQ',
     disclaimer_short:
       'Materiały mają charakter edukacyjny. Brak rekomendacji inwestycyjnych ani sygnałów rynkowych.',
+
+    // Footer / legal nav
+    navigation: 'Nawigacja',
+    resources: 'Zasoby',
+    legal: 'Prawne',
+    faq: 'FAQ',
+    terms_of_use: 'Warunki korzystania',
+    privacy_policy: 'Polityka prywatności',
+    cookies: 'Cookies',
+    contact: 'Kontakt',
+    pricing: 'Cennik',
+    terms: 'Regulamin',
+    returns: 'Zwroty',
+    risk_warning_long:
+      'Ostrzeżenie o ryzyku: Handel instrumentami z dźwignią (w tym CFD i Forex) wiąże się z wysokim ryzykiem szybkiej utraty środków z powodu dźwigni finansowej. Materiały dostępne na tej stronie mają charakter wyłącznie edukacyjny i nie stanowią rekomendacji inwestycyjnych.',
   },
   en: {
     // Core/nav
@@ -78,6 +103,9 @@ const DICT: Dict = {
     change_language: 'Change language',
     login: 'Log in',
     join_free: 'Join for free',
+    logout: 'Log out',
+    account: 'Account',
+    home: 'Home',
     courses: 'Courses',
     calculator: 'Calculator',
     quizzes: 'Quizzes',
@@ -88,6 +116,8 @@ const DICT: Dict = {
 
     // Nav
     market_panel_nav: 'Market Panel',
+    learn_nav: 'Learn',
+    about_nav: 'About us',
 
     // Hero
     badge_edu: 'EDU',
@@ -120,7 +150,12 @@ const DICT: Dict = {
     plan_elite_3: 'Monthly report',
     plan_most_popular: 'Most popular',
     per_month: '/month',
+    per_year: '/year',
     currency_pln: 'PLN',
+    billing_monthly: 'Monthly',
+    billing_yearly_2mo: 'Yearly (2 months free)',
+    elite_plus_badge: 'ELITE = PRO + AI coach + Monthly report',
+    trial_starter: 'Try 7 days (trial)',
 
     // FAQ
     faq_title: 'FAQ',
@@ -138,6 +173,21 @@ const DICT: Dict = {
     faq_title_short: 'FAQ',
     disclaimer_short:
       'Materials are for educational purposes only. No investment recommendations or trading signals.',
+
+    // Footer / legal nav
+    navigation: 'Navigation',
+    resources: 'Resources',
+    legal: 'Legal',
+    faq: 'FAQ',
+    terms_of_use: 'Terms of use',
+    privacy_policy: 'Privacy policy',
+    cookies: 'Cookies',
+    contact: 'Contact',
+    pricing: 'Pricing',
+    terms: 'Terms',
+    returns: 'Returns',
+    risk_warning_long:
+      'Risk warning: Trading leveraged instruments (including CFDs and Forex) involves a high risk of rapid loss due to leverage. Materials on this website are for educational purposes only and do not constitute investment recommendations.',
   },
 };
 

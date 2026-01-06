@@ -175,13 +175,13 @@ export default function ChallengeCard({
   }
 
   return (
-    <div className="group h-full rounded-2xl border border-white/10 bg-white/[0.03] shadow-sm transition hover:border-blue-400/30 hover:shadow-blue-500/10 motion-reduce:transition-none">
+    <div className="group h-full rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md motion-reduce:transition-none">
       <div className="flex h-full min-h-[340px] flex-col p-4 sm:min-h-[320px]">
         {/* HEADER */}
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold">{title}</h3>
-            <p className="text-xs text-muted-foreground">
+            <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+            <p className="text-xs text-slate-600">
               Instrument: <span className="font-medium">{ticker}</span> • Horyzont: {horizon}
             </p>
           </div>
@@ -191,23 +191,23 @@ export default function ChallengeCard({
         {/* COUNTDOWNS + Twój typ */}
         <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
           {status === 'open' && (
-            <span className="rounded-md bg-black/30 px-2 py-1">
-              Do zamknięcia: <span className="font-semibold">{timeLeft}</span>
+            <span className="rounded-md bg-slate-100 text-slate-700 px-2 py-1">
+              Do zamknięcia: <span className="font-semibold" suppressHydrationWarning>{timeLeft}</span>
             </span>
           )}
           {status === 'settling' && (
-            <span className="rounded-md bg-yellow-600/20 px-2 py-1 text-yellow-300">
-              Rozliczanie… {refreshLeft ? `(≤ ${refreshLeft})` : ''}
+            <span className="rounded-md bg-yellow-50 border border-yellow-200 text-yellow-700 px-2 py-1">
+              Rozliczanie… {refreshLeft ? (<span suppressHydrationWarning>(≤ {refreshLeft})</span>) : ''}
             </span>
           )}
           {status === 'closed' && (
-            <span className="rounded-md bg-zinc-600/20 px-2 py-1 text-zinc-300">
+            <span className="rounded-md bg-slate-100 text-slate-600 px-2 py-1">
               Zakończone – nowa runda wkrótce
             </span>
           )}
 
           {pick && (
-            <span className="rounded-md border border-white/15 bg-white/[0.06] px-2 py-1 text-white/90">
+            <span className="rounded-md border border-slate-200 bg-slate-100 px-2 py-1 text-slate-900">
               Twój typ: <b>{dirLabel(pick.dir)}</b> <span className="opacity-80">({pick.confidence}%)</span>
             </span>
           )}
@@ -216,15 +216,15 @@ export default function ChallengeCard({
         {/* NEWS DIGEST */}
         <div className="mb-3 min-h-[84px] max-h-[110px] overflow-hidden sm:min-h-[72px] sm:max-h-[96px]">
           {loading && !effectiveDigest && (
-            <div className="animate-pulse rounded-lg border border-white/10 p-3 text-xs text-muted-foreground">
+            <div className="animate-pulse rounded-lg border border-slate-200 p-3 text-xs text-slate-600">
               Ładuję skrót z News…
             </div>
           )}
 
           {!loading && effectiveDigest && (
-            <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-600">
               {effectiveDigest.slice(0, 3).map((n, i) => (
-                <li key={i} className="marker:text-white/50">
+                <li key={i} className="marker:text-slate-400">
                   {n.link ? (
                     <a
                       href={n.link}
@@ -245,7 +245,7 @@ export default function ChallengeCard({
           )}
 
           {!loading && !effectiveDigest && (
-            <div className="rounded-lg border border-dashed border-white/10 p-3 text-xs text-muted-foreground">
+            <div className="rounded-lg border border-dashed border-slate-200 p-3 text-xs text-slate-600">
               Brak skrótu z News — pojawi się automatycznie, gdy system zbierze nagłówki.
             </div>
           )}
@@ -255,14 +255,14 @@ export default function ChallengeCard({
         <div className="mt-auto" />
 
         {/* CONTROLS */}
-        <div className="border-t border-white/10 pt-3">
+        <div className="border-t border-slate-200 pt-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => handlePick('up')}
-                className="rounded-xl border border-emerald-600/30 bg-emerald-600/20 px-3 py-3 text-sm font-semibold text-emerald-200 hover:bg-emerald-600/25 disabled:opacity-50 md:py-2"
+                className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 md:py-2"
                 title="Wybierz: wzrost"
               >
                 ↑ Wzrost
@@ -271,7 +271,7 @@ export default function ChallengeCard({
                 type="button"
                 disabled={disabled}
                 onClick={() => handlePick('flat')}
-                className="rounded-xl border border-yellow-600/30 bg-yellow-600/20 px-3 py-3 text-sm font-semibold text-yellow-200 hover:bg-yellow-600/25 disabled:opacity-50 md:py-2"
+                className="rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-3 text-sm font-semibold text-yellow-700 hover:bg-yellow-100 disabled:opacity-50 md:py-2"
                 title="Wybierz: bez zmian (↔)"
               >
                 ↔ Bez zmian
@@ -280,7 +280,7 @@ export default function ChallengeCard({
                 type="button"
                 disabled={disabled}
                 onClick={() => handlePick('down')}
-                className="rounded-xl border border-rose-600/30 bg-rose-600/20 px-3 py-3 text-sm font-semibold text-rose-200 hover:bg-rose-600/25 disabled:opacity-50 md:py-2"
+                className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50 md:py-2"
                 title="Wybierz: spadek"
               >
                 ↓ Spadek
@@ -288,7 +288,7 @@ export default function ChallengeCard({
             </div>
 
             <div className="grid w-full gap-1 md:w-64">
-              <label className="text-xs text-muted-foreground">
+              <label className="text-xs text-slate-600">
                 Pewność prognozy: <span className="font-medium">{confidence}%</span>
                 {suggested !== null && (
                   <span className="ml-1 text-[11px] opacity-70">(Sugestia AI: {suggested}%)</span>
@@ -318,9 +318,9 @@ export default function ChallengeCard({
 
 function StatusBadge({ status }: { status: ChallengeStatus }) {
   const map: Record<ChallengeStatus, { label: string; cls: string }> = {
-    open: { label: 'otwarte', cls: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30' },
-    settling: { label: 'rozliczanie', cls: 'bg-yellow-500/20 text-yellow-200 border-yellow-400/30' },
-    closed: { label: 'zakończone', cls: 'bg-zinc-500/20 text-zinc-200 border-zinc-400/30' },
+    open: { label: 'otwarte', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    settling: { label: 'rozliczanie', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+    closed: { label: 'zakończone', cls: 'bg-slate-100 text-slate-600 border-slate-200' },
   };
   const { label, cls } = map[status];
   return (

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
+import SlowDataNotice from "@/components/SlowDataNotice";
 
 export default async function ClientLayout({ children }: { children: ReactNode }) {
   // Użyj iron-session, aby wiarygodnie potwierdzić logowanie
@@ -19,5 +20,12 @@ export default async function ClientLayout({ children }: { children: ReactNode }
     redirect("/logowanie?next=/client");
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
+        <SlowDataNotice />
+      </div>
+      {children}
+    </>
+  );
 }

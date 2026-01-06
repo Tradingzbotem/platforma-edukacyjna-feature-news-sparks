@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Page() {
   const Updated = () => (
-    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2025-08-01</p>
+    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-01-02</p>
   );
 
   const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => (
@@ -60,7 +60,11 @@ export default function Page() {
             ["odpowiedzialnosc", "4. Ograniczenie odpowiedzialności"],
             ["wlasnosc", "5. Własność intelektualna"],
             ["dane", "6. Dane, konto i bezpieczeństwo"],
-            ["zmiany", "7. Zmiany warunków"],
+            ["ai", "7. Asystent AI (EDU)"],
+            ["rynkowe", "8. Dane rynkowe i opóźnienia"],
+            ["zewnetrzne", "9. Treści zewnętrzne i linki"],
+            ["subskrypcje", "10. Subskrypcje i płatności"],
+            ["zmiany", "11. Zmiany warunków"],
           ].map(([id, label]) => (
             <li key={id}>
               <a
@@ -156,9 +160,71 @@ export default function Page() {
         </p>
       </section>
 
-      {/* 7. Zmiany */}
+      {/* 7. AI */}
       <section className="space-y-3">
-        <H2 id="zmiany">7. Zmiany warunków</H2>
+        <H2 id="ai">7. Asystent AI (EDU)</H2>
+        <p className="text-white/80">
+          Serwis udostępnia funkcje AI o charakterze edukacyjnym (m.in. czat i
+          asystent „Coach”). Odpowiedzi AI mają charakter informacyjny i nie
+          stanowią rekomendacji inwestycyjnych, porad finansowych ani prawnych.
+        </p>
+        <p className="text-white/80">
+          Treść zapytań (prompty) i kontekst mogą być przetwarzane przez zewnętrznego
+          dostawcę modelu (np. OpenAI) w celu wygenerowania odpowiedzi. Więcej
+          informacji znajdziesz w dokumencie{" "}
+          <Link href="/prawne/polityka-prywatnosci" className="underline">
+            Polityka prywatności
+          </Link>
+          .
+        </p>
+        <ul className="list-disc pl-6 text-white/80 space-y-1">
+          <li>Zakaz proszenia AI o „sygnały” handlowe i konkretne transakcje.</li>
+          <li>Treści AI mogą być nieaktualne, niepełne lub błędne.</li>
+          <li>Użytkownik samodzielnie ocenia ryzyko wykorzystania odpowiedzi AI.</li>
+        </ul>
+      </section>
+
+      {/* 8. Dane rynkowe */}
+      <section className="space-y-3">
+        <H2 id="rynkowe">8. Dane rynkowe i opóźnienia</H2>
+        <p className="text-white/80">
+          Wybrane widżety mogą prezentować uproszczone notowania (np. WebSocket
+          Binance dla krypto, Finnhub dla instrumentów FX/indeksów/surowców).
+          Dane te mogą być opóźnione, niekompletne lub chwilowo niedostępne.
+          Nie służą do zawierania transakcji i są wyłącznie materiałem edukacyjnym.
+        </p>
+        <p className="text-white/80">
+          Serwis nie gwarantuje poprawności, ciągłości ani aktualności danych
+          rynkowych. Dostawcy zewnętrzni mogą stosować własne regulaminy i polityki.
+        </p>
+      </section>
+
+      {/* 9. Zewnętrzne treści i linki */}
+      <section className="space-y-3">
+        <H2 id="zewnetrzne">9. Treści zewnętrzne i linki</H2>
+        <p className="text-white/80">
+          Sekcja Aktualności może agregować nagłówki z zewnętrznych źródeł (np.
+          Reuters, CNBC, FXStreet, Investing.com) i generować skróty przy użyciu
+          modelu językowego. Linki prowadzą do stron podmiotów trzecich, nad
+          którymi nie mamy kontroli. Nie odpowiadamy za ich treść ani polityki.
+        </p>
+      </section>
+
+      {/* 10. Subskrypcje */}
+      <section className="space-y-3">
+        <H2 id="subskrypcje">10. Subskrypcje i płatności</H2>
+        <p className="text-white/80">
+          Zasady płatności, odnowień i rezygnacji opisuje dokument{" "}
+          <Link href="/prawne/subskrypcja" className="underline">Regulamin subskrypcji</Link>
+          . Informacje o odstąpieniu i zwrotach znajdziesz w{" "}
+          <Link href="/prawne/zwroty-odstapienie" className="underline">Zwroty i odstąpienie</Link>
+          .
+        </p>
+      </section>
+
+      {/* 11. Zmiany */}
+      <section className="space-y-3">
+        <H2 id="zmiany">11. Zmiany warunków</H2>
         <p className="text-white/80">
           Zastrzegamy prawo do aktualizacji Warunków. Nowe brzmienie obowiązuje od
           chwili publikacji w Serwisie, o ile nie wskazano inaczej.

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g)"/>
+  <g opacity="0.5" stroke="url(#accent)" stroke-width="2" fill="none">
+    <path d="M0,740 C250,680 350,620 520,640 C720,660 840,560 1010,540 C1220,520 1300,640 1600,620" />
+    <path d="M0,600 C220,560 380,540 560,560 C760,580 900,500 1080,480 C1280,460 1380,560 1600,540" />
+    <path d="M0,460 C260,420 420,440 600,460 C800,480 940,440 1120,420 C1320,400 1440,440 1600,420" />
+  </g>
+  <g fill="#ffffff" opacity="0.95">
+    <circle cx="120" cy="140" r="3"/>
+    <circle cx="420" cy="200" r="2"/>
+    <circle cx="920" cy="120" r="2"/>
+    <circle cx="1320" cy="260" r="3"/>
+    <circle cx="1480" cy="160" r="2"/>
+  </g>
+  <text x="80" y="820" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell" font-size="40" fill="#e2e8f0" opacity="0.9">
+    FX•EDU — Domyślna okładka artykułu
+  </text>
+</svg>
+

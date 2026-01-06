@@ -29,7 +29,7 @@ export default function NewsPageClient({ initial72h }: Props) {
   const rangeParam = sp.get('range') ?? '72';
   const range: RangeKey = rangeParam === '24' ? '24h' : rangeParam === '48' ? '48h' : '72h';
 
-  const key = `/api/news/summarize?bucket=${range}`;
+  const key = `/api/news/articles?bucket=${range}&lang=pl`;
   const { data, mutate, isValidating } = useNewsSWR<{ items: Item[] }>(
     key,
     range === '72h' ? (initial72h && Array.isArray(initial72h.items) ? { items: initial72h.items } : undefined) : undefined

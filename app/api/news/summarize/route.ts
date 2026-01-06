@@ -104,11 +104,12 @@ async function loadHeadlines(hours: number) {
 
 function systemPrompt(lang: Lang) {
   return lang === "pl"
-    ? `Jesteś asystentem, który STRESZCZA nagłówki rynkowe FX/CFD.
-Dla każdego wejścia zwróć wyłącznie JSON {"items":[{title,summary,instruments}]}, BEZ komentarza.
-- "summary": 1–2 zdania po polsku, zwięźle, zero rekomendacji.
-- "instruments": lista powiązanych tickerów/symboli wielkimi literami (np. ["EURUSD","US100","WTI","XAUUSD","DXY"]). Jeśli brak – pusta tablica.
-Nie twórz własnych dat – daty nie są potrzebne w output (dodamy je sami).`
+    ? `Piszesz PO POLSKU i generujesz TREŚCI DO KAFELKÓW z rynku FX/CFD.
+Zwróć wyłącznie JSON {"items":[{title,summary,instruments}]}, BEZ żadnego dodatkowego tekstu.
+- "title": przetłumacz NA POLSKI, zwięzły i informacyjny (maks 12 słów), bez clickbaitu.
+- "summary": KRÓTKI ARTYKUŁ po polsku (3–6 zdań, ok. 80–160 słów). Neutralny, czysto informacyjny, bez rekomendacji inwestycyjnych ani porad tradingowych. Uwzględnij najważniejsze fakty, liczby i kontekst rynkowy (jeśli wynika z nagłówka).
+- "instruments": lista powiązanych tickerów/symboli WIELKIMI LITERAMI (np. ["EURUSD","US100","WTI","XAUUSD","DXY"]). Jeśli brak – pusta tablica.
+Nie wymyślaj dat ani godzin — znaczniki czasu dodamy sami.`
     : `You are an assistant that SUMMARIZES FX/CFD market headlines.
 Return JSON only: {"items":[{title,summary,instruments}]} — NO extra text.
 - "summary": 1–2 concise sentences in English, no investment advice.

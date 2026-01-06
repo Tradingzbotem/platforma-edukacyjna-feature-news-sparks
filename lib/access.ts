@@ -9,7 +9,7 @@ export type RequiredAccess = "public" | "auth" | "pro";
 export async function getRoleFromCookies(): Promise<Role> {
   try {
     const s = await getSession();
-    if (s?.plan === "pro") return "pro";
+    if (s?.plan === "pro" || s?.plan === "elite") return "pro";
     if (s?.userId) return "user";
     return "guest";
   } catch {

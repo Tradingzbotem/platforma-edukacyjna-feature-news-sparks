@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
  * Rejestracja demo:
  * - Odbiera POST z <form> (FormData)
  * - Ustawia ciasteczka auth i plan
- * - Przekierowuje na /konto
+ * - Przekierowuje na /client
  */
 export async function POST(req: NextRequest) {
   const form = await req.formData();
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Ustawiamy sesję w ciasteczkach (tryb demo)
-  const res = NextResponse.redirect(new URL('/konto', req.url), { status: 302 });
+  const res = NextResponse.redirect(new URL('/client', req.url), { status: 302 });
 
   const month = 60 * 60 * 24 * 30;
   const cookieOpts = { path: '/', maxAge: month, sameSite: 'lax' as const };

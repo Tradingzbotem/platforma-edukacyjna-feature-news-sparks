@@ -37,3 +37,109 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
   outline: 2px solid rgba(255,255,255,0.5);
   outline-offset: 2px;
 }
+
+/* ───────── Scoped jasny motyw tylko dla panelu klienta ───────── */
+.theme-panel-light {
+  /* shadcn/ui compatible tokens (subset) */
+  --background: #ffffff;           /* match content cards */
+  --foreground: #0f172a;           /* slate-900 */
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #f1f5f9;                /* slate-100 */
+  --muted-foreground: #64748b;     /* slate-500 */
+  --border: #e2e8f0;               /* slate-200 */
+  --input: #e2e8f0;
+  --ring: #2563eb;                 /* blue-600 */
+  --primary: #2563eb;              /* blue-600 */
+  --primary-foreground: #ffffff;
+
+  color-scheme: light;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Lżejszy outline w jasnym motywie panelu */
+.theme-panel-light a:focus-visible,
+.theme-panel-light button:focus-visible,
+.theme-panel-light [role="button"]:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.45); /* blue-600/45 */
+  outline-offset: 2px;
+}
+
+/* ───────── Dark normalization dla panelu konta ───────── */
+/* Cel: komponenty zaprojektowane pod jasne tła (bg-white, slate-200 itp.)
+   mają wyglądać spójnie na ciemnym tle: półprzezroczyste karty, delikatne obramowanie i cień. */
+.theme-konto-dark .bg-white {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+.theme-konto-dark .bg-slate-100,
+.theme-konto-dark .bg-slate-50 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+.theme-konto-dark .text-slate-900 {
+  color: #ffffff !important;
+}
+.theme-konto-dark .text-slate-600,
+.theme-konto-dark .text-slate-500 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+.theme-konto-dark .border-slate-200,
+.theme-konto-dark .border-slate-300 {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+.theme-konto-dark .shadow-sm {
+  box-shadow:
+    0 1px 2px 0 rgba(0, 0, 0, 0.35),
+    0 2px 8px 0 rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Czytelność fontów i ikon na ciemnym tle */
+.theme-konto-dark {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+.theme-konto-dark h1,
+.theme-konto-dark h2,
+.theme-konto-dark h3,
+.theme-konto-dark h4,
+.theme-konto-dark h5,
+.theme-konto-dark h6 {
+  color: #ffffff;
+}
+.theme-konto-dark p,
+.theme-konto-dark li,
+.theme-konto-dark small,
+.theme-konto-dark label {
+  color: rgba(255, 255, 255, 0.9);
+}
+/* Ujednolicenie popularnych odcieni slate* -> biele na dark */
+.theme-konto-dark .text-slate-800 { color: rgba(255, 255, 255, 0.95) !important; }
+.theme-konto-dark .text-slate-700 { color: rgba(255, 255, 255, 0.9) !important; }
+.theme-konto-dark .text-slate-400 { color: rgba(255, 255, 255, 0.7) !important; }
+.theme-konto-dark .text-slate-300 { color: rgba(255, 255, 255, 0.6) !important; }
+/* Ikony / SVG */
+.theme-konto-dark svg,
+.theme-konto-dark .icon,
+.theme-konto-dark [class*="icon-"] {
+  color: rgba(255, 255, 255, 0.88);
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+/* ───────── Subtelne animacje dla kafelków na stronie głównej ───────── */
+@keyframes auroraShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Delikatny, animowany gradient w tle (używany w "decision strip") */
+.aurora {
+  background:
+    radial-gradient(800px 400px at 10% -10%, rgba(99, 102, 241, 0.12), transparent 60%),
+    radial-gradient(700px 350px at 110% 110%, rgba(20, 184, 166, 0.12), transparent 60%),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.12), rgba(20, 184, 166, 0.12), rgba(59, 130, 246, 0.12));
+  background-size: 200% 200%;
+  animation: auroraShift 14s linear infinite;
+}

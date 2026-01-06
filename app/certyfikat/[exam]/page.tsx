@@ -2,6 +2,7 @@
 'use client';
 
 import { useSearchParams, useParams } from 'next/navigation';
+import BackButton from '@/components/BackButton';
 
 export default function Page() {
   const params = useParams<{ exam: string }>();
@@ -12,6 +13,9 @@ export default function Page() {
 
   return (
     <main className="mx-auto max-w-3xl p-6 md:p-8 print:p-0">
+      <div className="mb-3 print:hidden">
+        <BackButton fallbackHref="/kursy/egzaminy" />
+      </div>
       <div className="rounded-2xl border border-white/20 bg-white text-slate-900 p-10 print:rounded-none print:border-0">
         <h1 className="text-3xl font-bold text-center">Zaświadczenie ukończenia testu</h1>
         <p className="mt-6 text-lg text-center">

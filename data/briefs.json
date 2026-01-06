@@ -1,5 +1,106 @@
 [
   {
+    "id": "auto-synth-1767654307651",
+    "ts_iso": "2026-01-05T23:05:07.651Z",
+    "title": "Szybki briefing — GEN (06.01, 00:05)",
+    "bullets": [
+      "Syntetyczny wpis na bazie ruchu US100 (fallback).",
+      "Dane demo — bez porad inwestycyjnych."
+    ],
+    "content": "Wpis uzupełniający powstał automatycznie, aby dostarczyć podstawowe metryki kiedy generator AI był niedostępny.",
+    "sentiment": "Neutralny",
+    "metrics": {
+      "rsi": 0,
+      "adx": 28,
+      "macd": -1.1,
+      "volume": "Średnie",
+      "dist200": "-2.8%"
+    },
+    "opinion": "Przewaga spadku",
+    "type": "GEN"
+  },
+  {
+    "id": "auto-synth-1767654307506",
+    "ts_iso": "2026-01-05T23:05:07.506Z",
+    "title": "Szybki briefing — GEN (06.01, 00:05)",
+    "bullets": [
+      "Syntetyczny wpis na bazie ruchu US100 (fallback).",
+      "Dane demo — bez porad inwestycyjnych."
+    ],
+    "content": "Wpis uzupełniający powstał automatycznie, aby dostarczyć podstawowe metryki kiedy generator AI był niedostępny.",
+    "sentiment": "Neutralny",
+    "metrics": {
+      "rsi": 0,
+      "adx": 28,
+      "macd": -1.1,
+      "volume": "Średnie",
+      "dist200": "-2.8%"
+    },
+    "opinion": "Przewaga spadku",
+    "type": "GEN"
+  },
+  {
+    "id": "b0ry64sjmo6oormgbnsrwr",
+    "ts_iso": "2026-01-02T09:01:27.255Z",
+    "title": "Szybki briefing — GEN (02.01.2026, 10:01)",
+    "bullets": [],
+    "content": "### Szybki briefing — GEN (29.12.2025, 18:00)\n\nW ciągu ostatnich 24 godzin na amerykańskich rynkach giełdowych miały miejsce istotne wydarzenia. Akcje IQSTEL wzrosły po ogłoszeniu prognozy przychodów na poziomie 400 milionów dolarów oraz wypłaty pierwszej dywidendy (18:09 UTC, 29.12). Z kolei akcje Professional Diversity Network spadły po ogłoszeniu strategicznej inwestycji w token AI (17:56 UTC, 29.12), co może wskazywać na negatywne reakcje rynku na takie decyzje.\n\nIndeks S&P 500 odnotował spadek, co może być efektem odpoczynku sektora technologicznego po wcześniejszych wzrostach (17:53 UTC, 29.12). Dodatkowo, akcje Arizona Sonoran Copper spadły w wyniku rozmów o wcześniejszym zakończeniu współpracy z Rio Tinto (16:46 UTC, 29.12), co może wpływać na nastroje inwestorów w sektorze surowców.\n\nNa rynku walutowym, para GBP/USD ustabilizowała się w obliczu różnic w polityce monetarnej między Fed a Bankiem Anglii (17:59 UTC, 29.12). Z kolei złoto skorygowało się po osiągnięciu rekordowych poziomów, co może być wynikiem realizacji zysków oraz odbicia dolara amerykańskiego (15:40 UTC, 29.12).\n\n### OPINIA AI\nW krótkim okresie (1–7 dni) nastroje na rynku mogą być mieszane, z uwagi na spadki w sektorze technologicznym oraz reakcje na nowe informacje dotyczące spółek. W dłuższym okresie (1–6 miesięcy) warto obserwować zmiany w polityce monetarnej oraz wpływ globalnych wydarzeń na amerykański rynek akcji.\n\nUwaga: Materiał edukacyjny – to nie jest rekomendacja inwestycyjna.",
+    "sentiment": "Neutralny",
+    "metrics": {},
+    "opinion": "### OPINIA AI",
+    "type": "GEN"
+  },
+  {
+    "id": "ymad3unb7wqkq43yqekex",
+    "ts_iso": "2026-01-01T21:58:19.649Z",
+    "title": "Szybki briefing — GEN (01.01.2026, 22:58)",
+    "bullets": [],
+    "content": "# Szybki briefing — GEN (29.12.2025, 18:00)\n\nW ciągu ostatnich 24 godzin na amerykańskich rynkach finansowych miały miejsce istotne wydarzenia. Akcje IQSTEL wzrosły w związku z ogłoszeniem prognozy przychodów na poziomie 400 milionów dolarów oraz wypłatą pierwszej dywidendy (18:09 UTC, 29.12). Z kolei akcje Professional Diversity Network spadły po ogłoszeniu strategicznej inwestycji w token AI, co sugeruje negatywny wpływ na zaufanie inwestorów (17:56 UTC, 29.12).\n\nNa rynku technologicznym indeks S&P 500 odnotował spadki, co może być efektem realizacji zysków po wcześniejszych wzrostach (17:53 UTC, 29.12). Warto również zauważyć, że akcje Sellas Life Sciences znacząco wzrosły po aktualizacji dotyczącej prób klinicznych, co może świadczyć o pozytywnym odbiorze innowacji w sektorze zdrowia (17:52 UTC, 29.12).\n\nNa rynku walutowym, para GBP/USD ustabilizowała się, gdy inwestorzy analizowali różnice w polityce monetarnej pomiędzy Fed a Bankiem Anglii (17:59 UTC, 29.12). Z kolei dolar kanadyjski poruszał się w znanych ramach, co może wskazywać na brak istotnych impulsów w obliczu zbliżającego się końca roku (16:49 UTC, 29.12).\n\n## OPINIA AI\nW krótkim okresie (1–7 dni) nastroje na rynkach mogą być pod wpływem realizacji zysków oraz oczekiwań na nowe dane makroekonomiczne. W dłuższym horyzoncie (1–6 miesięcy) kluczowe będą obserwacje dotyczące polityki monetarnej oraz wpływu innowacji technologicznych na wyniki firm.\n\nUwaga: Materiał edukacyjny – to nie jest rekomendacja inwestycyjna.",
+    "sentiment": "Neutralny",
+    "metrics": {},
+    "opinion": "## OPINIA AI",
+    "type": "GEN"
+  },
+  {
+    "id": "bccyalu1j6q0lqx11k7jmq",
+    "ts_iso": "2026-01-01T21:22:50.574Z",
+    "title": "Szybki briefing — GEN (01.01.2026, 22:22)",
+    "bullets": [],
+    "content": "**Szybki briefing — GEN (30.12.2025, 18:00)**\n\nW ciągu ostatnich 24 godzin na amerykańskich rynkach giełdowych miało miejsce kilka istotnych wydarzeń. Akcje IQSTEL wzrosły po ogłoszeniu prognozy przychodów na poziomie 400 milionów dolarów oraz wypłacie pierwszej dywidendy (18:09 UTC, 29.12). Z kolei akcje Professional Diversity Network spadły po ogłoszeniu strategicznej inwestycji w token AI (17:56 UTC, 29.12).\n\nNa rynku akcji, indeks S&P 500 odnotował spadek, co może być efektem odpoczynku sektora technologicznego po ostatnich wzrostach (17:53 UTC, 29.12). W tym samym czasie, akcje Sellas Life Sciences wzrosły po aktualizacji dotyczącej prób klinicznych, która pokazała wolniejszy wskaźnik zdarzeń (17:52 UTC, 29.12).\n\nW obszarze walutowym, para GBP/USD stabilizowała się, gdy rynki analizowały różnice w stopach procentowych między Fed a BoE w warunkach niskiej płynności (17:59 UTC, 29.12). Dodatkowo, dolar kanadyjski osłabł, co może być związane z osłabieniem wsparcia ze strony cen ropy (13:04 UTC, 29.12).\n\n**OPINIA AI:** W krótkim okresie, nastroje na rynku mogą być mieszane z powodu spadków w sektorze technologicznym oraz niepewności związanej z inwestycjami w nowe technologie. W dłuższym okresie, kluczowe będą obserwacje dotyczące polityki monetarnej oraz wpływu globalnych wydarzeń na amerykański rynek.\n\nUwaga: Materiał edukacyjny – to nie jest rekomendacja inwestycyjna.",
+    "sentiment": "Neutralny",
+    "metrics": {},
+    "opinion": "**OPINIA AI:** W krótkim okresie, nastroje na rynku mogą być mieszane z powodu spadków w sektorze technologicznym oraz niepewności związanej z inwestycjami w nowe technologie. W dłuższym okresie, kluczowe będą obserwacje dotyczące polityki monetarnej oraz wpływu globalnych wydarzeń na amerykański rynek.",
+    "type": "GEN"
+  },
+  {
+    "id": "vblljzx0luenuw3zn9ilzg",
+    "ts_iso": "2026-01-01T18:23:43.596Z",
+    "title": "Szybki briefing — GEN (01.01.2026, 19:23)",
+    "bullets": [],
+    "content": "**Szybki briefing — GEN (29.12.2025, 18:23)**\n\nW ciągu ostatnich 24 godzin na amerykańskich rynkach akcji miały miejsce istotne wydarzenia. Akcje IQSTEL wzrosły po ogłoszeniu prognozy przychodów na poziomie 400 milionów dolarów oraz wypłaty pierwszej dywidendy (18:09 UTC, 29.12). Z kolei akcje Professional Diversity Network spadły w wyniku strategicznej inwestycji w token AI, co może wskazywać na negatywne reakcje rynku na takie innowacje (17:56 UTC, 29.12).\n\nIndeks S&P 500 odnotował spadek, co może być efektem odpoczynku sektora technologicznego po niedawnym wzroście (17:53 UTC, 29.12). Warto również zauważyć, że akcje Arizona Sonoran Copper spadły po rozmowach o wcześniejszym zakończeniu współpracy z Rio Tinto, co może wpłynąć na postrzeganie stabilności tej spółki (16:46 UTC, 29.12).\n\nNa rynku walutowym, para GBP/USD stabilizuje się w obliczu różnic w polityce monetarnej Fed i BoE, co może wpływać na zmienność w najbliższych dniach (17:59 UTC, 29.12). Z kolei złoto skorygowało się po osiągnięciu rekordowych poziomów, co może być wynikiem realizacji zysków oraz odbicia dolara amerykańskiego (15:40 UTC, 29.12).\n\n**OPINIA AI:** W krótkim okresie (1–7 dni) nastroje na rynku mogą być pod wpływem dalszych informacji dotyczących polityki monetarnej oraz wyników finansowych spółek. W dłuższym horyzoncie (1–6 miesięcy) istotne będą obserwacje dotyczące inflacji oraz stabilności gospodarczej, które mogą wpłynąć na decyzje inwestycyjne.\n\nUwaga: Materiał edukacyjny – to nie jest rekomendacja inwestycyjna.",
+    "sentiment": "Neutralny",
+    "metrics": {},
+    "opinion": "**OPINIA AI:** W krótkim okresie (1–7 dni) nastroje na rynku mogą być pod wpływem dalszych informacji dotyczących polityki monetarnej oraz wyników finansowych spółek. W dłuższym horyzoncie (1–6 miesięcy) istotne będą obserwacje dotyczące inflacji oraz stabilności gospodarczej, które mogą wpłynąć na decyzje inwestycyjne.",
+    "type": "GEN"
+  },
+  {
+    "id": "q7sel2dklh8m0stmbyxxc",
+    "ts_iso": "2025-12-31T17:58:57.074Z",
+    "title": "Szybki briefing — GEN (31.12.2025, 18:58)",
+    "bullets": [
+      "**RSI(14)**: 55 (neutralny)",
+      "**ADX (proxy)**: 20 (słaba tendencja)",
+      "**MACD**: Wartości bliskie zeru (brak wyraźnego sygnału)",
+      "**Wolumen**: Średni, z tendencją wzrostową",
+      "**Odległość od 200MA**: +5% (lekka przewaga byków)"
+    ],
+    "content": "**Szybki briefing — GEN**\n\n**CO TERAZ GRA NAJGŁOŚNIEJ:**\n\n1. **Shutdown administracji publicznej**: W obliczu braku porozumienia budżetowego, ryzyko zamknięcia rządu USA rośnie, co może wpłynąć na wydatki publiczne i zaufanie inwestorów.\n   \n2. **Dane o zatrudnieniu**: Opublikowane wczoraj dane wskazują na wzrost liczby miejsc pracy, co może sugerować silniejszy rynek pracy, ale także zwiększa presję na Fed w kontekście podwyżek stóp procentowych.\n\n3. **Ceny ropy**: Wzrost cen ropy naftowej z powodu napięć geopolitycznych, co może wpłynąć na inflację i koszty transportu w USA.\n\n4. **Wyniki kwartalne spółek**: Zbliżający się sezon wyników kwartalnych może wprowadzić zmienność na rynkach, szczególnie w sektorze technologicznym.\n\n5. **Decyzje Fed**: Oczekiwania dotyczące przyszłych decyzji Federal Reserve w sprawie stóp procentowych są na czołowej pozycji w agendzie inwestorów.\n\n6. **Wzrost rentowności obligacji**: Wzrost rentowności obligacji skarbowych USA może wpłynąć na wyceny akcji, szczególnie w sektorze technologicznym.\n\n7. **Sentiment rynkowy**: Wzrost niepewności na rynkach z powodu globalnych wydarzeń, co może prowadzić do większej zmienności.\n\n8. **Kurs dolara**: Stabilizacja dolara amerykańskiego w obliczu niepewności gospodarczej, co może wpływać na międzynarodowy handel.\n\n**OPINIA AI (SKRÓT)**: Rynki w USA stają w obliczu rosnącej niepewności z powodu potencjalnego shutdownu oraz wpływu danych makroekonomicznych na politykę monetarną.\n\n**Metryki techniczne:**\n- **RSI(14)**: 55 (neutralny)\n- **ADX (proxy)**: 20 (słaba tendencja)\n- **MACD**: Wartości bliskie zeru (brak wyraźnego sygnału)\n- **Wolumen**: Średni, z tendencją wzrostową\n- **Odległość od 200MA**: +5% (lekka przewaga byków)",
+    "sentiment": "Neutralny",
+    "metrics": {},
+    "opinion": "**OPINIA AI (SKRÓT)**: Rynki w USA stają w obliczu rosnącej niepewności z powodu potencjalnego shutdownu oraz wpływu danych makroekonomicznych na politykę monetarną.",
+    "type": "GEN"
+  },
+  {
     "id": "9tj1lvsulzihlz9zdmkn7m",
     "ts_iso": "2025-12-29T19:37:58.788Z",
     "title": "Szybki briefing — GEN (29.12.2025, 20:37)",

@@ -7,6 +7,7 @@ type Props = {
   symbols?: string[];         // opcjonalnie możesz nadpisać listę
   className?: string;
   speedSec?: number;          // szybkość przesuwu (UI), domyślnie 40s
+  showPrice?: boolean;        // czy pokazywać cenę – domyślnie tak
 };
 
 type Quote = {
@@ -50,7 +51,7 @@ function fmtPrice(price?: number) {
   return price.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export default function TickerFinnhub({ symbols, className, speedSec = 40 }: Props) {
+export default function TickerFinnhub({ symbols, className, speedSec = 40, showPrice = true }: Props) {
   // ✅ Obsługa obu nazw zmiennych środowiskowych
   const token =
     process.env.NEXT_PUBLIC_FINNHUB_KEY ??
@@ -204,7 +205,7 @@ export default function TickerFinnhub({ symbols, className, speedSec = 40 }: Pro
       return (
         <div key={s} className="flex items-center gap-2 px-3 py-2 border-r border-white/10">
           <span className="text-xs text-white/60 uppercase">{label}</span>
-          <span className="text-sm font-semibold">{fmtPrice(q.price)}</span>
+          {showPrice && <span className="text-sm font-semibold">{fmtPrice(q.price)}</span>}
           {q.changePct != null ? (
             <span className={`text-xs ${up ? 'text-emerald-400' : 'text-rose-400'}`}>
               {up ? '▲' : '▼'} {q.changePct.toFixed(2)}%

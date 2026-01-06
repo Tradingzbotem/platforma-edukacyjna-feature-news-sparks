@@ -1,12 +1,10 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { useLang } from '@/lib/i18n-client';
-import { t } from '@/lib/i18n';
 
+// Pasek z aktywnymi cenami (bez SSR, aby uniknąć problemów z WS)
 const TickerFinnhubNoSSR = dynamic(() => import('@/components/TickerFinnhub'), { ssr: false });
 
 /* ────────────────────── Ikony / drobnice ────────────────────── */
@@ -33,20 +31,41 @@ const Star = ({ filled = true }: { filled?: boolean }) => (
   </svg>
 );
 
-/* ────────────────────── Dane ────────────────────── */
-type Category = {
-  key: 'fundamentals' | 'forex' | 'cfd' | 'advanced';
-  title: string;
-  desc: string;
-  href: string;
-};
-
-const categories: Category[] = [
-  { key: 'fundamentals', title: 'Podstawy inwestowania', desc: 'Ryzyko vs. zwrot, dźwignia, typy zleceń, czytanie świec.', href: '/kursy/podstawy' },
-  { key: 'forex',        title: 'Forex',                  desc: 'Pary walutowe, pipsy i loty, sesje, wpływ makro i stóp procentowych.', href: '/kursy/forex' },
-  { key: 'cfd',          title: 'CFD',                    desc: 'Mechanika CFD, finansowanie overnight, indeksy, surowce, krypto.', href: '/kursy/cfd' },
-  { key: 'advanced',     title: 'Zaawansowane',           desc: 'Edge i statystyka, testy out-of-sample, psychologia i błędy poznawcze.', href: '/kursy/zaawansowane' },
-];
+/* ────────────────────── Karta: Check przed decyzją ────────────────────── */
+function HeroPricingCard() {
+  return (
+    <div className="relative rounded-2xl p-[1px] bg-gradient-to-b from-emerald-400/40 via-emerald-400/10 to-transparent">
+      <div className="rounded-2xl bg-slate-900 p-6 border border-white/10 max-w-md mx-auto">
+        <h3 className="text-lg font-semibold">Check przed decyzją</h3>
+        <ul className="mt-5 space-y-3 text-sm">
+          <li className="flex items-start gap-2">
+            <span aria-hidden className="text-emerald-300 mt-0.5">✓</span>
+            <span>Co jest w kalendarzu i czy to ‘rusza rynek’</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span aria-hidden className="text-emerald-300 mt-0.5">✓</span>
+            <span>Gdzie są poziomy i co potwierdza wybicie/odrzucenie</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span aria-hidden className="text-emerald-300 mt-0.5">✓</span>
+            <span>Jakie warunki muszą się zgodzić</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span aria-hidden className="text-emerald-300 mt-0.5">✓</span>
+            <span>Jaki jest plan B, jeśli rynek zrobi odwrotnie</span>
+          </li>
+        </ul>
+        <p className="mt-5 text-xs text-white/60">Tryb podglądu — pełne potwierdzenia w pakiecie</p>
+        <Link
+          href="/ebooki#plany"
+          className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+        >
+          Zobacz przykładowe scenariusze
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 type Q = { q: string; opts: string[]; a: number };
 
@@ -75,7 +94,6 @@ export default function HomePage() {
   const [activeQuestions, setActiveQuestions] = useState<Q[]>([]);
   const [answers, setAnswers] = useState<number[]>([]);
   const [checked, setChecked] = useState(false);
-  const lang = useLang('pl');
 
   // ref do okna modala dla autofocusu
   const modalRef = useRef<HTMLDivElement | null>(null);
@@ -128,118 +146,78 @@ export default function HomePage() {
 
   return (
     <main id="content" className="min-h-screen bg-slate-950 text-white">
-      {/* NAVBAR */}
-      <header className="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 bg-slate-900/60 border-b border-white/10">
-        <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* LEWO: logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
-              <span className="font-bold">FX</span>
-            </div>
-            <span className="font-semibold tracking-wide">
-              Edu<span className="text-white/60">Lab</span>
-            </span>
-          </div>
 
-          {/* ŚRODEK: menu */}
-            <ul className="hidden md:flex items-center gap-6 text-sm text-white/80">
-            <li><Link href="/kursy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">{t(lang, 'courses')}</Link></li>
-            <li><Link href="/symulator" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">{t(lang, 'calculator')}</Link></li>
-            <li><Link href="/quizy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">{t(lang, 'quizzes')}</Link></li>
-            <li><Link href="/ebooki" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">{t(lang, 'ebooks')}</Link></li>
-            <li><Link href="/rankingi/brokerzy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">{t(lang, 'broker_rankings')}</Link></li>
-            <li>
-              <Link href="/challenge" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">
-                {t(lang, 'challenge')}
-              </Link>
-            </li>
-            <li>
-              <Link href="/news" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded-md px-1">
-                {t(lang, 'news')}
-              </Link>
-            </li>
-          </ul>
-
-          {/* PRAWO: auth */}
-          <div className="flex items-center gap-3">
-            <Link href="/logowanie" className="hidden sm:inline-flex px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition focus:outline-none focus:ring-2 focus:ring-white/50">
-              {t(lang, 'login')}
-            </Link>
-            <Link href="/rejestracja" className="px-4 py-2 rounded-xl bg-white text-slate-900 font-semibold hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-white/50">
-              {t(lang, 'join_free')}
-            </Link>
-            <LanguageSwitcher />
-          </div>
-        </nav>
-
-        {/* LIVE ticker z Finnhub */}
-        <TickerFinnhubNoSSR
-          className="border-t border-white/10"
-          speedSec={42}
-          symbols={[
-            'OANDA:NAS100_USD', // US100
-            'OANDA:XAU_USD',    // Złoto
-            'OANDA:WTICO_USD',  // Ropa WTI
-            'OANDA:BCO_USD',    // Ropa Brent
-            'OANDA:EUR_USD',    // EUR/USD
-            'OANDA:USD_JPY',    // USD/JPY
-          ]}
-        />
-      </header>
+      {/* Pasek aktywów – LIVE (Finnhub) */}
+      <TickerFinnhubNoSSR
+        className="border-b border-white/10"
+        speedSec={42}
+        symbols={[
+          'OANDA:NAS100_USD',
+          'OANDA:XAU_USD',
+          'OANDA:WTICO_USD',
+          'OANDA:BCO_USD',
+          'OANDA:EUR_USD',
+          'OANDA:USD_JPY',
+        ]}
+      />
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 pb-10">
-          <div className="grid md:grid-cols-2 items-center gap-10">
-            <div>
+          <div className="grid md:grid-cols-12 items-start gap-10">
+            {/* Lewa kolumna */}
+            <div className="md:col-span-7">
               <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-3 py-1 text-xs mb-4">
                 <BadgeIcon />
-                <span className="tracking-wide">Edukacja od podstaw do pro (CFD & Forex)</span>
+                <span className="tracking-wide">Decyzje oparte o potwierdzenia, nie emocje</span>
               </div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
-                Zbuduj solidne podstawy i praktyczne umiejętności na rynku Forex i CFD
+                Zanim wejdziesz w pozycję, sprawdź to, co robi różnicę.
               </h1>
-              <p className="mt-4 text-white/70 max-w-xl">
-                Lekcje, quizy, wyzwania i kalkulatory. Zero „sygnałów”, 100% edukacji. Ucz się w tempie, które daje wyniki.
+              <p className="mt-4 text-white/80 max-w-2xl">
+                Panel rynkowy porządkuje dane dla konkretnego aktywa i godziny: wydarzenia, technikę i scenariusze — żebyś wiedział, czy rynek ma powód, by iść w tę stronę.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link href="/kursy" className="px-5 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/50">
-                  Rozpocznij naukę
+              <ul className="mt-5 space-y-2 text-white/80">
+                <li className="flex items-start gap-2">
+                  <span aria-hidden className="text-emerald-300 mt-0.5">✓</span>
+                  <span>Co jest w kalendarzu i czy to ‘rusza rynek’</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span aria-hidden className="text-emerald-300 mt-0.5">✓</span>
+                  <span>Gdzie są poziomy i co potwierdza wybicie/odrzucenie</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span aria-hidden className="text-emerald-300 mt-0.5">✓</span>
+                  <span>Jakie warunki muszą się zgodzić (wskaźniki + price action)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span aria-hidden className="text-emerald-300 mt-0.5">✓</span>
+                  <span>Jaki jest plan B, jeśli rynek zrobi odwrotnie</span>
+                </li>
+              </ul>
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <Link href="/ebooki#plany" className="px-5 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/50">
+                  Zobacz przykładowe scenariusze
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => openQuiz(10, 'Próbny test')}
+                <Link
+                  href="/ebooki#plany"
                   className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
                 >
-                  Zagraj próbny test
-                </button>
+                  Poznaj pakiety dostępu
+                </Link>
               </div>
-              <div className="mt-6 flex items-center gap-2 text-white/70">
-                {[...Array(4)].map((_, i) => <Star key={i} />)}<Star filled={false} />
-                <span className="text-sm">4.0/5 na podstawie 1 245 opinii</span>
+              <div className="mt-6 flex items-center gap-2 text-white/80">
+                {[...Array(5)].map((_, i) => <Star key={i} />)}
+                <span className="text-sm">4.8 na podstawie 1 245 opinii</span>
               </div>
+              <p className="mt-3 text-xs text-white/60 max-w-2xl">
+                Treści mają charakter edukacyjny i nie stanowią porady inwestycyjnej. Inwestowanie wiąże się z ryzykiem.
+              </p>
             </div>
 
-            <div>
-              <div className="relative rounded-2xl p-6 bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 shadow-2xl">
-                {/* Moduły z linkiem */}
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {categories.map((c) => (
-                    <div key={c.key} className="group rounded-xl p-4 bg-white/5 border border-white/10 hover:bg-white/10 transition">
-                      <div className="flex items-start justify-between">
-                        <h3 className="font-semibold">{c.title}</h3><BadgeIcon />
-                      </div>
-                      <p className="mt-2 text-sm text-white/70">{c.desc}</p>
-                      <Link
-                        href={c.href}
-                        className="mt-3 inline-block text-sm underline underline-offset-4 decoration-white/30 group-hover:decoration-white focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
-                      >
-                        Wejdź do modułu
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* Prawa kolumna */}
+            <div className="md:col-span-5">
+              <HeroPricingCard />
             </div>
           </div>
         </div>
@@ -249,18 +227,35 @@ export default function HomePage() {
         <div className="pointer-events-none absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-indigo-500/20 blur-3xl" />
       </section>
 
-      {/* STATS */}
+      
+
+      {/* DECISION STRIP — aphorisms guiding better decisions */}
       <section className="border-t border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
-            { label: 'Kursy', value: '24' },
-            { label: 'Lekcje', value: '180+' },
-            { label: 'Uczestnicy', value: '12 500' },
-            { label: 'Śr. czas / tydz.', value: '3.2h' },
+            { label: 'Zasada cierpliwości', value: 'Brak decyzji to też decyzja' },
+            { label: 'Powiedzenie rynku', value: 'Kupuj plotki, sprzedawaj fakty' },
+            { label: 'Higiena tradingu', value: 'Emocje nie są dobrym doradcą' },
+            { label: 'Perspektywa dynamiki', value: 'Rynek to organizm, nie maszyna' },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl bg-white/5 border border-white/10 py-5">
-              <div className="text-2xl font-bold">{s.value}</div>
-              <div className="text-sm text-white/70 mt-1">{s.label}</div>
+            <div
+              key={s.label}
+              tabIndex={0}
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-2xl hover:shadow-black/40 focus-visible:-translate-y-1"
+            >
+              {/* animated glow backdrop */}
+              <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                <div className="absolute -inset-10 aurora blur-2xl" />
+              </div>
+              {/* glossy light at the top */}
+              <div className="pointer-events-none absolute inset-px rounded-2xl bg-gradient-to-b from-white/10 to-transparent opacity-60" />
+
+              <div className="relative z-10 text-xl sm:text-2xl font-extrabold tracking-tight leading-snug antialiased [text-wrap:balance]">
+                {s.value}
+              </div>
+              <div className="relative z-10 mt-2 text-xs sm:text-sm text-white/70">
+                {s.label}
+              </div>
             </div>
           ))}
         </div>
@@ -350,62 +345,10 @@ export default function HomePage() {
           <p className="mt-2 text-white/70">Darmowy dostęp do modułu „Podstawy” + quizy wprowadzające.</p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <Link href="/rejestracja" className="px-5 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/50">Załóż konto</Link>
-            <Link href="/quizy" className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">Rozwiąż quiz</Link>
+            <Link href="/logowanie" className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">Zaloguj się</Link>
           </div>
         </div>
       </section>
-
-      {/* FOOTER */}
-      <footer className="border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 grid md:grid-cols-4 gap-8 text-sm">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                <span className="font-bold">FX</span>
-              </div>
-              <span className="font-semibold">EduLab</span>
-            </div>
-            <p className="mt-3 text-white/70">
-              Platforma edukacyjna Forex/CFD. Bez porad inwestycyjnych – tylko wiedza i praktyka.
-            </p>
-          </div>
-
-          <div>
-            <div className="font-semibold mb-2">Nawigacja</div>
-            <ul className="space-y-1 text-white/70">
-              <li><Link href="/kursy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded">Kursy</Link></li>
-              <li><Link href="/quizy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded">Quizy</Link></li>
-              <li><Link href="/rankingi/brokerzy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded">Rankingi brokerów</Link></li>
-              <li><Link href="/symulator" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded">Kalkulator</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="font-semibold mb-2">Zasoby</div>
-            <ul className="space-y-1 text-white/70">
-              <li><Link href="/zasoby/faq" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded">FAQ</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="font-semibold mb-2">Prawne</div>
-            <ul className="space-y-1 text-white/70">
-              <li><Link href="/prawne/warunki" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded">Warunki korzystania</Link></li>
-              <li><Link href="/prawne/polityka" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded">Polityka prywatności</Link></li>
-              <li><Link href="/prawne/cookies" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded">Cookies</Link></li>
-              <li><Link href="/kontakt" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded">Kontakt</Link></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-10 text-xs text-white/60">
-          <p>
-            Ostrzeżenie o ryzyku: Handel instrumentami z dźwignią (w tym CFD i Forex) wiąże się z wysokim ryzykiem
-            szybkiej utraty środków z powodu dźwigni finansowej. Materiały dostępne na tej stronie mają charakter
-            wyłącznie edukacyjny i nie stanowią rekomendacji inwestycyjnych.
-          </p>
-        </div>
-      </footer>
 
       {/* QUIZ MODAL */}
       {quizOpen && (

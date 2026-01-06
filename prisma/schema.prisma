@@ -1,0 +1,56 @@
+// prisma/schema.prisma
+// Minimal Prisma schema for Redakcja (editorial articles).
+// Note: Project primarily uses @vercel/postgres directly; Prisma is added only for this feature.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Article {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  excerpt        String?
+  content        String
+  status         ArticleStatus @default(DRAFT)
+  publishedAt    DateTime?
+  coverImageUrl  String?
+  coverImageAlt  String?
+  readingTime    Int?
+  tags           String[]      @default([])
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([createdAt])
+}
+
+model MediaAsset {
+  id          String   @id @default(cuid())
+  url         String   @unique
+  pathname    String?
+  contentType String?
+  size        Int?
+  alt         String?
+  notes       String?
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([isArchived, createdAt])
+}
+
+

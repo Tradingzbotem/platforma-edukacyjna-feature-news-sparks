@@ -6,6 +6,10 @@
 export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
   en: {
     // Navbar
+    "Nauka": "Learn",
+    "Panel rynkowy": "Market panel",
+    "O nas": "About us",
+    "Konto": "Account",
     "Kursy": "Courses",
     "Kalkulator": "Calculator",
     "Quizy": "Quizzes",
@@ -18,6 +22,11 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     "Przejdź do treści": "Skip to content",
 
     // Hero
+    "Decyzje oparte o potwierdzenia, nie emocje": "Decisions based on confirmations, not emotions",
+    "Zanim wejdziesz w pozycję, sprawdź to, co robi różnicę.":
+      "Before you enter a trade, check what actually makes the difference.",
+    "Panel rynkowy porządkuje dane dla konkretnego aktywa i godziny: wydarzenia, technikę i scenariusze — żebyś wiedział, czy rynek ma powód, by iść w tę stronę.":
+      "The market panel organizes data for a given asset and time: events, technicals and scenarios — so you know whether the market has a reason to move that way.",
     "Edukacja od podstaw do pro (CFD & Forex)": "Education from basics to pro (CFD & Forex)",
     "Zbuduj solidne podstawy i praktyczne umiejętności na rynku Forex i CFD":
       "Build solid foundations and practical skills for the Forex and CFD markets",
@@ -27,6 +36,13 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     "Próbny test": "Practice test",
     "Zagraj próbny test": "Take a practice test",
     "4.0/5 na podstawie 1 245 opinii": "4.0/5 based on 1,245 reviews",
+    "4.8 na podstawie 1 245 opinii": "4.8 based on 1,245 reviews",
+    "Treści mają charakter edukacyjny i nie stanowią porady inwestycyjnej. Inwestowanie wiąże się z ryzykiem.":
+      "Content is educational and does not constitute investment advice. Investing involves risk.",
+
+    // Hero CTA buttons
+    "Zobacz przykładowe scenariusze": "See sample scenarios",
+    "Poznaj pakiety dostępu": "See access plans",
 
     // Categories
     "Podstawy inwestowania": "Investing fundamentals",
@@ -73,6 +89,26 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     "Zaawansowany": "Advanced",
     "Rozpocznij": "Start",
 
+    // Home: decision strip aphorisms
+    "Zasada cierpliwości": "Rule of patience",
+    "Brak decyzji to też decyzja": "No decision is also a decision",
+    "Powiedzenie rynku": "Market saying",
+    "Kupuj plotki, sprzedawaj fakty": "Buy the rumor, sell the fact",
+    "Higiena tradingu": "Trading hygiene",
+    "Emocje nie są dobrym doradcą": "Emotions are not a good advisor",
+    "Perspektywa dynamiki": "Dynamics perspective",
+    "Rynek to organizm, nie maszyna": "The market is an organism, not a machine",
+
+    // Home: checklist card
+    "Check przed decyzją": "Checklist before a decision",
+    "Co jest w kalendarzu i czy to ‘rusza rynek’": "What’s on the calendar and whether it ‘moves the market’",
+    "Gdzie są poziomy i co potwierdza wybicie/odrzucenie": "Where key levels are and what confirms breakout/rejection",
+    "Jakie warunki muszą się zgodzić": "Which conditions must align",
+    "Jakie warunki muszą się zgodzić (wskaźniki + price action)":
+      "Which conditions must align (indicators + price action)",
+    "Jaki jest plan B, jeśli rynek zrobi odwrotnie": "What’s plan B if the market does the opposite",
+    "Tryb podglądu — pełne potwierdzenia w pakiecie": "Preview mode — full confirmations in the package",
+
     // AI section
     "Bądź na bieżąco z AI": "Stay up to date with AI",
     "Szybkie info od AI": "Quick updates from AI",
@@ -100,6 +136,9 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     "Polityka prywatności": "Privacy policy",
     "Cookies": "Cookies",
     "Kontakt": "Contact",
+    "Cennik": "Pricing",
+    "Regulamin": "Terms",
+    "Zwroty": "Returns",
     "Ostrzeżenie o ryzyku: Handel instrumentami z dźwignią (w tym CFD i Forex) wiąże się z wysokim ryzykiem szybkiej utraty środków z powodu dźwigni finansowej. Materiały dostępne na tej stronie mają charakter wyłącznie edukacyjny i nie stanowią rekomendacji inwestycyjnych.":
       "Risk warning: Trading leveraged instruments (including CFDs and Forex) involves a high risk of rapid loss due to leverage. Materials on this website are for educational purposes only and do not constitute investment recommendations.",
 
@@ -288,12 +327,12 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     , "Wkrótce dostępne": "Available soon"
 
     // eBooks page
-    , "E-booki: profesjonalne materiały PDF (platforma pozostaje darmowa)":
-      "E-books: professional PDF materials (the platform remains free)"
+    , "E-booki: profesjonalne materiały PDF (materiały dodatkowe; płatne)":
+      "E-books: professional PDF materials (additional; paid)"
     , "Moje konto": "My account"
     , "Ebooki": "eBooks"
-    , "Kursy i dostęp do platformy są darmowe. Płatne są tylko e-booki (PDF): podstawy, Forex, CFD i moduł zaawansowany. Możesz też kupić cały pakiet taniej.":
-      "Courses and access to the platform are free. Only e-books (PDF) are paid: basics, Forex, CFDs and the advanced module. You can also buy the whole bundle at a discount."
+    , "Wybrane treści są darmowe (np. Podstawy, quizy demo). Dodatkowe sekcje i narzędzia dostępne są w płatnych planach. E-booki (PDF) są płatne.":
+      "Selected content is free (e.g., Basics, demo quizzes). Additional sections and tools are available in paid plans. E-books (PDF) are paid."
     , "Do kupienia": "To buy"
     , "Posiadane": "Owned"
     , "Szukaj (np. MiFID, risk, KNF)…": "Search (e.g., MiFID, risk, KNF)…"
@@ -490,7 +529,7 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     , ", a potem sprawdź się w 10-pytaniowym quizie.": ", then try a 10-question quiz."
 
     , "Dostęp": "Access"
-    , "Masz pełny, bezpłatny dostęp do wszystkich treści i narzędzi.": "You have full, free access to all content and tools."
+    , "Masz dostęp do treści w ramach Twojego planu. Sekcje otwarte są bezpłatne; dodatkowe materiały i narzędzia wymagają planu płatnego.": "You have access to content within your plan. Open sections are free; additional materials and tools require a paid plan."
     , "Wszystkie kursy i lekcje.": "All courses and lessons."
     , "Quizy i egzaminy próbne.": "Quizzes and practice exams."
     , "Materiały do pobrania i kalkulatory.": "Downloadable materials and calculators."
@@ -983,6 +1022,204 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     , "Dobre materiały edukacyjne i analizy rynkowe": "Good educational materials and market analysis"
     , "Szeroka gama indeksów i towarów": "Wide range of indices and commodities"
     , "Warunki różnią się między regionami i klasami aktywów – sprawdź lokalną ofertę": "Conditions differ between regions and asset classes — check the local offer"
+
+    // ───────── Additional coverage: Legal index blurbs ─────────
+    , "Regulamin subskrypcji, polityka zwrotów/odstąpienia, prywatność (skrót) i disclaimery rynkowe.":
+      "Subscription terms, returns/withdrawal policy, privacy (summary) and market disclaimers."
+    , "Zasady płatności i rozliczeń, odnowienia, anulacje, fair use i reklamacje.":
+      "Payment and settlement rules, renewals, cancellations, fair use and complaints."
+    , "Prawo odstąpienia 14 dni, wyłączenia dla treści cyfrowych, procedura i zwroty.":
+      "14‑day withdrawal right, exclusions for digital content, procedure and refunds."
+    , "Charakter edukacyjny, ryzyko, dźwignia, opóźnienia danych i ograniczenia odpowiedzialności.":
+      "Educational nature, risk, leverage, data delays and liability limitations."
+    , "Zasady korzystania z serwisu, licencja na treści, odpowiedzialność i ograniczenia.":
+      "Rules of use, content license, liability and limitations."
+    , "Jakie dane przetwarzamy, podstawy prawne, Twoje prawa i kontakt w sprawach RODO.":
+      "What data we process, legal bases, your rights and privacy contact."
+    , "Rodzaje plików cookie, cele, czas przechowywania i jak zarządzać zgodami.":
+      "Types of cookies, purposes, retention and how to manage consent."
+    , "Wyślij nam wiadomość przez formularz kontaktowy.": "Send us a message via the contact form."
+
+    // ───────── Cookies: extra tokens ─────────
+    , "2a. Technologie podobne (localStorage/WS)": "2a. Similar technologies (localStorage/WS)"
+    , "← Prawne": "← Legal"
+
+    // ───────── Returns & withdrawal (Zwroty i odstąpienie) ─────────
+    , "Zwroty i odstąpienie od umowy": "Returns and withdrawal"
+    , "Zasady dotyczące prawa odstąpienia oraz polityki zwrotów dla usług cyfrowych i subskrypcji.":
+      "Rules on the right of withdrawal and refund policy for digital services and subscriptions."
+    , "1. Prawo odstąpienia 14 dni": "1. 14‑day right of withdrawal"
+    , "2. Wyłączenia prawa odstąpienia": "2. Withdrawal right exclusions"
+    , "3. Procedura odstąpienia": "3. Withdrawal procedure"
+    , "4. Terminy i forma": "4. Deadlines and form"
+    , "5. Zwrot świadczeń": "5. Refund of consideration"
+    , "6. Reklamacje i rekompensaty": "6. Complaints and remedies"
+    , "7. Klienci biznesowi": "7. Business customers"
+    , "8. Kontakt": "8. Contact"
+    , "Konsument może odstąpić od umowy zawartej na odległość w terminie 14 dni bez podawania przyczyny, chyba że zachodzą ustawowe wyłączenia dotyczące treści cyfrowych.":
+      "A consumer may withdraw from a distance contract within 14 days without giving any reason, unless statutory exclusions for digital content apply."
+    , "W przypadku dostarczania treści cyfrowych, które nie są zapisane na nośniku materialnym, prawo odstąpienia nie przysługuje, jeżeli świadczenie rozpoczęto za wyraźną zgodą konsumenta przed upływem terminu odstąpienia i po poinformowaniu o utracie tego prawa.":
+      "For digital content not supplied on a tangible medium, the right of withdrawal does not apply if performance started with the consumer’s explicit consent before the withdrawal period ended and after being informed of the loss of that right."
+    , "Złóż oświadczenie o odstąpieniu w terminie 14 dni (np. przez formularz kontaktowy).":
+      "Submit a withdrawal statement within 14 days (e.g., via the contact form)."
+    , "Wskaż dane konta i numer zamówienia/płatności, aby przyspieszyć obsługę.":
+      "Provide account details and order/payment number to speed up processing."
+    , "Otrzymasz potwierdzenie przyjęcia oświadczenia na trwałym nośniku.":
+      "You will receive confirmation of receipt of the statement on a durable medium."
+    , "Termin 14 dni liczony jest od dnia zawarcia umowy (dla usług cyfrowych). Do zachowania terminu wystarczy wysłanie oświadczenia przed jego upływem. Możesz skorzystać z naszego formularza lub własnego wzoru.":
+      "The 14‑day period is counted from the day the contract is concluded (for digital services). Sending your statement before the deadline is sufficient to meet it. You may use our form or your own template."
+    , "W przypadku skutecznego odstąpienia zwracamy dokonane płatności niezwłocznie, nie później niż w ciągu 14 dni od otrzymania oświadczenia, z wykorzystaniem tego samego sposobu zapłaty, chyba że uzgodniono inaczej.":
+      "In case of a valid withdrawal, we refund payments without undue delay and no later than 14 days after receipt of the statement, using the same payment method unless agreed otherwise."
+    , "W przypadku subskrypcji już aktywowanej co do zasady nie realizujemy zwrotów za rozpoczęty okres rozliczeniowy; możliwe jest anulowanie na przyszłość (brak dalszych obciążeń).":
+      "For an already activated subscription we generally do not provide refunds for a started billing period; cancellation for the future (no further charges) is possible."
+    , "W razie braku dostępu lub istotnych problemów technicznych z naszej winy możesz złożyć reklamację. Każdy przypadek rozpatrujemy indywidualnie.":
+      "If access is missing or there are significant technical issues on our side, you may file a complaint. Each case is reviewed individually."
+
+    // ───────── Compliance (Prawne/compliance) ─────────
+    , "Pakiet zgodności (Compliance)": "Compliance package"
+    , "Zestaw najważniejszych dokumentów i informacji: regulamin subskrypcji, polityka zwrotów i odstąpienia, skrót polityki prywatności oraz disclaimery rynkowe. Dokument ma charakter informacyjny i stanowi uzupełnienie szczegółowych polityk w sekcji Prawne.":
+      "A set of key documents and information: subscription terms, returns and withdrawal policy, privacy policy summary and market disclaimers. This document is informational and complements the detailed policies in the Legal section."
+
+    // ───────── Pricing (Cennik) ─────────
+    , "Cennik": "Pricing"
+    , "Plany subskrypcyjne dla platformy edukacyjnej FX EduLab": "Subscription plans for the FX EduLab educational platform"
+    , "Dostępne plany": "Available plans"
+    , "Kalendarz wydarzeń 7 dni": "7‑day events calendar"
+    , "Scenariusze warunkowe A/B/C": "Conditional scenarios A/B/C"
+    , "Checklisty decyzyjne": "Decision checklists"
+    , "Wszystko ze Starter": "Everything in Starter"
+    , "Mapy techniczne (EDU)": "Technical maps (EDU)"
+    , "Playbooki eventowe": "Event playbooks"
+    , "Analizy makro": "Macro analysis"
+    , "Wszystko z Pro": "Everything in Pro"
+    , "Ramy zarządzania ryzykiem": "Risk management framework"
+    , "Zaawansowane checklisty": "Advanced checklists"
+    , "Dostęp do forum premium": "Access to premium forum"
+    , "Asystent AI (bez limitu)": "AI assistant (no limit)"
+    , "Subskrypcja i płatności": "Subscription and payments"
+    , "Wszystkie plany są dostępne w formie miesięcznej subskrypcji. Płatności są przetwarzane przez Paddle, naszego zaufanego partnera płatniczego.":
+      "All plans are available as a monthly subscription. Payments are processed by Paddle, our trusted payment partner."
+    , "Subskrypcja odnawia się automatycznie co miesiąc": "Subscription renews automatically each month"
+    , "Możesz anulować subskrypcję w dowolnym momencie": "You can cancel your subscription at any time"
+    , "Anulowanie wejdzie w życie na koniec bieżącego okresu rozliczeniowego": "Cancellation takes effect at the end of the current billing period"
+    , "Akceptujemy karty kredytowe i inne metody płatności obsługiwane przez Paddle": "We accept credit cards and other payment methods supported by Paddle"
+    , "Ceny podane w złotych polskich (PLN) i euro (€) po aktualnym kursie wymiany":
+      "Prices shown in Polish zloty (PLN) and euro (€) at the current exchange rate"
+    , "Anulowanie i zwroty": "Cancellations and refunds"
+    , "Jeśli nie jesteś zadowolony z usługi, możesz anulować subskrypcję i zażądać zwrotu zgodnie z naszą polityką zwrotów.":
+      "If you are not satisfied with the service, you can cancel your subscription and request a refund according to our refund policy."
+    , "Szczegóły znajdziesz w": "See details in the"
+    , "polityce zwrotów": "refund policy"
+    , "Masz pytania dotyczące cennika lub subskrycji? Skontaktuj się z nami przez": "Questions about pricing or subscriptions? Contact us via the"
+    , "formularz kontaktowy": "contact form"
+    , "FX EduLab to platforma edukacyjna poświęcona nauce Forex i CFD. Nie świadczymy porad inwestycyjnych.":
+      "FX EduLab is an educational platform focused on learning Forex and CFDs. We do not provide investment advice."
+
+    // ───────── General FAQ (app/faq) additions ─────────
+    , "Czy cała platforma jest darmowa?": "Is the whole platform free?"
+    , "Część treści jest dostępna bezpłatnie (np. moduł „Podstawy”, wybrane quizy demo, glosariusz). Dodatkowe sekcje i narzędzia, w tym panel rynkowy, dostępne są w płatnych planach (np. Starter/Pro/Elite). E‑booki (PDF) są płatne.":
+      "Some content is available for free (e.g., the 'Basics' module, selected demo quizzes, glossary). Additional sections and tools, including the market panel, are available in paid plans (e.g., Starter/Pro/Elite). E‑books (PDF) are paid."
+    , "Mam pytanie – jak się skontaktować?": "I have a question — how do I contact you?"
+    , "Najprościej przez formularz na stronie Kontakt. Przejdź do zakładki „Kontakt” i wyślij wiadomość – odpowiemy możliwie szybko.":
+      "The simplest way is via the form on the Contact page. Go to the 'Contact' tab and send a message — we will reply as soon as possible."
+
+    // ───────── Contact additions ─────────
+    , "Wybierz temat": "Choose topic"
+    , "Polityce prywatności": "Privacy policy"
+
+    // ───────── About page (O nas) ─────────
+    , "Wróć na stronę główną": "Back to homepage"
+    , "O nas": "About us"
+    , "Uczymy procesu i zarządzania ryzykiem, nie gonienia wyniku. Tworzymy narzędzia, które pomagają podejmować bardziej świadome decyzje: checklisty, scenariusze, quizy i praktyczne zadania — bez doradztwa inwestycyjnego.": "We teach process and risk management, not chasing results. We create tools that help you make more informed decisions: checklists, scenarios, quizzes and practical tasks — without investment advice."
+    , "Scenariusze i checklisty": "Scenarios and checklists"
+    , "Quizy i testy wiedzy": "Quizzes and knowledge tests"
+    , "Symulator i praktyka": "Simulator and practice"
+    , "Briefy i skróty dnia": "Briefs and daily summaries"
+    , "Zobacz pakiety": "See plans"
+    , "Poznaj ścieżkę nauki": "Explore learning path"
+    , "Czego NIE robimy:": "What we do NOT do:"
+    , "Nie dajemy sygnałów": "We do not give signals"
+    , "Nie prowadzimy doradztwa": "We do not provide advice"
+    , "Nie obiecujemy wyników": "We do not promise results"
+    , "Aktualizowane materiały": "Updated materials"
+    , "Edukacja bez doradztwa": "Education without advisory"
+    , "Proces i ryzyko": "Process and risk"
+    , "Ustrukturyzowane materiały do pracy": "Structured materials to work with"
+    , "Rozwój treści i korekty": "Content development and revisions"
+    , "Bez sygnałów i obietnic zysku": "No signals or profit promises"
+    , "Zrozumienie mechaniki rynku": "Understanding market mechanics"
+
+    , "Po co stworzyliśmy tę platformę?": "Why did we build this platform?"
+    , "Praktyka ponad teorię": "Practice over theory"
+    , "Wiedza przełożona na działanie, małe kroki i ćwiczenia.": "Knowledge turned into action, small steps and exercises."
+    , "Scenariusze z checklistą": "Scenario + checklist"
+    , "Zadania do wykonania": "Tasks to complete"
+    , "Jasne zasady ryzyka": "Clear risk rules"
+    , "Zrozumiałe ramy: kapitał, ekspozycja, konsekwencje decyzji.": "Clear framework: capital, exposure, decision consequences."
+    , "Progi i limity ryzyka": "Risk thresholds and limits"
+    , "Przykłady decyzji „tak/nie”": "Yes/no decision examples"
+    , "Edukacja, nie obietnice": "Education, not promises"
+    , "Uczymy procesu i krytycznego myślenia, nie wyników.": "We teach process and critical thinking, not results."
+    , "Quizy i testy kontrolne": "Quizzes and review tests"
+    , "Materiały referencyjne": "Reference materials"
+
+    , "Kto stoi za projektem?": "Who is behind the project?"
+    , "Praktycy rynku": "Market practitioners"
+    , "Traderzy": "Traders"
+    , "Twórcy edukacyjni": "Educational creators"
+    , "Zespół technologiczny": "Technology team"
+    , "Zaczynaliśmy od prostego założenia: uczyć decyzji, nie prognoz. Z czasem dołożyliśmy checklisty, scenariusze i quizy, aby połączyć teorię z działaniem. Dziś skupiamy się na procesie i odpowiedzialnym podejściu do ryzyka.": "We started from a simple premise: teach decisions, not forecasts. Over time we added checklists, scenarios and quizzes to connect theory with action. Today we focus on process and a responsible approach to risk."
+    , "Wnoszą kontekst działania i realne scenariusze, które pomagają zrozumieć proces podejmowania decyzji.": "They bring operational context and real scenarios that help understand the decision‑making process."
+    , "Testują materiały i ćwiczenia pod presją decyzji, akcentując konsekwencje i ramy ryzyka.": "They test materials and exercises under decision pressure, emphasizing consequences and the risk framework."
+    , "Upraszczają język i tworzą ścieżkę nauki: od podstaw, przez quizy, po pracę na checklistach.": "They simplify language and create the learning path: from basics, through quizzes, to working with checklists."
+    , "Buduje narzędzia i interfejsy, które zamieniają wiedzę w praktyczne kroki do wykonania.": "Builds tools and interfaces that turn knowledge into practical steps to execute."
+
+    , "Jak pracujemy?": "How do we work?"
+    , "Selekcja tematów": "Topic selection"
+    , "Wybieramy zagadnienia, które mają praktyczne zastosowanie.": "We select topics with practical application."
+    , "Walidacja merytoryczna": "Content validation"
+    , "Sprawdzamy źródła, pojęcia i zależności — bez skrótów.": "We verify sources, concepts and relationships — no shortcuts."
+    , "Przełożenie na praktykę": "Translating into practice"
+    , "Tworzymy scenariusze i zadania „krok po kroku”.": "We create scenarios and step‑by‑step tasks."
+    , "Aktualizacja materiałów": "Updating materials"
+    , "Wracamy do treści, gdy pojawia się lepszy sposób wyjaśnienia.": "We revisit content when a better explanation emerges."
+    , "brief": "brief"
+    , "checklista": "checklist"
+    , "scenariusz": "scenario"
+    , "aktualizacja": "update"
+
+    , "Nasze wartości": "Our values"
+    , "Klarowność i prosty język": "Clarity and simple language"
+    , "Unikamy żargonu, gdy nie wnosi wartości. Materiały są krótkie, konkretne i logicznie ułożone.": "We avoid jargon when it adds no value. Materials are short, concrete and logically structured."
+    , "Odpowiedzialne podejście do ryzyka": "Responsible approach to risk"
+    , "Decyzje mają konsekwencje. Uczymy limitów, ekspozycji i scenariuszy „co jeśli”.": "Decisions have consequences. We teach limits, exposure and “what if” scenarios."
+    , "Edukacja, nie obietnice zysku": "Education, not profit promises"
+    , "Pokazujemy proces i ramy myślenia. Nie dajemy sygnałów, nie reklamujemy wyników.": "We show process and the thinking framework. We don’t give signals, we don’t advertise results."
+    , "Transparentność działania": "Operational transparency"
+    , "Wyjaśniamy skąd pochodzą treści i jak powstają. Aktualizujemy, gdy można lepiej.": "We explain where content comes from and how it’s created. We update when it can be improved."
+
+    , "Co znajdziesz w środku?": "What will you find inside?"
+    , "Moduły": "Modules"
+    , "Scenariusze": "Scenarios"
+    , "Checklisty": "Checklists"
+    , "Dziesiątki zwięzłych lekcji": "Dozens of concise lessons"
+    , "Sprawdzenie zrozumienia": "Understanding check"
+    , "Kroki „co jeśli”": "“What if” steps"
+    , "Decyzje w punktach": "Decisions in bullet points"
+    , "Przykład briefu": "Brief example"
+    , "Brief: „Co sprawdzamy przed decyzją”": "Brief: “What we check before a decision”"
+    , "Cel, kontekst, dane wejściowe. Warunki „STOP”, gdy informacja jest niepełna lub jakość sygnału jest niska. Decyzja dopiero po przejściu checklisty.": "Goal, context, inputs. “STOP” conditions when information is incomplete or signal quality is low. Decision only after going through the checklist."
+    , "Przykład checklisty": "Checklist example"
+    , "Checklista: „Wejście/wyjście”": "Checklist: “Entry/exit”"
+    , "1) Warunek A i B spełnione?": "1) Are conditions A and B met?"
+    , "2) Jaki limit ryzyka obowiązuje?": "2) What risk limit applies?"
+    , "3) Czy kontekst rynkowy nie wyklucza decyzji?": "3) Does market context not exclude the decision?"
+    , "4) Plan wyjścia i kryterium oceny po fakcie.": "4) Exit plan and after‑action review criteria."
+
+    , "Gotowy uczyć się procesem, nie emocjami?": "Ready to learn through process, not emotions?"
+    , "Porównaj pakiety": "Compare plans"
+    , "Treści edukacyjne. Brak doradztwa inwestycyjnego.": "Educational content. No investment advice."
+    , "Treści mają charakter edukacyjny i informacyjny. Nie stanowią rekomendacji inwestycyjnej ani doradztwa.": "Content is for educational and informational purposes. It does not constitute investment recommendations or advice."
   },
 };
 

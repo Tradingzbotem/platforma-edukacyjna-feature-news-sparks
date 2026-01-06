@@ -38,7 +38,7 @@ export default function ClientNewsPage({ initial }: { initial: { items: Item[] }
 
   // ISR initial data provided for 72h; for other ranges we have no SSR cache here
   const initialForRange = rangeKey === '72h' ? initial : undefined;
-  const swrKey = `/api/news/summarize?bucket=${rangeKey}`;
+  const swrKey = `/api/news/articles?bucket=${rangeKey}&lang=pl`;
   const { data, error, mutate, isValidating } = useNewsSWR<{ items: Item[] }>(swrKey, initialForRange);
   const items = data?.items || [];
 

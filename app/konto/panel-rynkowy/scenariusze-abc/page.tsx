@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { getSession } from '@/lib/session';
 import { SCENARIOS_ABC } from '@/lib/panel/scenariosABC';
 import { resolveTierFromCookiesAndSession, isTierAtLeast } from '@/lib/panel/access';
+import ScenariosClient from './ScenariosClient';
 
 export default async function Page() {
   const session = await getSession();
@@ -55,7 +56,7 @@ export default async function Page() {
                 <div className="text-sm text-white/70 mt-1">Ten moduł jest dostępny w STARTER/PRO/ELITE.</div>
               </div>
               <Link
-                href="/konto/upgrade"
+                href="/kontakt?topic=zakup-pakietu"
                 className="inline-flex items-center justify-center rounded-lg bg-white text-slate-900 font-semibold px-4 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
               >
                 Ulepsz plan
@@ -64,59 +65,21 @@ export default async function Page() {
           </div>
         ) : (
           <>
-            {/* list of scenarios */}
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {SCENARIOS_ABC.map((s, idx) => (
-                <article key={`${s.asset}-${s.timeframe}-${idx}`} className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm text-white/70">
-                      <div className="font-semibold text-white/80">{s.asset} · {s.timeframe}</div>
-                      <div className="mt-0.5">Aktualizacja: {new Date(s.updatedAt).toLocaleString()}</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 text-sm text-white/80">
-                    <div className="font-semibold">Kontekst</div>
-                    <p className="mt-1">{s.context}</p>
-                  </div>
-                  <div className="mt-2 text-sm text-white/80">
-                    <div className="font-semibold">Poziomy</div>
-                    <ul className="mt-1 list-disc pl-5">
-                      {s.levels.map((lv, i) => <li key={i}>{String(lv)}</li>)}
-                    </ul>
-                  </div>
+            {/* mini guide */}
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="text-sm text-white/80">
+                Jak to czytać: <span className="text-white">1) wybierz aktywo i interwał</span> · <span className="text-white">2) sprawdź poziomy</span> · <span className="text-white">3) porównaj scenariusz A/B/C</span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">1) Wybór aktywa/TF</span>
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">2) Kluczowe poziomy</span>
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">3) A vs B vs C</span>
+              </div>
+            </div>
 
-                  {/* A */}
-                  <div className="mt-3 text-sm text-white/80">
-                    <div className="font-semibold">Scenariusz A</div>
-                    <ul className="mt-1 list-disc pl-5 space-y-0.5">
-                      <li><b>IF:</b> {s.scenarioA.if}</li>
-                      <li><b>INVALIDATION:</b> {s.scenarioA.invalidation}</li>
-                      <li><b>CONFIRMATIONS:</b> {s.scenarioA.confirmations}</li>
-                      <li><b>RISK NOTES:</b> {s.scenarioA.riskNotes}</li>
-                    </ul>
-                  </div>
-                  {/* B */}
-                  <div className="mt-3 text-sm text-white/80">
-                    <div className="font-semibold">Scenariusz B</div>
-                    <ul className="mt-1 list-disc pl-5 space-y-0.5">
-                      <li><b>IF:</b> {s.scenarioB.if}</li>
-                      <li><b>INVALIDATION:</b> {s.scenarioB.invalidation}</li>
-                      <li><b>CONFIRMATIONS:</b> {s.scenarioB.confirmations}</li>
-                      <li><b>RISK NOTES:</b> {s.scenarioB.riskNotes}</li>
-                    </ul>
-                  </div>
-                  {/* C */}
-                  <div className="mt-3 text-sm text-white/80">
-                    <div className="font-semibold">Scenariusz C</div>
-                    <ul className="mt-1 list-disc pl-5 space-y-0.5">
-                      <li><b>IF:</b> {s.scenarioC.if}</li>
-                      <li><b>INVALIDATION:</b> {s.scenarioC.invalidation}</li>
-                      <li><b>CONFIRMATIONS:</b> {s.scenarioC.confirmations}</li>
-                      <li><b>RISK NOTES:</b> {s.scenarioC.riskNotes}</li>
-                    </ul>
-                  </div>
-                </article>
-              ))}
+            {/* filters + scenarios (client) */}
+            <div className="mt-6">
+              <ScenariosClient items={SCENARIOS_ABC} />
             </div>
           </>
         )}

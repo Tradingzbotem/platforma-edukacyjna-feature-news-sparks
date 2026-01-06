@@ -20,7 +20,7 @@ export default function DevAuthButtons() {
         className="rounded-lg border p-3 text-center hover:bg-gray-50 bg-white text-slate-900"
         href="/api/auth/mock-login?plan=pro"
       >
-        PRO (99 PLN/mies)
+        PRO (110 PLN/mies)
       </a>
       <a
         className="rounded-lg border p-3 text-center hover:bg-gray-50 bg-white text-slate-900"

@@ -5,13 +5,37 @@ type Item = { href: string; title: string; blurb: string };
 
 const ITEMS: Item[] = [
   {
+    href: "/prawne/compliance",
+    title: "Pakiet zgodności (Compliance)",
+    blurb:
+      "Regulamin subskrypcji, polityka zwrotów/odstąpienia, prywatność (skrót) i disclaimery rynkowe.",
+  },
+  {
+    href: "/prawne/subskrypcja",
+    title: "Regulamin subskrypcji",
+    blurb:
+      "Zasady płatności i rozliczeń, odnowienia, anulacje, fair use i reklamacje.",
+  },
+  {
+    href: "/prawne/zwroty-odstapienie",
+    title: "Zwroty i odstąpienie",
+    blurb:
+      "Prawo odstąpienia 14 dni, wyłączenia dla treści cyfrowych, procedura i zwroty.",
+  },
+  {
+    href: "/prawne/disclaimery",
+    title: "Disclaimery rynkowe",
+    blurb:
+      "Charakter edukacyjny, ryzyko, dźwignia, opóźnienia danych i ograniczenia odpowiedzialności.",
+  },
+  {
     href: "/prawne/warunki",
     title: "Warunki korzystania",
     blurb:
       "Zasady korzystania z serwisu, licencja na treści, odpowiedzialność i ograniczenia.",
   },
   {
-    href: "/prawne/prywatnosc",
+    href: "/prawne/polityka-prywatnosci",
     title: "Polityka prywatności",
     blurb:
       "Jakie dane przetwarzamy, podstawy prawne, Twoje prawa i kontakt w sprawach RODO.",

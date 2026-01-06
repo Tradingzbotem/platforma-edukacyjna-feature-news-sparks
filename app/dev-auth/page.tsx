@@ -1,6 +1,7 @@
 // app/dev-auth/page.tsx
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import BackButton from "@/components/BackButton";
 
 export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
@@ -53,6 +54,9 @@ export default async function DevAuthPage() {
 
   return (
     <div className="mx-auto max-w-2xl p-8">
+      <div className="mb-4">
+        <BackButton fallbackHref="/" />
+      </div>
       <div className="rounded-2xl border shadow-sm p-6 bg-white/5">
         <h1 className="text-3xl font-bold">Panel dostępu (dev)</h1>
         <p className="mt-2 text-sm opacity-80">

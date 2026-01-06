@@ -28,8 +28,13 @@ export default async function Page() {
         <div className="mt-4">
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Coach AI (EDU)</h1>
           <p className="mt-2 text-white/80 max-w-3xl">
-            Asystent edukacyjny do scenariuszy, checklist i interpretacji danych. Bez rekomendacji i bez „sygnałów”.
+            Scenariusze warunkowe, checklisty, interpretacja danych. Bez rekomendacji i bez „sygnałów”.
           </p>
+          <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <div className="text-sm text-white/85">
+              To moduł premium — dostajesz prowadzenie krok po kroku: przygotowanie → publikacja → weryfikacja → debrief.
+            </div>
+          </div>
         </div>
 
         {!unlocked ? (
@@ -40,7 +45,7 @@ export default async function Page() {
                 <div className="text-sm text-white/70 mt-1">Ten moduł jest dostępny wyłącznie w ELITE.</div>
               </div>
               <Link
-                href="/konto/upgrade"
+                href="/kontakt?topic=zakup-pakietu"
                 className="inline-flex items-center justify-center rounded-lg bg-white text-slate-900 font-semibold px-4 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
               >
                 Ulepsz plan

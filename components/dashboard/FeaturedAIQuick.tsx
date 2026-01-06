@@ -31,36 +31,23 @@ export default function FeaturedAIQuick() {
   return (
     <section
       aria-label="Szybkie info od AI"
-      className="relative rounded-2xl p-5 sm:p-6 bg-white/5 border border-white/10 shadow-[0_0_45px_-15px_rgba(99,102,241,0.5)]"
-      style={{
-        // gradient outline using double border trick
-        boxShadow:
-          '0 0 45px -15px rgba(99,102,241,0.5), inset 0 0 0 1px rgba(255,255,255,0.08)'
-      }}
+      className="relative rounded-2xl p-5 sm:p-6 bg-white border border-slate-200 shadow-sm"
     >
-      <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{
-        background:
-          'linear-gradient(135deg, rgba(99,102,241,0.35), rgba(168,85,247,0.35), rgba(34,211,238,0.35))',
-        mask: 'linear-gradient(#000, transparent 30%)',
-        WebkitMask: 'linear-gradient(#000, transparent 30%)',
-        mixBlendMode: 'overlay'
-      }} />
-
       <div className="relative z-[1]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+            <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
               <Zap className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
-              <h3 className="text-lg sm:text-xl font-semibold">Szybkie info od AI</h3>
-              <p className="text-white/60 text-sm">Briefy, sentyment i szybkie odpowiedzi – bez porad inwestycyjnych.</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-slate-900">Szybkie info od AI</h3>
+              <p className="text-slate-500 text-sm">Briefy, sentyment i szybkie odpowiedzi – bez porad inwestycyjnych.</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => openAI()}
-            className="shrink-0 rounded-xl bg-white text-slate-900 px-4 py-2.5 font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/50"
+            className="shrink-0 rounded-xl bg-blue-600 text-white px-4 py-2.5 font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
             aria-label="Otwórz panel AI"
           >
             Otwórz AI
@@ -71,34 +58,34 @@ export default function FeaturedAIQuick() {
           <button
             type="button"
             onClick={() => openAI('Podsumuj kluczowe newsy z ostatnich 24h i ich wpływ.')} 
-            className="rounded-lg px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10 text-sm text-left"
+            className="rounded-lg px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-sm text-left text-slate-900"
           >
             News 24/48/72h
           </button>
           <button
             type="button"
             onClick={() => openAI('Oceń sentyment rynku i wypisz 2-3 scenariusze na jutro.')} 
-            className="rounded-lg px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10 text-sm text-left"
+            className="rounded-lg px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-sm text-left text-slate-900"
           >
             Sentyment i scenariusze
           </button>
           <button
             type="button"
             onClick={() => openAI('Pokaż moje postępy w kursach i quizach oraz zaproponuj następne kroki.')} 
-            className="rounded-lg px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10 text-sm text-left col-span-2 sm:col-span-1"
+            className="rounded-lg px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-sm text-left col-span-2 sm:col-span-1 text-slate-900"
           >
             Pokaż moje postępy
           </button>
         </div>
 
-        <div className="mt-3 text-[11px] text-white/50">
+        <div className="mt-3 text-[11px] text-slate-500">
           Materiał edukacyjny — nie jest rekomendacją inwestycyjną.
         </div>
 
         <div className="mt-4">
           <Link
             href="/news"
-            className="inline-flex items-center gap-2 text-sm underline underline-offset-4 decoration-white/30 hover:decoration-white"
+            className="inline-flex items-center gap-2 text-sm underline underline-offset-4 decoration-slate-300 hover:decoration-slate-500 text-slate-900"
             aria-label="Przejdź do sekcji newsów"
           >
             Zobacz ostatnie briefy AI

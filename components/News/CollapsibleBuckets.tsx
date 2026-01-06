@@ -20,7 +20,7 @@ type Spark = {
 };
 
 async function fetchItems(range: '24h' | '48h' | '72h'): Promise<Item[]> {
-  const res = await fetch(`/api/news/summarize?bucket=${encodeURIComponent(range)}`, { method: 'GET', cache: 'no-store' });
+  const res = await fetch(`/api/news/articles?bucket=${encodeURIComponent(range)}&lang=pl`, { method: 'GET', cache: 'no-store' });
   const j = await res.json();
   const items: Item[] = Array.isArray(j?.items) ? j.items : [];
   return items;

@@ -8,7 +8,7 @@ export default function Page() {
   const router = useRouter();
 
   // ← domyślny cel po zalogowaniu; nadpisujemy go po montażu jeśli w URL jest ?next=
-  const [next, setNext] = useState('/konto');
+  const [next, setNext] = useState('/client');
   useEffect(() => {
     try {
       const q = new URLSearchParams(window.location.search);

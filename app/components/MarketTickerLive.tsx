@@ -17,8 +17,8 @@ type LiveRow = {
 };
 
 const DEFAULT_ITEMS: Item[] = [
-  { label: 'US500',  symbol: 'SPY',                 decimals: 2 },
-  { label: 'US100',  symbol: 'QQQ',                 decimals: 2 },
+  { label: 'US500',  symbol: 'OANDA:US500_USD',     decimals: 0 },
+  { label: 'US100',  symbol: 'OANDA:NAS100_USD',    decimals: 0 },
   { label: 'EURUSD', symbol: 'OANDA:EUR_USD',       decimals: 5 },
   { label: 'USDJPY', symbol: 'OANDA:USD_JPY',       decimals: 3 },
   { label: 'USDPLN', symbol: 'OANDA:USD_PLN',       decimals: 4 },

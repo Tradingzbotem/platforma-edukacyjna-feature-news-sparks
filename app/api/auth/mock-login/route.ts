@@ -20,7 +20,7 @@ export async function GET(req: Request) {
     planParam === 'elite' ? 'elite' :
     'free';
 
-  const res = NextResponse.redirect(new URL('/konto/panel-rynkowy', req.url));
+  const res = NextResponse.redirect(new URL('/client', req.url));
   setMockCookies(res, tier);
   return res;
 }
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   const raw = String(data?.plan ?? 'free').toLowerCase();
   const tier: Tier = raw === 'starter' ? 'starter' : raw === 'pro' ? 'pro' : raw === 'elite' ? 'elite' : 'free';
 
-  const res = NextResponse.redirect(new URL('/konto/panel-rynkowy', req.url));
+  const res = NextResponse.redirect(new URL('/client', req.url));
   setMockCookies(res, tier);
   return res;
 }

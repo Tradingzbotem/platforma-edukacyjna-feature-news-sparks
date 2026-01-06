@@ -4,11 +4,12 @@ import 'server-only';
 import { getIronSession, type SessionOptions } from 'iron-session';
 import crypto from 'crypto';
 import { cookies as nextCookies } from 'next/headers';
+import { findUserById, isDatabaseConfigured } from '@/lib/db';
 
 export type SessionData = {
   userId?: string;
   email?: string;
-  plan?: 'free' | 'pro';
+  plan?: 'free' | 'starter' | 'pro' | 'elite';
 };
 
 const sessionOptions: SessionOptions = {
@@ -48,6 +49,31 @@ function ensurePassword() {
 export async function getSession() {
   ensurePassword();
   const store = await nextCookies(); // ⬅️ dodany await (Next 15.x)
-  return getIronSession<SessionData>(store, sessionOptions);
+  const session = await getIronSession<SessionData>(store, sessionOptions);
+  // Sync plan with DB on every request so admin changes take effect immediately
+  try {
+    if (session.userId && isDatabaseConfigured()) {
+      const dbUser = await findUserById(session.userId).catch(() => null);
+      if (!dbUser) {
+        // User removed → clear session
+        session.userId = undefined;
+        session.email = undefined;
+        session.plan = undefined;
+        await session.save();
+      } else {
+        const dbPlan =
+          dbUser.plan === 'elite' || dbUser.plan === 'pro' || dbUser.plan === 'starter' || dbUser.plan === 'free'
+            ? dbUser.plan
+            : 'free';
+        if (session.plan !== dbPlan) {
+          session.plan = dbPlan;
+          await session.save();
+        }
+      }
+    }
+  } catch {
+    // Best-effort sync; ignore failures
+  }
+  return session;
 }
 

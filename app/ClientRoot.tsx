@@ -1,7 +1,7 @@
 'use client';
 
-import { useLang } from '@/lib/i18n-client';
-import { useRef } from 'react';
+import { autoTranslateContainer, useLang } from '@/lib/i18n-client';
+import { useEffect, useRef } from 'react';
 import ProgressSync from './components/ProgressSync';
 
 /**
@@ -16,6 +16,15 @@ export default function ClientRoot({ children }: { children: React.ReactNode }) 
 
   // Ref zostawiamy na przyszłość (np. do a11y/focus trap), ale nie tłumaczymy DOM.
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Wersja tymczasowa: jeśli wybrano EN, przetłumacz zawartość klientem (DOM).
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    if (lang && lang !== 'pl') {
+      void autoTranslateContainer(node, 'en');
+    }
+  }, [lang]);
 
   return (
     <div id="app-content" ref={containerRef} data-lang={lang}>

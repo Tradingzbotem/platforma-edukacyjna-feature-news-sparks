@@ -21,9 +21,11 @@ export const CHECKLISTS: ChecklistGroup[] = [
     subtitle: 'Makro, kalendarz, sentyment i zmienność jako tło decyzji (EDU).',
     items: [
       { id: 'macro-brief', text: 'Makro: najważniejsze wątki (inflacja, stopy, wzrost).', tag: 'makro' },
-      { id: 'calendar', text: 'Kalendarz: dziś/jutro kluczowe wydarzenia i godziny.', note: 'Zwróć uwagę na publikacje o wysokiej ważności.', tag: 'makro' },
+      { id: 'calendar', text: 'Sprawdzony kalendarz: dziś/jutro ważne publikacje i godziny.', note: 'Zwróć uwagę na publikacje o wysokiej ważności.', tag: 'makro' },
+      { id: 'events-impacts', text: 'Czy nadchodzące wydarzenia mogą mocno poruszyć to aktywo?', tag: 'makro' },
       { id: 'sentiment', text: 'Sentyment: risk-on/off, relatywna siła sektorów.', tag: 'sentyment' },
-      { id: 'volatility', text: 'Zmienność (ATR/VIX): środowisko spokojne czy podwyższone?', tag: 'zmiennosc' },
+      { id: 'volatility', text: 'Zmienność: spokojnie, normalnie czy „szarpie”?', tag: 'zmiennosc' },
+      { id: 'seasonality', text: 'Cykliczność/sezonowość: czy w tym okresie bywa specyficznie?', tag: 'makro' },
     ],
   },
   {
@@ -31,9 +33,11 @@ export const CHECKLISTS: ChecklistGroup[] = [
     title: 'Technika / scenariusze',
     subtitle: 'Trend, poziomy, konfluencja i warunki unieważnienia (EDU).',
     items: [
-      { id: 'trend-structure', text: 'Trend i struktura: swing high/low, HH/HL/LH/LL.', tag: 'technika' },
-      { id: 'levels', text: 'Kluczowe poziomy: wsparcia/opory i strefy reakcji.', tag: 'technika' },
-      { id: 'confluence', text: 'Konfluencja: niezależne argumenty wzmacniające tezę.', note: 'Im więcej niezależnych potwierdzeń, tym większa wiarygodność kontekstu.', tag: 'technika' },
+      { id: 'trend-htf', text: 'Trend na wyższym interwale: zgodny, przeciwny czy boczny?', tag: 'technika' },
+      { id: 'levels', text: 'Kluczowe poziomy: wsparcia/opory i strefy reakcji — zaznaczone.', tag: 'technika' },
+      { id: 'recent-extremes', text: 'Aktualny pułap: blisko dziennego/tygodniowego minimum/maksimum?', tag: 'technika' },
+      { id: 'retests', text: 'Jest odrzucenie/retest poziomu zamiast zgadywania?', tag: 'technika' },
+      { id: 'confluence', text: 'Konfluencja: 2–3 niezależne argumenty za tezą.', note: 'Im więcej niezależnych potwierdzeń, tym większa wiarygodność kontekstu.', tag: 'technika' },
       { id: 'invalidation', text: 'Unieważnienie: jasny warunek, kiedy teza przestaje obowiązywać.', tag: 'technika' },
     ],
   },
@@ -43,9 +47,10 @@ export const CHECKLISTS: ChecklistGroup[] = [
     subtitle: 'Limit maks. straty, rozmiar pozycji i plan działania (EDU).',
     items: [
       { id: 'max-loss', text: 'Maksymalna strata na dzień/tydzień — z góry określona.', tag: 'ryzyko' },
-      { id: 'size', text: 'Wielkość pozycji dopasowana do zmienności i akceptowanego 1R.', tag: 'ryzyko' },
-      { id: 'stops', text: 'Warunki stop/wyjścia: rozpisane przed działaniem.', tag: 'ryzyko' },
+      { id: 'size', text: 'Wielkość pozycji dopasowana do bieżącej zmienności.', tag: 'ryzyko' },
+      { id: 'stops', text: 'Warunki stop/wyjścia: ustalone zanim klikniesz.', tag: 'ryzyko' },
       { id: 'plan-b', text: 'Plan B: co robisz, jeśli warunki rynkowe się zmienią.', tag: 'ryzyko' },
+      { id: 'spread-check', text: 'Sprawdzony spread/warunki wykonania przed działaniem.', tag: 'ryzyko' },
     ],
   },
 ];

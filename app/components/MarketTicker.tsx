@@ -35,13 +35,14 @@ export default function MarketTicker({ items, speedSec = 40, className = '' }: P
     if (items) setData(items);
   }, [items]);
 
-  // delikatne „życie” dla dema – losowy dryf co kilka sekund
+  // Odświeżaj wartości dema co godzinę – pokazujemy tylko % zmiany
   useEffect(() => {
     if (items) return; // gdy mamy prawdziwe dane, nie dotykamy
     const id = setInterval(() => {
       setData((prev) =>
         prev.map((x) => {
-          const driftPct = (Math.random() - 0.5) * 0.3; // +-0.15% ~ 0.30% zakres
+          // lekkie odświeżenie % raz na godzinę (symulacja)
+          const driftPct = (Math.random() - 0.5) * 0.6; // węższy zakres, +-0.3%
           const nextPrice = x.price * (1 + driftPct / 100);
           return {
             ...x,
@@ -50,7 +51,7 @@ export default function MarketTicker({ items, speedSec = 40, className = '' }: P
           };
         })
       );
-    }, 4000);
+    }, 60 * 60 * 1000); // 1 godzina
     return () => clearInterval(id);
   }, [items]);
 
@@ -64,9 +65,6 @@ export default function MarketTicker({ items, speedSec = 40, className = '' }: P
             className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-3 py-1.5 mr-3"
           >
             <span className="font-semibold">{it.symbol}</span>
-            <span className="text-white/80 text-sm">
-              {it.price.toLocaleString(undefined, { minimumFractionDigits: it.symbol.endsWith('JPY') ? 3 : 2 })}
-            </span>
             <span className={`text-xs font-medium ${positive ? 'text-emerald-400' : 'text-rose-400'}`}>
               {positive ? '▲' : '▼'} {Math.abs(it.change).toFixed(2)}%
             </span>

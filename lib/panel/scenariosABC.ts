@@ -97,5 +97,425 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     },
     updatedAt: new Date().toISOString(),
   },
+  // ───────────── FX (uzupełnienia) ─────────────
+  {
+    asset: 'GBPUSD',
+    timeframe: 'H1',
+    context:
+      'Funt i dolar często reagują na różnice w ścieżce stóp i dane inflacyjne. To edukacyjny szkic czytania wykresu bez sygnałów.',
+    levels: ['1.2900', '1.2850', '1.2800', '1.2750'],
+    scenarioA: {
+      if: 'Jeśli nastroje sprzyjają ryzyku i słabnie USD, utrzymanie powyżej 1.2850 zwykle wspiera dalsze wzrosty.',
+      invalidation: 'Głębsze zejście pod 1.2800 bez szybkiego powrotu.',
+      confirmations: 'Słabszy DXY, spokojniejsze świece, brak panicznej podaży na retestach.',
+      riskNotes: 'Publikacje CPI/PMI potrafią zmienić obraz w krótkim czasie.',
+    },
+    scenarioB: {
+      if: 'Gdy brak impulsu, kurs potrafi krążyć między 1.2800–1.2850, szanując poziomy.',
+      invalidation: 'Akceptacja poniżej 1.2750 albo szybki rajd bez korekt.',
+      confirmations: 'Zawężenie wahań, małe świece, obroty umiarkowane.',
+      riskNotes: 'Fałszywe wybicia w oknie danych są częste — potrzebna ostrożność.',
+    },
+    scenarioC: {
+      if: 'Jeśli USD się wzmacnia, wybicie dołem 1.2800 bywa impulsem do testu niższych stref.',
+      invalidation: 'Powrót powyżej 1.2850 i odkupienia korekt.',
+      confirmations: 'Wyższy DXY, słabość ryzyka, mocniejsze spadkowe świece.',
+      riskNotes: 'Zwroty w drugiej części sesji nie są rzadkie.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'USDJPY',
+    timeframe: 'H1',
+    context:
+      'Para często zależy od różnicy rentowności i nastawienia BoJ/Fed. Tu pokazujemy prosty, edukacyjny szablon scenariuszy.',
+    levels: [162.5, 161.8, 161.0, 160.2],
+    scenarioA: {
+      if: 'Jeśli rentowności USA rosną, a JPY słabnie, utrzymanie powyżej 161.8 zwykle sprzyja kontynuacji.',
+      invalidation: 'Spadek i akceptacja poniżej 161.0 bez szybkiej reakcji popytowej.',
+      confirmations: 'Stabilny wzrost UST, mocniejszy DXY, brak presji podaży na wybiciach.',
+      riskNotes: 'Nagłe komentarze BoJ potrafią odwrócić kierunek.',
+    },
+    scenarioB: {
+      if: 'Brak rozstrzygnięcia bywa widoczny jako wąska konsolidacja 161.0–161.8.',
+      invalidation: 'Wybicie z akceptacją i brak szybkiego powrotu.',
+      confirmations: 'Małe świece, niższa zmienność, respekt poziomów.',
+      riskNotes: 'Publikacje USA/Japonia mogą zrywać konsolidacje bez kontynuacji.',
+    },
+    scenarioC: {
+      if: 'Gdy spadają rentowności USA, zejścia pod 161.0 mogą skłaniać do testów niższych stref.',
+      invalidation: 'Powrót ponad 161.8 i spokojniejsze wybicia.',
+      confirmations: 'Słabszy DXY, mocniejszy JPY, większe czerwone świece.',
+      riskNotes: 'Ruchy bywają szybkie i krótkotrwałe na danych.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'EURPLN',
+    timeframe: 'H4',
+    context:
+      'Kurs zależny od sentymentu do rynków EM i różnicy stóp. Przykład edukacyjny — prosty opis poziomów i zachowania.',
+    levels: [4.40, 4.36, 4.33, 4.30],
+    scenarioA: {
+      if: 'Jeśli panuje spokój na rynkach, utrzymanie ponad 4.36 często pomaga stabilizacji/odbiciom.',
+      invalidation: 'Powrót pod 4.33 bez szybkiego odkupienia.',
+      confirmations: 'Mniejsze świece, spokojniejsza zmienność, brak presji podaży przy retestach.',
+      riskNotes: 'Dane lokalne i globalne potrafią wywołać skoki.',
+    },
+    scenarioB: {
+      if: 'Gdy nie ma impulsu, wahania 4.33–4.36 bywają częste.',
+      invalidation: 'Wyjście z akceptacją i brak powrotu.',
+      confirmations: 'Zwężające się wahania, krótkie knoty, respekt stref.',
+      riskNotes: 'Nagłe newsy makro mogą przebić konsolidację.',
+    },
+    scenarioC: {
+      if: 'Przy mocniejszym PLN, zejścia pod 4.33 mogą pchać w kierunku 4.30.',
+      invalidation: 'Szybkie wejście z powrotem powyżej 4.36.',
+      confirmations: 'Lepszy sentyment do PLN, spokojniejsze świece spadkowe.',
+      riskNotes: 'Zmienność bywa podwyższona wokół decyzji banków centralnych.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'USDPLN',
+    timeframe: 'H4',
+    context:
+      'Para często odbija nastroje globalne i siłę USD. Poniżej prosty, edukacyjny układ scenariuszy.',
+    levels: [4.10, 4.06, 4.03, 4.00],
+    scenarioA: {
+      if: 'Jeśli USD zyskuje globalnie, utrzymanie powyżej 4.06 bywa wspierające dla wzrostów.',
+      invalidation: 'Spadek i akceptacja poniżej 4.03.',
+      confirmations: 'Silniejszy DXY, mniejsze knoty spadkowe, odbicia na retestach.',
+      riskNotes: 'Dane z USA i lokalne publikacje potrafią zmienić obraz szybko.',
+    },
+    scenarioB: {
+      if: 'Brak wyraźnego impulsu sprzyja wahanom 4.03–4.06.',
+      invalidation: 'Wyjście z akceptacją  i brak szybkiego powrotu.',
+      confirmations: 'Malejąca zmienność, wąskie świece, respekt poziomów.',
+      riskNotes: 'Wokół publikacji dane bywają mylące.',
+    },
+    scenarioC: {
+      if: 'Przy mocniejszym PLN, zejście poniżej 4.03 bywa krokiem w stronę 4.00.',
+      invalidation: 'Powrót powyżej 4.06 i utrzymanie.',
+      confirmations: 'Słabszy DXY, spokojniejsze spadki, brak paniki na retestach.',
+      riskNotes: 'Zwroty intraday nie są rzadkie.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  // ───────────── Indeksy ─────────────
+  {
+    asset: 'US500',
+    timeframe: 'H4',
+    context:
+      'Szeroki rynek w USA często reaguje na wyniki i dane o inflacji. Edukacyjny opis: poziomy i zachowanie, bez sygnałów.',
+    levels: [5300, 5250, 5200, 5140],
+    scenarioA: {
+      if: 'Jeśli panuje risk-on, utrzymanie powyżej 5250 często wspiera dalsze podejścia.',
+      invalidation: 'Domknięcia pod 5200 bez szybkiego powrotu.',
+      confirmations: 'Szeroki breadth, spokojniejsze VIX, brak podaży na retestach.',
+      riskNotes: 'Sezon wyników i dane makro potrafią przynieść nagłe zwroty.',
+    },
+    scenarioB: {
+      if: 'Przy braku impulsu konsolidacja 5200–5250 jest naturalna.',
+      invalidation: 'Zerwanie konsolidacji i akceptacja poza zakresem.',
+      confirmations: 'Wygaszanie zmienności, węższe świece.',
+      riskNotes: 'Wybicia na danych bywają krótkie bez potwierdzeń.',
+    },
+    scenarioC: {
+      if: 'Jeśli pojawi się risk-off, zejście pod 5200 bywa krokiem do 5140.',
+      invalidation: 'Szybki powrót ponad 5250 i brak podaży na retestach.',
+      confirmations: 'Wyższy VIX, presja na growth, mocniejszy USD.',
+      riskNotes: 'Zwroty po południu sesji się zdarzają.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'DE40',
+    timeframe: 'H4',
+    context:
+      'Niemiecki indeks często odbija nastroje w EZ i dane przemysłowe. Przykład edukacyjny, bez wskazań inwestycyjnych.',
+    levels: [18600, 18450, 18250, 18050],
+    scenarioA: {
+      if: 'Jeśli sentyment w EZ jest stabilny, utrzymanie powyżej 18450 bywa sprzyjające.',
+      invalidation: 'Wybicie i akceptacja poniżej 18250.',
+      confirmations: 'Lepsze PMI, wsparcie na retestach, spokojniejsze świece.',
+      riskNotes: 'Geopolityka i dane z USA też potrafią wpłynąć.',
+    },
+    scenarioB: {
+      if: 'Konsolidacja 18250–18450 jest częsta, gdy brak nowych informacji.',
+      invalidation: 'Trwałe wyjście poza zakres bez szybkiego powrotu.',
+      confirmations: 'Niższa zmienność, węższe świece, respekt poziomów.',
+      riskNotes: 'Wybicia na danych bywają fałszywe.',
+    },
+    scenarioC: {
+      if: 'Przy risk-off zejścia pod 18250 mogą zapraszać niższe strefy.',
+      invalidation: 'Powrót ponad 18450 i brak presji podaży.',
+      confirmations: 'Słabsze PMI, większy DXY, zjazdy na ryzyku.',
+      riskNotes: 'Ruchy bywają poszarpane w okolicach publikacji.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'US30',
+    timeframe: 'H4',
+    context:
+      'Indeks spółek blue-chip często jest spokojniejszy niż growth. Edukacyjne poziomy i warunki, bez sygnałów.',
+    levels: [40000, 39750, 39500, 39200],
+    scenarioA: {
+      if: 'Jeśli popyt dominuje, respekt 39750 bywa wsparciem dla wzrostów.',
+      invalidation: 'Akceptacja poniżej 39500.',
+      confirmations: 'Spokojniejszy VIX, brak presji podaży po wybiciach.',
+      riskNotes: 'Dane z USA potrafią szybko zmienić klimat.',
+    },
+    scenarioB: {
+      if: 'Przy braku kierunku zakres 39500–39750 często się utrzymuje.',
+      invalidation: 'Wyjście z akceptacją i brak powrotu.',
+      confirmations: 'Zawężenie świec, malejąca zmienność.',
+      riskNotes: 'Wybicia na newsach bywają krótkie.',
+    },
+    scenarioC: {
+      if: 'Gdy wraca risk-off, spadki pod 39500 mogą prowadzić do 39200.',
+      invalidation: 'Szybki powrót ponad 39750.',
+      confirmations: 'Wyższy DXY, presja na cykliczne sektory.',
+      riskNotes: 'Późne zwroty w sesji nie są wyjątkowe.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  // ───────────── Towary ─────────────
+  {
+    asset: 'XAGUSD',
+    timeframe: 'H1',
+    context:
+      'Srebro często porusza się podobnie do złota, ale bywa bardziej zmienne. Edukacyjny szkic.',
+    levels: [29.5, 29.0, 28.6, 28.0],
+    scenarioA: {
+      if: 'Przy słabszym USD i spokojnym sentymencie utrzymanie powyżej 29.0 bywa sprzyjające.',
+      invalidation: 'Wejście poniżej 28.6 bez szybkiego odbicia.',
+      confirmations: 'Popyt na metale, spokojniejsze świece, brak głębokich knotów spadkowych.',
+      riskNotes: 'Zmienność potrafi nagle wzrosnąć przy danych USA.',
+    },
+    scenarioB: {
+      if: 'Gdy brak impulsu, konsolidacja 28.6–29.0 jest typowa.',
+      invalidation: 'Wyjście z akceptacją.',
+      confirmations: 'Wąskie świece, malejąca zmienność.',
+      riskNotes: 'Fałszywe ruchy przy publikacjach nie są rzadkie.',
+    },
+    scenarioC: {
+      if: 'Jeśli USD się wzmacnia, spadek pod 28.6 bywa krokiem do 28.0.',
+      invalidation: 'Powrót ponad 29.0 i brak podaży na retestach.',
+      confirmations: 'Mocniejszy DXY, słabość metali.',
+      riskNotes: 'Ruchy bywają gwałtowne, ale krótkie.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'WTI',
+    timeframe: 'H4',
+    context:
+      'Ropa reaguje na zapasy, OPEC i risk-on/off. Edukacyjny opis — poziomy i zachowanie.',
+    levels: [84, 82, 80, 78],
+    scenarioA: {
+      if: 'Przy lepszym sentymencie i wsparciu popytu utrzymanie powyżej 82 bywa pozytywne.',
+      invalidation: 'Spadek pod 80 bez szybkiej reakcji.',
+      confirmations: 'Spokojniejsze świece, brak podaży na retestach, stabilne zapasy.',
+      riskNotes: 'Nagłe newsy geopolityczne potrafią zmienić obraz.',
+    },
+    scenarioB: {
+      if: 'Kiedy brak kierunku, 80–82 bywa zakresem.',
+      invalidation: 'Trwałe wyjście z zakresu.',
+      confirmations: 'Malejąca zmienność, wąskie korpusy.',
+      riskNotes: 'Wybicia przy danych o zapasach bywają krótkie.',
+    },
+    scenarioC: {
+      if: 'Przy risk-off zejścia pod 80 częściej testują niższe poziomy.',
+      invalidation: 'Szybki powrót ponad 82.',
+      confirmations: 'Mocniejszy USD, słabsze ryzyko, większe czerwone świece.',
+      riskNotes: 'Zwroty intraday zdarzają się po nagłówkach.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'BRENT',
+    timeframe: 'H4',
+    context:
+      'Brent zachowuje się podobnie do WTI — wpływ zapasów i nagłówków. Edukacyjny układ.',
+    levels: [86, 84, 82, 80],
+    scenarioA: {
+      if: 'Jeśli popyt utrzymuje poziom 84, zwykle wspiera to podejścia.',
+      invalidation: 'Wejście pod 82 i brak szybkiego powrotu.',
+      confirmations: 'Spokojniejsze świece, stabilne zapasy, brak podaży na retestach.',
+      riskNotes: 'Geopolityka potrafi gwałtownie zmienić kierunek.',
+    },
+    scenarioB: {
+      if: 'W konsolidacji 82–84 rynek często czeka na nowe informacje.',
+      invalidation: 'Wyjście z akceptacją.',
+      confirmations: 'Mniejsze korpusy, niższa zmienność.',
+      riskNotes: 'Wybicia bywają krótkotrwałe bez potwierdzeń.',
+    },
+    scenarioC: {
+      if: 'Przy risk-off spadek pod 82 potrafi kierować uwagę na 80.',
+      invalidation: 'Powrót nad 84 i uspokojenie świec.',
+      confirmations: 'Wyższy DXY, słabsze aktywa ryzykowne.',
+      riskNotes: 'Zwroty nie są rzadkie po publikacjach.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  // ───────────── Akcje (przykładowe, EDU) ─────────────
+  {
+    asset: 'AAPL',
+    timeframe: 'D1',
+    context:
+      'Duża spółka technologiczna; kurs często odzwierciedla sentyment do sektora i wyniki. Edukacyjny przykład techniczny.',
+    levels: [230, 225, 220, 215],
+    scenarioA: {
+      if: 'Jeśli sektor tech ma wsparcie, utrzymanie ponad 225 zwykle pomaga we wzrostach.',
+      invalidation: 'Domknięcia pod 220 bez szybkiego powrotu.',
+      confirmations: 'Spokojniejsze świece, brak podaży na retestach, szeroki popyt w sektorze.',
+      riskNotes: 'Sezon wyników potrafi zmienić obraz w jeden dzień.',
+    },
+    scenarioB: {
+      if: 'Gdy brak impulsu, zakres 220–225 bywa utrzymywany.',
+      invalidation: 'Trwałe wyjście z zakresu.',
+      confirmations: 'Malejąca zmienność, krótsze świece.',
+      riskNotes: 'Wybicia bez potwierdzeń bywają krótkie.',
+    },
+    scenarioC: {
+      if: 'Przy słabości sektora zejścia pod 220 kierują uwagę na 215.',
+      invalidation: 'Powrót ponad 225 i brak presji podaży.',
+      confirmations: 'Słabszy sentyment do growth, większe czerwone świece.',
+      riskNotes: 'Nagłówki o produktach potrafią szybko odwrócić ruch.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'TSLA',
+    timeframe: 'D1',
+    context:
+      'Spółka o podwyższonej zmienności; narracja często zmienia się po wynikach/produkcji. Edukacyjny układ.',
+    levels: [260, 245, 230, 215],
+    scenarioA: {
+      if: 'Przy lepszym sentymencie utrzymanie powyżej 245 bywa wsparciem.',
+      invalidation: 'Spadek pod 230 bez szybkiego odbicia.',
+      confirmations: 'Węższe świece, brak podaży na retestach, wsparcie w sektorze EV.',
+      riskNotes: 'News flow bywa gwałtowny i zmienny.',
+    },
+    scenarioB: {
+      if: 'Gdy brak kierunku, 230–245 bywa zakresem.',
+      invalidation: 'Trwałe wybicie z akceptacją.',
+      confirmations: 'Niższa zmienność, zawężenie wahań.',
+      riskNotes: 'Fałszywe wybicia nie są rzadkie.',
+    },
+    scenarioC: {
+      if: 'Przy słabości sentymentu zjazd pod 230 kieruje uwagę na 215.',
+      invalidation: 'Powrót nad 245 i utrzymanie.',
+      confirmations: 'Słabszy sektor growth, większe czerwone świece.',
+      riskNotes: 'Zwroty pod wpływem nagłówków są częste.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'NVDA',
+    timeframe: 'D1',
+    context:
+      'Lider półprzewodników; często dyktuje ton dla sektora. Edukacyjny szkic poziomów i zachowania.',
+    levels: [140, 132, 126, 120],
+    scenarioA: {
+      if: 'Jeśli półprzewodniki są silne, respekt 132 zwykle sprzyja utrzymaniu trendu.',
+      invalidation: 'Akceptacja poniżej 126.',
+      confirmations: 'Szeroki popyt w półprzewodnikach, spokojniejsze świece.',
+      riskNotes: 'Wyniki i guidance potrafią zmienić obraz natychmiast.',
+    },
+    scenarioB: {
+      if: 'Przy braku nowości 126–132 bywa zakresem.',
+      invalidation: 'Trwałe wyjście z zakresu i brak powrotu.',
+      confirmations: 'Malejąca zmienność, wąskie korpusy.',
+      riskNotes: 'Wybicia bez potwierdzeń często gasną.',
+    },
+    scenarioC: {
+      if: 'Przy osłabieniu sektora zejście pod 126 kieruje uwagę na 120.',
+      invalidation: 'Powrót ponad 132 i brak podaży na retestach.',
+      confirmations: 'Słabość sektora, większe czerwone świece.',
+      riskNotes: 'Zwroty wraz z nastrojami do AI są częste.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'MSFT',
+    timeframe: 'D1',
+    context:
+      'Duża spółka technologiczna; ruch często jest spokojniejszy niż u mniejszych growth. Edukacyjny układ.',
+    levels: [465, 455, 445, 435],
+    scenarioA: {
+      if: 'Jeśli sektor IT jest stabilny, utrzymanie powyżej 455 bywa wspierające.',
+      invalidation: 'Spadek pod 445 bez szybkiego powrotu.',
+      confirmations: 'Spokojniejsze świece, brak podaży po wybiciach.',
+      riskNotes: 'Wyniki i guidance mogą chwilowo podbić zmienność.',
+    },
+    scenarioB: {
+      if: 'Gdy brak impulsu, zakres 445–455 potrafi się utrzymywać.',
+      invalidation: 'Wyjście poza zakres i akceptacja.',
+      confirmations: 'Wąskie korpusy, niższa zmienność.',
+      riskNotes: 'Fałszywe wybicia możliwe wokół newsów o produktach.',
+    },
+    scenarioC: {
+      if: 'Przy słabości sektora zejścia pod 445 kierują uwagę na 435.',
+      invalidation: 'Powrót nad 455 i brak podaży.',
+      confirmations: 'Słabszy popyt w IT, większe czerwone świece.',
+      riskNotes: 'Zwroty po konferencjach produktowych się zdarzają.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'AMZN',
+    timeframe: 'D1',
+    context:
+      'E-commerce i chmura; wrażliwa na sezon zakupowy i CAPEX. Edukacyjny szkic.',
+    levels: [200, 195, 190, 184],
+    scenarioA: {
+      if: 'Przy spokojnym rynku utrzymanie ponad 195 bywa wspierające.',
+      invalidation: 'Wejście pod 190 i brak szybkiego powrotu.',
+      confirmations: 'Spokojniejsze świece, brak podaży na retestach.',
+      riskNotes: 'Wyniki i guidance potrafią zmienić obraz.',
+    },
+    scenarioB: {
+      if: 'Kiedy brak impulsu, 190–195 bywa zakresem.',
+      invalidation: 'Wyjście z akceptacją.',
+      confirmations: 'Niższa zmienność, wąskie korpusy.',
+      riskNotes: 'Wybicia bez potwierdzeń bywają krótkie.',
+    },
+    scenarioC: {
+      if: 'Przy słabości sektora zejścia pod 190 kierują uwagę na 184.',
+      invalidation: 'Powrót ponad 195 i stabilizacja.',
+      confirmations: 'Słabszy popyt na growth, mocniejszy USD.',
+      riskNotes: 'Zwroty po nagłówkach o chmurze/logistyce są częste.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'META',
+    timeframe: 'D1',
+    context:
+      'Spółka social/ads; sentyment bywa związany z wydatkami reklamowymi i narracją AI. Edukacyjny układ.',
+    levels: [540, 520, 500, 480],
+    scenarioA: {
+      if: 'Jeśli rynek akceptuje 520 jako wsparcie, często pomaga to utrzymaniu trendu.',
+      invalidation: 'Spadek pod 500 i brak szybkiego odbicia.',
+      confirmations: 'Spokojniejsze świece, brak podaży na retestach, wsparcie w szerokim rynku.',
+      riskNotes: 'Wyniki i guidance mogą szybko zmienić nastroje.',
+    },
+    scenarioB: {
+      if: 'Gdy brak kierunku, zakres 500–520 bywa utrzymywany.',
+      invalidation: 'Trwałe wyjście z zakresu.',
+      confirmations: 'Wąskie korpusy, mniejsza zmienność.',
+      riskNotes: 'Wybicia bez potwierdzeń bywają chwilowe.',
+    },
+    scenarioC: {
+      if: 'Przy słabym sentymencie zejścia pod 500 kierują uwagę na 480.',
+      invalidation: 'Powrót nad 520 i utrzymanie.',
+      confirmations: 'Słabsze reklamy/sektor, większe czerwone świece.',
+      riskNotes: 'Zwroty po nagłówkach o polityce/produktach są możliwe.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
 ];
 

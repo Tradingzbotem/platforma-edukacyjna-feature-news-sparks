@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 /* ──────────────────────────────
@@ -90,9 +90,11 @@ function PasswordMeter({ value }: { value: string }) {
    ────────────────────────────── */
 export default function Page() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [name, setName] = useState('');
   const [mail, setMail] = useState('');
+  const [phone, setPhone] = useState('');
   const [pass, setPass] = useState('');
   const [pass2, setPass2] = useState('');
   const [agree, setAgree] = useState(false);
@@ -103,6 +105,19 @@ export default function Page() {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Komunikaty o błędach zwracane z backendu po redirect (np. ?error=email_taken)
+  const serverErrorParam = searchParams.get('error');
+  const serverErrorMessage = useMemo(() => {
+    if (!serverErrorParam) return null;
+    if (serverErrorParam === 'email_taken') {
+      return 'Konto z tym adresem e‑mail już istnieje. Zaloguj się lub zresetuj hasło.';
+    }
+    if (serverErrorParam === 'missing') {
+      return 'Uzupełnij wymagane pola i spróbuj ponownie.';
+    }
+    return 'Nie udało się utworzyć konta. Spróbuj ponownie.';
+  }, [serverErrorParam]);
 
   // Walidacja „w locie”
   const emailError =
@@ -116,19 +131,29 @@ export default function Page() {
       ? 'Dodaj przynajmniej 1 wielką literę i 1 cyfrę.'
       : null;
   const pass2Error = pass2.length === 0 ? null : pass !== pass2 ? 'Hasła się różnią.' : null;
+  const phoneError =
+    phone.length === 0
+      ? null
+      : /^\+[1-9]\d{7,14}$/.test(phone)
+      ? null
+      : 'Podaj numer w formacie E.164, np. +48500111222';
 
   // ⬇️ ZMIANA: pozwalamy formularzowi wykonać POST do /api/auth/mock-register,
   // ale TYLKO jeśli walidacja przejdzie. W przeciwnym razie blokujemy submit.
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     setErr(null);
 
-    if (!name || !mail || !pass || !pass2) {
+    if (!name || !mail || !phone || !pass || !pass2) {
       e.preventDefault();
       return setErr('Uzupełnij wszystkie pola.');
     }
     if (emailError) {
       e.preventDefault();
       return setErr(emailError);
+    }
+    if (phoneError) {
+      e.preventDefault();
+      return setErr(phoneError);
     }
     if (passError) {
       e.preventDefault();
@@ -190,6 +215,19 @@ export default function Page() {
               className="rounded-2xl p-6 bg-white/5 border border-white/10 shadow-xl"
               noValidate
             >
+              {serverErrorMessage ? (
+                <div
+                  className="mb-4 rounded-lg p-3 border border-amber-400/40 bg-amber-400/10 text-sm"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  {serverErrorMessage}{' '}
+                  <Link href="/logowanie" className="underline hover:no-underline">
+                    Przejdź do logowania
+                  </Link>
+                  .
+                </div>
+              ) : null}
               <Field label="Imię / Nick">
                 <input
                   className="mt-1 w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 outline-none focus:border-white/30"
@@ -215,6 +253,22 @@ export default function Page() {
                     name="email"           // ⬅️ ważne
                     required
                     aria-invalid={!!emailError}
+                  />
+                </Field>
+              </div>
+
+              <div className="mt-4">
+                <Field label="Numer telefonu (z kierunkowym)" error={phoneError} hint="Format E.164, np. +48500111222">
+                  <input
+                    className="mt-1 w-full rounded-lg bg-slate-900/60 border border-white/10 px-3 py-2 outline-none focus:border-white/30"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    autoComplete="tel"
+                    type="tel"
+                    placeholder="+48500111222"
+                    name="phone"
+                    required
+                    aria-invalid={!!phoneError}
                   />
                 </Field>
               </div>

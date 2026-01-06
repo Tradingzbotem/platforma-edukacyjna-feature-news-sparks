@@ -13,14 +13,17 @@ export function Section({ title, right, children }:{
         <h2 className="text-xl font-semibold">{title}</h2>
         {right}
       </div>
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">{children}</div>
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">{children}</div>
     </section>
   );
 }
 
-export function StatTile({ label, value }:{ label:string; value:string|number|undefined }) {
+export function StatTile({ label, value, hint }:{ label:string; value:string|number|undefined; hint?: string }) {
   return (
-    <div className="rounded-xl bg-white/5 border border-white/10 p-2.5 text-center min-h-[64px] flex flex-col items-center justify-center">
+    <div
+      className="rounded-xl bg-white/5 border border-white/10 p-2.5 text-center min-h-[64px] flex flex-col items-center justify-center"
+      title={hint || undefined}
+    >
       <div className="text-lg md:text-xl font-bold leading-tight truncate max-w-[120px]">
         {value === undefined || value === null || value === '' ? '—' : String(value)}
       </div>

@@ -56,7 +56,8 @@ export async function GET(req: Request) {
     return Response.json({ ok: true, symbol, series }, { status: 200 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
-    return Response.json({ ok: false, error: message, series: [] }, { status: 500 });
+    // Zamiast 500 zwracamy 200 z ok:false, aby nie spamować logów błędami DEV
+    return Response.json({ ok: false, error: message, series: [] }, { status: 200 });
   }
 }
 

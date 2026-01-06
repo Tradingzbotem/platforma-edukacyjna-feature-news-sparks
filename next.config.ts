@@ -9,6 +9,14 @@ const nextConfig: NextConfig = {
   // Nie przerywaj builda przez ESLint/TS na Vercel
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

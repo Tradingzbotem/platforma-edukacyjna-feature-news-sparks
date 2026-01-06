@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Page() {
   const Updated = () => (
-    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2025-08-01</p>
+    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-01-02</p>
   );
 
   const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => (
@@ -59,6 +59,7 @@ export default function Page() {
           {[
             ["def", "1. Czym są pliki cookies"],
             ["rodzaje", "2. Rodzaje i cele stosowanych cookies"],
+            ["tech", "2a. Technologie podobne (localStorage/WS)"],
             ["czas", "3. Czas życia plików"],
             ["zarz", "4. Jak zarządzać zgodą i cookies"],
             ["third", "5. Cookies podmiotów trzecich"],
@@ -111,6 +112,26 @@ export default function Page() {
         </ul>
       </section>
 
+      {/* 2a. Technologie podobne */}
+      <section className="space-y-3">
+        <H2 id="tech">2a. Technologie podobne (localStorage/WS)</H2>
+        <p className="text-white/80">
+          Oprócz cookies możemy używać technologii pokrewnych, które nie zapisują danych jako
+          plików cookie, ale działają w przeglądarce:
+        </p>
+        <ul className="list-disc pl-6 text-white/80 space-y-1">
+          <li>
+            <b>localStorage</b> — np. buforowanie ostatnich notowań w widżecie rynku, aby przyspieszyć
+            wczytanie (dane pozostają w Twojej przeglądarce do czasu ich usunięcia).
+          </li>
+          <li>
+            <b>WebSocket</b> — połączenia na żywo z dostawcami danych rynkowych (np. Binance, Finnhub)
+            celem prezentacji uproszczonych notowań; zwykle nie są to cookies, lecz połączenia
+            sieciowe do usługodawcy.
+          </li>
+        </ul>
+      </section>
+
       {/* 3. Czas życia */}
       <section className="space-y-3">
         <H2 id="czas">3. Czas życia plików</H2>
@@ -149,7 +170,9 @@ export default function Page() {
         <p className="text-white/80">
           Niektóre elementy mogą pochodzić od zewnętrznych dostawców (np. narzędzia
           analityczne). W takim przypadku pliki mogą być odczytywane również przez
-          te podmioty na zasadach ich polityk prywatności. Szczegóły wskażemy w
+          te podmioty na zasadach ich polityk prywatności. Wybrane widżety rynku mogą
+          łączyć się z usługami dostawców danych (np. Binance WebSocket, Finnhub REST/WS).
+          Szczegóły (o ile mają cookies) wskażemy w
           konfiguracji banera zgód, jeśli takie narzędzia zostaną aktywowane.
         </p>
       </section>
