@@ -32,6 +32,16 @@ OPENAI_API_KEY=
 FINNHUB_API_KEY=
 ```
 
+### Media uploads (production)
+
+To persist media uploads on production (serverless file system is read-only), configure Vercel Blob:
+
+```
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_token_here
+```
+
+The upload API will automatically store files in Blob and save the public URL in `MediaAsset.url`. Without this token, uploads fall back to local filesystem (works in dev only).
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

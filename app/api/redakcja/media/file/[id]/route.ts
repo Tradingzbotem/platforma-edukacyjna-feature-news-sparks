@@ -2,15 +2,16 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 export const runtime = 'nodejs';
 
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(_req: Request, ctx: Params) {
+	const { id } = await ctx.params;
 	const baseDir = path.join(process.cwd(), '.data', 'media');
 	try {
 		const files = fs.readdirSync(baseDir);
-		const file = files.find((f) => f.startsWith(params.id + '.'));
+		const file = files.find((f) => f.startsWith(id + '.'));
 		if (!file) return new NextResponse('Not found', { status: 404 });
 		const filePath = path.join(baseDir, file);
 		const buf = fs.readFileSync(filePath);

@@ -7,16 +7,9 @@ type FallbackArticle = {
   id: string;
   title: string;
   slug: string;
-  excerpt: string | null;
   content: string;
-  status: 'DRAFT' | 'PUBLISHED';
-  publishedAt: string | null;
-  coverImageUrl: string | null;
-  coverImageAlt: string | null;
   readingTime: number | null;
   tags: string[];
-  seoTitle: string | null;
-  seoDescription: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -66,16 +59,9 @@ export async function createFallbackArticle(input: unknown): Promise<FallbackArt
     id,
     title: parsed.title,
     slug: parsed.slug,
-    excerpt: parsed.excerpt ?? null,
     content: parsed.content,
-    status: parsed.status || 'DRAFT',
-    publishedAt: parsed.status === 'PUBLISHED' ? now : null,
-    coverImageUrl: parsed.coverImageUrl ?? null,
-    coverImageAlt: parsed.coverImageAlt ?? null,
     readingTime: parsed.readingTime ?? null,
     tags,
-    seoTitle: parsed.seoTitle ?? null,
-    seoDescription: parsed.seoDescription ?? null,
     createdAt: now,
     updatedAt: now,
   };
@@ -83,6 +69,48 @@ export async function createFallbackArticle(input: unknown): Promise<FallbackArt
   items.unshift(item);
   await writeAll(items);
   return item;
+}
+
+export async function getFallbackArticleBySlug(slug: string): Promise<FallbackArticle | null> {
+  const items = await readAll();
+  const found = items.find((a) => a.slug === slug);
+  return found ?? null;
+}
+
+export async function getFallbackArticleById(id: string): Promise<FallbackArticle | null> {
+  const items = await readAll();
+  const found = items.find((a) => a.id === id);
+  return found ?? null;
+}
+
+export async function deleteFallbackArticleById(id: string): Promise<boolean> {
+  const items = await readAll();
+  const next = items.filter((a) => a.id !== id);
+  if (next.length === items.length) return false;
+  await writeAll(next);
+  return true;
+}
+
+export async function updateFallbackArticleById(
+  id: string,
+  updates: Partial<Pick<FallbackArticle, 'title' | 'slug' | 'content' | 'readingTime' | 'tags'>>,
+): Promise<FallbackArticle | null> {
+  const items = await readAll();
+  const idx = items.findIndex((a) => a.id === id);
+  if (idx === -1) return null;
+  const current = items[idx];
+  const next: FallbackArticle = {
+    ...current,
+    title: updates.title !== undefined ? updates.title : current.title,
+    slug: updates.slug !== undefined ? updates.slug : current.slug,
+    content: updates.content !== undefined ? updates.content : current.content,
+    readingTime: updates.readingTime !== undefined ? (updates.readingTime as any) : current.readingTime,
+    tags: updates.tags !== undefined ? (updates.tags as any) : current.tags,
+    updatedAt: new Date().toISOString(),
+  };
+  items[idx] = next;
+  await writeAll(items);
+  return next;
 }
 
 

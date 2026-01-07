@@ -5,6 +5,7 @@ export default function MediaUploader({ onUploaded }: { onUploaded?: () => void 
 	const [dragOver, setDragOver] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [message, setMessage] = useState<string | null>(null);
 	const fileRef = useRef<HTMLInputElement | null>(null);
 	const altRef = useRef<HTMLInputElement | null>(null);
 	const notesRef = useRef<HTMLInputElement | null>(null);
@@ -13,6 +14,7 @@ export default function MediaUploader({ onUploaded }: { onUploaded?: () => void 
 		if (!files || files.length === 0) return;
 		setBusy(true);
 		setError(null);
+		setMessage('Przesyłanie…');
 		try {
 			const file = files[0];
 			const alt = altRef.current?.value || '';
@@ -29,11 +31,14 @@ export default function MediaUploader({ onUploaded }: { onUploaded?: () => void 
 			if (altRef.current) altRef.current.value = '';
 			if (notesRef.current) notesRef.current.value = '';
 			if (fileRef.current) fileRef.current.value = '';
+			setMessage('Zdjęcie przesłane.');
 		} catch (e: any) {
 			setError(e?.message || 'Upload failed');
+			setMessage(null);
 		} finally {
 			setBusy(false);
 			setDragOver(false);
+			setTimeout(() => setMessage(null), 2500);
 		}
 	}, [onUploaded]);
 
@@ -80,6 +85,12 @@ export default function MediaUploader({ onUploaded }: { onUploaded?: () => void 
 				</button>
 			</div>
 			<p className="mt-2 text-xs text-white/60">Przeciągnij i upuść plik lub wybierz z dysku. Obsługiwane: image/*</p>
+			{busy ? <div className="mt-2 text-xs text-white/70">Przesyłanie pliku…</div> : null}
+			{message && !busy ? (
+				<div className="mt-2 rounded-md border border-emerald-500/30 bg-emerald-900/30 px-3 py-2 text-sm text-emerald-200">
+					{message}
+				</div>
+			) : null}
 			{error ? <div className="mt-2 rounded-md border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-200">{error}</div> : null}
 		</div>
 	);

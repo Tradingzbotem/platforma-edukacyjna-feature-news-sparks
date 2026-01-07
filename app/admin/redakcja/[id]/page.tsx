@@ -3,15 +3,43 @@ import AdminArticleForm from "@/components/redakcja/AdminArticleForm";
 import { getIsAdmin } from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
 import BackButton from "@/components/BackButton";
+import { getFallbackArticleById } from "@/lib/redakcja/fallbackStore";
+import { isDatabaseConfigured } from "@/lib/db";
+import { ensureArticleTable } from "@/lib/redakcja/ensureDb";
+import { sql } from "@vercel/postgres";
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 export default async function AdminRedakcjaEditPage({ params }: Params) {
 	const isAdmin = await getIsAdmin();
 	if (!isAdmin) return redirect("/");
+	const { id } = await params;
 	const prisma = getPrisma();
-	if (!prisma) return notFound();
-	const item = await prisma.article.findUnique({ where: { id: params.id } });
+	let item: any = null;
+	if (prisma) {
+		item = await prisma.article.findUnique({ where: { id } });
+	}
+	// Try direct SQL if DB configured but Prisma didn't find it
+	if (!item && isDatabaseConfigured()) {
+		try {
+			await ensureArticleTable();
+			const sel = await sql<{
+				id: string;
+				title: string;
+				slug: string;
+				content: string;
+				readingTime: number | null;
+				tags: string[];
+			}>`SELECT id, title, slug, content, "readingTime", tags FROM "Article" WHERE id = ${id} LIMIT 1`;
+			item = sel.rows[0] ?? null;
+		} catch {
+			// ignore, fall through to file store
+		}
+	}
+	if (!item) {
+		// fallback: read from file store
+		item = await getFallbackArticleById(id);
+	}
 	if (!item) return notFound();
 
 	return (
@@ -31,15 +59,9 @@ export default async function AdminRedakcjaEditPage({ params }: Params) {
 					id: item.id,
 					title: item.title,
 					slug: item.slug,
-					excerpt: item.excerpt ?? '',
 					content: item.content,
-					status: item.status,
-					coverImageUrl: item.coverImageUrl ?? '',
-					coverImageAlt: item.coverImageAlt ?? '',
 					readingTime: item.readingTime ?? null,
 					tags: (item.tags || []).join(', '),
-					seoTitle: item.seoTitle ?? '',
-					seoDescription: item.seoDescription ?? '',
 				}}
 			/>
 		</div>

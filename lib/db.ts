@@ -137,16 +137,26 @@ export type ContactMessage = {
 
 export async function ensureContactTable() {
   if (!hasPostgres()) return;
-  await sql`
-    CREATE TABLE IF NOT EXISTS contact_messages (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      subject TEXT NOT NULL,
-      message TEXT NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT now()
-    )
-  `;
+  // Be defensive: some providers may still throw even with IF NOT EXISTS.
+  // Ignore "relation already exists" (42P07) and continue with ALTERs.
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS contact_messages (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `;
+  } catch (e: any) {
+    const code = e?.code || e?.originalError?.code;
+    const msg = String(e?.message || '').toLowerCase();
+    if (code !== '42P07' && !msg.includes('already exists')) {
+      throw e;
+    }
+  }
   await sql`ALTER TABLE contact_messages ADD COLUMN IF NOT EXISTS handled BOOLEAN DEFAULT FALSE;`;
   await sql`ALTER TABLE contact_messages ADD COLUMN IF NOT EXISTS admin_note TEXT;`;
 }

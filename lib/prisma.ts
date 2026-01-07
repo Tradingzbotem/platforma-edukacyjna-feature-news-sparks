@@ -11,19 +11,18 @@ export function getPrisma(): PrismaClientType | null {
 	if (!isDatabaseConfigured()) return null;
 	if (prisma) return prisma;
 	try {
-		// Ensure Prisma sees a valid DATABASE_URL even if only POSTGRES_* are set
+		// Resolve connection string from multiple env variants
 		const dbUrl =
 			process.env.DATABASE_URL ??
 			process.env.POSTGRES_URL ??
 			(process.env as any).POSTGRES_PRISMA_URL ??
 			process.env.POSTGRES_URL_NON_POOLING;
-		if (!process.env.DATABASE_URL && dbUrl) {
-			process.env.DATABASE_URL = dbUrl;
-		}
-		// Require at runtime to avoid typegen dependency at build time.
+		if (!dbUrl) return null;
+
+		// Prisma 7: pass datasourceUrl directly to PrismaClient
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		const { PrismaClient } = require('@prisma/client') as { PrismaClient: new () => PrismaClientType };
-		prisma = new PrismaClient();
+		const { PrismaClient } = require('@prisma/client') as { PrismaClient: new (args?: any) => PrismaClientType };
+		prisma = new PrismaClient({ datasourceUrl: dbUrl });
 		return prisma;
 	} catch {
 		return null;

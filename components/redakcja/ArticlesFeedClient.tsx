@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { ArticleListItem } from '@/lib/redakcja/types';
+import { extractCoverFromContent } from '@/lib/redakcja/content-utils';
 import ArticleRow from './ArticleRow';
 import CategoryTabs from './CategoryTabs';
 
@@ -30,6 +31,7 @@ type ApiResponse =
 
 function normalize(item: ApiItem): ArticleListItem {
 	const dateSource = item.publishedAt || item.createdAt;
+	const derived = extractCoverFromContent(item.content || '');
 	return {
 		title: item.title,
 		slug: item.slug,
@@ -37,7 +39,7 @@ function normalize(item: ApiItem): ArticleListItem {
 		tags: Array.isArray(item.tags) ? item.tags : [],
 		readingTime: item.readingTime ?? 0,
 		excerpt: item.excerpt || '',
-		coverImageUrl: item.coverImageUrl || undefined,
+		coverImageUrl: item.coverImageUrl || derived.cover.url || undefined,
 	};
 }
 
@@ -45,24 +47,40 @@ export default function ArticlesFeedClient() {
 	const searchParams = useSearchParams();
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [items, setItems] = useState<ArticleListItem[]>([]);
+	const [items, setItems] = useState<(ArticleListItem & { __key: string })[]>([]);
 
 	useEffect(() => {
 		const ac = new AbortController();
 		setLoading(true);
 		setError(null);
-		fetch('/api/redakcja/articles', { signal: ac.signal })
+		fetch('/api/redakcja/articles', { signal: ac.signal, cache: 'no-store' })
 			.then(async (r) => {
 				const data = (await r.json()) as ApiResponse;
 				if (!r.ok) throw new Error((data as any)?.message || 'Request failed');
 				if (!('ok' in data) || data.ok !== true) throw new Error((data as any)?.message || 'Invalid response');
-				const normalized = data.items.map(normalize);
+				// Deduplicate by id (can happen when mixing DB and fallback or after rapid updates)
+				const uniqueById = Array.from(new Map(data.items.map((it) => [it.id, it])).values());
+				const normalized = uniqueById.map((it) => {
+					const n = normalize(it);
+					// Build a stable React key (prefer id; fallback to slug+updatedAt)
+					const key = it.id || `${it.slug}-${it.updatedAt || it.createdAt}`;
+					return { ...n, __key: key };
+				});
 				setItems(
 					normalized.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
 				);
 			})
-			.catch((e) => setError(e?.message || 'Nie udało się pobrać artykułów'))
-			.finally(() => setLoading(false));
+			.catch((e) => {
+				// Ignore aborts (navigation/unmount/rapid re-renders)
+				const msg = String(e?.message || '');
+				if (e?.name === 'AbortError' || msg.toLowerCase().includes('aborted')) {
+					return;
+				}
+				setError(msg || 'Nie udało się pobrać artykułów');
+			})
+			.finally(() => {
+				setLoading(false);
+			});
 		return () => ac.abort();
 	}, []);
 
@@ -103,8 +121,8 @@ export default function ArticlesFeedClient() {
 			{!loading && !error && filtered.length > 0 && (
 				<ul className="space-y-3">
 					{filtered.map((article) => (
-						<li key={article.slug}>
-							<ArticleRow article={article} />
+						<li key={(article as any).__key ?? article.slug}>
+							<ArticleRow article={article as any} />
 						</li>
 					))}
 				</ul>

@@ -5,20 +5,15 @@ import { useRouter } from 'next/navigation';
 import Markdown from '@/components/redakcja/Markdown';
 import { slugify } from '@/lib/redakcja/admin';
 import MediaPickerModal from '@/components/redakcja/MediaPickerModal';
+import { injectCoverMeta, extractCoverFromContent, listImagesFromContent, removeImageByUrl } from '@/lib/redakcja/content-utils';
 
 export type AdminArticleFormValues = {
 	id?: string;
 	title: string;
 	slug: string;
-	excerpt?: string | null;
 	content: string;
-	status: 'DRAFT' | 'PUBLISHED';
-	coverImageUrl?: string | null;
-	coverImageAlt?: string | null;
-	readingTime?: number | null;
+	readingTime?: number | string | null;
 	tags?: string;
-	seoTitle?: string | null;
-	seoDescription?: string | null;
 };
 
 type Props = {
@@ -32,15 +27,9 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 	const [values, setValues] = useState<AdminArticleFormValues>({
 		title: initial?.title || '',
 		slug: initial?.slug || '',
-		excerpt: initial?.excerpt || '',
 		content: initial?.content || '',
-		status: (initial?.status as any) || 'DRAFT',
-		coverImageUrl: initial?.coverImageUrl || '',
-		coverImageAlt: initial?.coverImageAlt || '',
 		readingTime: (initial?.readingTime as any) ?? '',
 		tags: Array.isArray((initial as any)?.tags) ? (initial as any)?.tags?.join(', ') : (initial as any)?.tags || '',
-		seoTitle: initial?.seoTitle || '',
-		seoDescription: initial?.seoDescription || '',
 	});
 	const [preview, setPreview] = useState(false);
 	const [busy, setBusy] = useState(false);
@@ -52,6 +41,19 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 		if (mode === 'create') return '/api/redakcja/articles';
 		return `/api/redakcja/articles/${initial?.id}`;
 	}, [mode, initial?.id]);
+
+	// Derive cover and content-for-preview (hide cover meta and first-image-as-cover)
+	const derived = useMemo(() => extractCoverFromContent(values.content || ''), [values.content]);
+	const imagesInContent = useMemo(() => listImagesFromContent(values.content || ''), [values.content]);
+
+	function handleRemoveImage(url: string) {
+		const res = removeImageByUrl(values.content || '', url);
+		if (res.removed) {
+			update('content', res.content as any);
+			setNotice('Usunięto obraz z treści.');
+			setTimeout(() => setNotice(null), 2000);
+		}
+	}
 
 	function update<K extends keyof AdminArticleFormValues>(key: K, value: AdminArticleFormValues[K]) {
 		setValues((v) => ({ ...v, [key]: value }));
@@ -66,9 +68,19 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 			const method = mode === 'create' ? 'POST' : 'PATCH';
 			const payload: any = {
 				...values,
-				readingTime: values.readingTime === '' ? null : Number(values.readingTime),
+				readingTime:
+					typeof values.readingTime === 'string'
+						? (values.readingTime.trim() === '' ? null : Number(values.readingTime))
+						: (values.readingTime ?? null),
 			};
 			if (!payload.slug) payload.slug = slugify(payload.title || '');
+			// strip unsupported fields just in case
+			delete payload.seoTitle;
+			delete payload.seoDescription;
+			delete payload.coverImageUrl;
+			delete payload.coverImageAlt;
+			delete payload.excerpt;
+			delete payload.status;
 			const res = await fetch(apiUrl, {
 				method,
 				headers: { 'Content-Type': 'application/json' },
@@ -85,13 +97,20 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 			}
 			const saved = data as any;
 			if (saved?._storage === 'file') {
-				setNotice('Zapisano lokalnie (brak bazy). Ustaw env DATABASE_URL/POSTGRES_URL aby zapisywać do bazy.');
+				// Gdy zapis nastąpił do lokalnego fallbacku (bez bazy),
+				// nie przechodzimy do strony edycji (ta czyta z DB i mogłaby zwrócić 404).
+				// Zamiast tego pokaż jasny komunikat sukcesu i zostawiamy użytkownika na formularzu.
+				setNotice('Artykuł dodany — zapis lokalny (brak połączenia z bazą). Ustaw env DATABASE_URL/POSTGRES_URL, aby zapisywać do bazy.');
+				return;
 			}
 			if (onSaved) {
 				onSaved(saved.id);
 			} else {
 				if (mode === 'create') {
-					router.push(`/admin/redakcja/${saved.id}`);
+					// Zostań na formularzu i pokaż komunikat sukcesu (bez przekierowania do edycji)
+					setNotice('Artykuł został dodany.');
+					setValues({ title: '', slug: '', content: '', readingTime: '', tags: '' });
+					try { router.refresh(); } catch {}
 				} else {
 					router.refresh();
 				}
@@ -155,13 +174,17 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 				open={pickerOpen}
 				onClose={() => setPickerOpen(false)}
 				onPickCover={(m) => {
-					update('coverImageUrl', m.url as any);
-					update('coverImageAlt', (m.alt || '') as any);
+					const next = injectCoverMeta(values.content || '', { url: m.url, alt: m.alt || '' });
+					update('content', next as any);
+					setNotice('Ustawiono miniaturę artykułu.');
+					setTimeout(() => setNotice(null), 2500);
 					setPickerOpen(false);
 				}}
 				onInsertMarkdown={(m) => {
 					const snippet = `\n\n![${m.alt || ''}](${m.url})\n\n`;
 					update('content', (values.content || '') + snippet as any);
+					setNotice('Dodano obraz do treści.');
+					setTimeout(() => setNotice(null), 2500);
 					setPickerOpen(false);
 				}}
 			/>
@@ -178,7 +201,7 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 							required
 						/>
 					</div>
-					<div>
+					<div className="hidden">
 						<label className="block text-sm text-zinc-400">Slug</label>
 						<input
 							value={values.slug}
@@ -186,40 +209,6 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 							placeholder="auto-z-tytułu"
 							className="mt-1 w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-white/30"
 						/>
-					</div>
-					<div>
-						<label className="block text-sm text-zinc-400">Excerpt</label>
-						<textarea
-							value={values.excerpt || ''}
-							onChange={(e) => update('excerpt', e.target.value)}
-							className="mt-1 w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-white/30 min-h-[70px]"
-						/>
-					</div>
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-						<div>
-							<label className="block text-sm text-zinc-400">Okładka URL</label>
-							<input
-								value={values.coverImageUrl || ''}
-								onChange={(e) => update('coverImageUrl', e.target.value)}
-								className="mt-1 w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-white/30"
-								placeholder="https://…"
-							/>
-							<button
-								type="button"
-								onClick={() => setPickerOpen(true)}
-								className="mt-2 rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15"
-							>
-								Biblioteka mediów
-							</button>
-						</div>
-						<div>
-							<label className="block text-sm text-zinc-400">Alt</label>
-							<input
-								value={values.coverImageAlt || ''}
-								onChange={(e) => update('coverImageAlt', e.target.value)}
-								className="mt-1 w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-white/30"
-							/>
-						</div>
 					</div>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 						<div>
@@ -241,35 +230,6 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 								className="mt-1 w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-white/30"
 							/>
 						</div>
-					</div>
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-						<div>
-							<label className="block text-sm text-zinc-400">SEO Title</label>
-							<input
-								value={values.seoTitle || ''}
-								onChange={(e) => update('seoTitle', e.target.value)}
-								className="mt-1 w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-white/30"
-							/>
-						</div>
-						<div>
-							<label className="block text-sm text-zinc-400">SEO Description</label>
-							<input
-								value={values.seoDescription || ''}
-								onChange={(e) => update('seoDescription', e.target.value)}
-								className="mt-1 w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-white/30"
-							/>
-						</div>
-					</div>
-					<div>
-						<label className="block text-sm text-zinc-400">Status</label>
-						<select
-							value={values.status}
-							onChange={(e) => update('status', e.target.value as any)}
-							className="mt-1 w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-white/30"
-						>
-							<option value="DRAFT">DRAFT</option>
-							<option value="PUBLISHED">PUBLISHED</option>
-						</select>
 					</div>
 				</div>
 				<div className="space-y-3">
@@ -301,32 +261,14 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 						</button>
 						<div className="flex items-center gap-2">
 							{mode === 'edit' && (
-								<>
-									<button
-										type="button"
-										onClick={() => publishToggle('publish')}
-										className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm"
-										disabled={busy}
-									>
-										Publikuj
-									</button>
-									<button
-										type="button"
-										onClick={() => publishToggle('unpublish')}
-										className="px-3 py-2 rounded-lg bg-yellow-600 hover:bg-yellow-500 text-white text-sm"
-										disabled={busy}
-									>
-										Cofnij publikację
-									</button>
-									<button
-										type="button"
-										onClick={handleDelete}
-										className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm"
-										disabled={busy}
-									>
-										Usuń
-									</button>
-								</>
+								<button
+									type="button"
+									onClick={handleDelete}
+									className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm"
+									disabled={busy}
+								>
+									Usuń
+								</button>
 							)}
 							<button
 								type="submit"
@@ -342,9 +284,40 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 			{preview && (
 				<div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
 					<h4 className="text-sm text-zinc-400 mb-2">Podgląd</h4>
-					<Markdown content={values.content} />
+					{/* Hide cover meta/comment in preview */}
+					<Markdown content={derived.contentWithoutCover} />
 				</div>
 			)}
+			{/* Attached images overview */}
+			<div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
+				<h4 className="text-sm text-zinc-400 mb-3">Załączone obrazy w treści</h4>
+				{imagesInContent.length === 0 ? (
+					<div className="text-sm text-white/60">Brak obrazów w treści.</div>
+				) : (
+					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+						{imagesInContent.map((img, idx) => (
+							<div key={`${img.url}-${idx}`} className="rounded border border-white/10 bg-black/20 overflow-hidden">
+								<div className="aspect-video bg-black/30">
+									<img src={img.url} alt={img.alt || ''} className="h-full w-full object-cover" />
+								</div>
+								<div className="p-2 text-xs text-white/80 space-y-1">
+									<div className="truncate" title={img.alt || ''}>{img.alt || '—'}</div>
+									<div className="flex items-center gap-2">
+										{img.isCover ? <div className="inline-block rounded bg-white text-slate-900 px-1.5 py-0.5">Okładka</div> : null}
+										<button
+											type="button"
+											onClick={() => handleRemoveImage(img.url)}
+											className="ml-auto rounded bg-red-600/90 hover:bg-red-500 text-white px-2 py-1"
+										>
+											Usuń
+										</button>
+									</div>
+								</div>
+							</div>
+						))}
+					</div>
+				)}
+			</div>
 		</form>
 	);
 }
