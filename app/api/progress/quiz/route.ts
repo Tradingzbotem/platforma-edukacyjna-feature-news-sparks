@@ -17,10 +17,11 @@ export async function POST(req: NextRequest) {
   const scoreNum = Number(body?.score ?? NaN);
   const totalNum = Number(body?.total ?? NaN);
   const at = body?.at ? new Date(body.at) : undefined;
+  const answers = Array.isArray(body?.answers) ? body.answers : undefined;
   if (!slug || !Number.isFinite(scoreNum) || !Number.isFinite(totalNum)) {
     return NextResponse.json({ ok: false, error: 'INVALID_INPUT' }, { status: 400 });
   }
-  await insertQuizResult({ userId: session.userId, slug, score: scoreNum, total: totalNum, at });
+  await insertQuizResult({ userId: session.userId, slug, score: scoreNum, total: totalNum, at, answers });
   return NextResponse.json({ ok: true });
 }
 

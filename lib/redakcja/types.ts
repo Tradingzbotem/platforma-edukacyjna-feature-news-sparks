@@ -11,8 +11,10 @@ export interface Article {
 	coverImageUrl?: string;
 }
 
-export interface ArticleListItem
-	extends Pick<Article, "title" | "slug" | "date" | "tags" | "readingTime" | "excerpt" | "coverImageUrl"> {}
+export type ArticleListItem = Pick<
+	Article,
+	"title" | "slug" | "date" | "tags" | "readingTime" | "excerpt" | "coverImageUrl"
+>;
 
 export type GetArticleBySlug = (slug: string) => Article | undefined;
 

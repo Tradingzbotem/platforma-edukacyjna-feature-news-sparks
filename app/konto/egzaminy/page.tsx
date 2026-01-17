@@ -92,7 +92,7 @@ export default function Page() {
         </div>
       )}
 
-      <Link href="/konto" className="underline text-sm">← Panel konta</Link>
+      <Link href="/client" className="underline text-sm">← Panel konta</Link>
     </main>
   );
 }

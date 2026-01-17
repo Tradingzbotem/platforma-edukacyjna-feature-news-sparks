@@ -118,7 +118,7 @@ export function QuizCard({ meta, mode, query, onClick }: {
 
   return (
     <article
-      className="rounded-2xl p-5 bg-[#0b1220] border border-white/10 shadow-[0_0_0_0_rgba(255,255,255,0)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.1)] transition-shadow flex flex-col justify-between min-h-[240px]"
+      className="rounded-2xl p-5 bg-gradient-to-br from-[#0b1220] to-[#0a0f1a] backdrop-blur-sm border border-white/10 shadow-sm hover:shadow-lg hover:shadow-black/40 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 flex flex-col justify-between min-h-[240px]"
       tabIndex={0}
       aria-label={`${meta.title} — ${meta.blurb}`}
     >
@@ -177,8 +177,8 @@ export function QuizCard({ meta, mode, query, onClick }: {
         </div>
 
         <div className="mt-3" aria-hidden>
-          <div className="h-2 w-full rounded-full bg-white/10">
-            <div className="h-2 rounded-full bg-white" style={{ width: `${progressPct}%` }} />
+          <div className="h-2 w-full rounded-full bg-white/10 shadow-inner">
+            <div className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500 shadow-sm" style={{ width: `${progressPct}%` }} />
           </div>
           <div className="mt-1 text-[11px] text-white/60">
             Postęp: {progressAnswered}/{progressTotal}
@@ -191,14 +191,14 @@ export function QuizCard({ meta, mode, query, onClick }: {
           <Link
             href={href}
             onClick={onClick}
-            className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-white text-slate-900 font-semibold hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-white text-slate-900 font-semibold hover:opacity-90 hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 transition-all duration-200 shadow-md hover:shadow-lg"
             aria-label={ctaAria}
           >
             {ctaLabel}
           </Link>
         ) : (
           <span
-            className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-white/10 text-white/60 border border-white/10 cursor-not-allowed select-none"
+            className="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-white/10 text-white/60 border border-white/10 cursor-not-allowed select-none shadow-sm"
             title="Wkrótce dostępne"
           >
             Wkrótce

@@ -59,8 +59,8 @@ export default async function Page() {
   const items = await fetchWeeklyItems();
 
   return (
-    <main className="theme-panel-light min-h-screen bg-white text-slate-900">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-950 text-white">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
         <ChallengeLead />
         <ChallengeHelp />
         <div className="mt-10">
@@ -80,7 +80,7 @@ export default async function Page() {
         */}
 
         <div className="mt-8">
-          <Link href="/konto" className="underline underline-offset-4 decoration-slate-300 hover:decoration-slate-500">
+          <Link href="/client" className="underline underline-offset-4 decoration-white/30 hover:decoration-white/60 text-white/70 hover:text-white">
             Wróć do konta
           </Link>
         </div>

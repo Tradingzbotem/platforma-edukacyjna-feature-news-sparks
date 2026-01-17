@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
+import { sendContactEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -90,7 +91,32 @@ export async function POST(req: Request) {
       VALUES (${name}, ${email}, ${subject}, ${message}, ${topic || null}, ${phone || null}, ${preferred || null}, ${ip}, ${ua})
     `;
 
-    return NextResponse.json({ ok: true });
+    // Optionally send notification email (controlled via CONTACT_EMAIL_ENABLED)
+    const enabledRaw = (process.env.CONTACT_EMAIL_ENABLED || '').toLowerCase();
+    const emailEnabled = enabledRaw ? ['1', 'true', 'yes'].includes(enabledRaw) : true;
+    let emailSent = false;
+    if (emailEnabled) {
+      const emailResult = await sendContactEmail({
+        name,
+        email,
+        subject,
+        message,
+        topic,
+        phone,
+        preferred,
+        ip,
+        ua,
+      });
+      emailSent = emailResult.ok === true;
+      if (!emailSent) {
+        try {
+          // eslint-disable-next-line no-console
+          console.error('[contact] Email send failed:', (emailResult as any).error);
+        } catch {}
+      }
+    }
+
+    return NextResponse.json({ ok: true, emailSent });
   } catch (err: any) {
     console.error('Contact submit error', err);
     return NextResponse.json({ error: err.message }, { status: 500 });

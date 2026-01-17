@@ -29,7 +29,7 @@ function PageHeader() {
       <div className="flex items-center justify-between">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 rounded-lg bg-white/10 hover:bg-white/20 px-3 py-1.5 text-sm border border-white/10"
+          className="inline-flex items-center gap-2 rounded-lg bg-white/10 hover:bg-white/20 hover:scale-105 px-3 py-1.5 text-sm border border-white/10 transition-all duration-200 shadow-sm hover:shadow-md"
           aria-label="Wróć na stronę główną"
         >
           ← Strona główna
@@ -42,19 +42,19 @@ function PageHeader() {
         >
           <Link
             href="#moduly"
-            className="rounded-lg bg-white/5 hover:bg-white/10 px-3 py-1.5 border border-white/10"
+            className="rounded-lg bg-white/5 hover:bg-white/10 hover:scale-105 px-3 py-1.5 border border-white/10 transition-all duration-200 shadow-sm hover:shadow-md"
           >
             Moduły
           </Link>
           <Link
             href="#materialy"
-            className="rounded-lg bg-white/5 hover:bg-white/10 px-3 py-1.5 border border-white/10"
+            className="rounded-lg bg-white/5 hover:bg-white/10 hover:scale-105 px-3 py-1.5 border border-white/10 transition-all duration-200 shadow-sm hover:shadow-md"
           >
             Materiały
           </Link>
           <Link
             href="#egzaminy"
-            className="rounded-lg bg-white/5 hover:bg-white/10 px-3 py-1.5 border border-white/10"
+            className="rounded-lg bg-white/5 hover:bg-white/10 hover:scale-105 px-3 py-1.5 border border-white/10 transition-all duration-200 shadow-sm hover:shadow-md"
           >
             Egzaminy
           </Link>
@@ -78,7 +78,7 @@ function Intro() {
       aria-labelledby="intro-title"
       className="grid md:grid-cols-2 gap-5"
     >
-      <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
+      <div className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-5 shadow-sm hover:shadow-md transition-all duration-200">
         <h2 id="intro-title" className="text-xl font-bold">
           Czego się nauczysz
         </h2>
@@ -105,7 +105,7 @@ function Intro() {
         </p>
       </div>
 
-      <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
+      <div className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-5 shadow-sm hover:shadow-md transition-all duration-200">
         <h3 className="text-xl font-bold">Jak wykorzystasz w praktyce</h3>
         <ul className="mt-3 space-y-2 text-sm text-white/80">
           <li className="flex items-start gap-2">
@@ -134,14 +134,14 @@ function Intro() {
         <div className="mt-4 flex gap-2">
           <Link
             href="/quizy"
-            className="px-3 py-1.5 text-sm rounded-lg bg-white/10 hover:bg-white/20 border border-white/10"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white/10 hover:bg-white/20 hover:scale-105 border border-white/10 transition-all duration-200 shadow-sm hover:shadow-md"
             aria-label="Przejdź do quizów"
           >
             Rozwiąż quiz
           </Link>
           <Link
             href="/symulator"
-            className="px-3 py-1.5 text-sm rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90"
+            className="px-3 py-1.5 text-sm rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90 hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
             aria-label="Przejdź do kalkulatora"
           >
             Kalkulator
@@ -162,8 +162,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="space-y-4 scroll-mt-24" aria-labelledby={`${id}-title`}>
-      <h2 id={`${id}-title`} className="text-2xl font-bold">
+    <section id={id} className="space-y-4 scroll-mt-24 animate-fade-in" aria-labelledby={`${id}-title`}>
+      <h2 id={`${id}-title`} className="text-2xl font-bold text-white">
         {title}
       </h2>
       {/* Mniejsze kafelki → gęstsza siatka */}
@@ -176,9 +176,9 @@ function Section({
 
 function Card({ tag, title, description, href, cta = "Otwórz" }: CardProps) {
   return (
-    <div className="h-full rounded-2xl bg-[#0b1220] border border-white/10 p-4 flex flex-col shadow-[0_0_0_0_rgba(255,255,255,0)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.10)] transition-shadow">
+    <div className="h-full rounded-2xl bg-gradient-to-br from-[#0b1220] to-[#0a0f1a] border border-white/10 p-4 flex flex-col shadow-sm hover:shadow-lg hover:shadow-black/40 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 backdrop-blur-sm">
       {tag ? (
-        <span className="inline-block text-[10px] tracking-wide uppercase bg-white/5 border border-white/10 px-2 py-0.5 rounded-md w-fit text-white/70">
+        <span className="inline-block text-[10px] tracking-wide uppercase bg-white/5 border border-white/10 px-2 py-0.5 rounded-md w-fit text-white/70 shadow-sm">
           {tag}
         </span>
       ) : (
@@ -186,7 +186,7 @@ function Card({ tag, title, description, href, cta = "Otwórz" }: CardProps) {
       )}
 
       <div className="mt-2">
-        <h3 className="text-lg font-semibold leading-snug">{title}</h3>
+        <h3 className="text-lg font-semibold leading-snug text-white">{title}</h3>
         {description ? (
           <p className="mt-2 text-white/70 text-sm leading-relaxed">
             {description}
@@ -194,10 +194,10 @@ function Card({ tag, title, description, href, cta = "Otwórz" }: CardProps) {
         ) : null}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-white/10">
+      <div className="mt-auto pt-4 border-t border-white/10">
         <Link
           href={href}
-          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white text-slate-900 text-sm font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
+          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white text-slate-900 text-sm font-semibold hover:opacity-90 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-all duration-200 shadow-md hover:shadow-lg"
           aria-label={`${cta}: ${title}`}
         >
           {cta}
@@ -211,9 +211,12 @@ function Card({ tag, title, description, href, cta = "Otwórz" }: CardProps) {
 /* ──────────────────────────────────────────────────────────────
    Strona
    ────────────────────────────────────────────────────────────── */
+import AccessGuard from "../components/AccessGuard";
+
 export default function Page() {
   return (
-    <main className="mx-auto max-w-6xl p-6 md:p-8 space-y-10 text-white">
+    <AccessGuard required="auth">
+      <main className="mx-auto max-w-6xl p-6 md:p-8 space-y-10 text-white animate-fade-in">
       <PageHeader />
 
       {/* WPROWADZENIE */}
@@ -278,6 +281,13 @@ export default function Page() {
       {/* EGZAMINY / REGULACJE */}
       <Section id="egzaminy" title="Egzaminy / regulacje">
         <Card
+          tag="Kurs"
+          title="Regulacje i egzaminy"
+          description="Kompleksowy kurs o regulacjach finansowych: MiFID II, ESMA, KNF, testy adekwatności, best execution, ochrona klienta, limity dźwigni, marketing i compliance. Przygotowanie do egzaminów regulacyjnych."
+          href="/kursy/regulacje/lekcja-1"
+          cta="Rozpocznij"
+        />
+        <Card
           tag="Regulacje"
           title="Przewodnik: KNF, ESMA, MiFID"
           description="Kluczowe pojęcia: test adekwatności, ochrona klienta, ryzyka, KID/KIID i dokumentacja. Zrozumiesz ramy regulacyjne, w których porusza się broker i klient detaliczny."
@@ -297,5 +307,6 @@ export default function Page() {
         />
       </Section>
     </main>
+    </AccessGuard>
   );
 }

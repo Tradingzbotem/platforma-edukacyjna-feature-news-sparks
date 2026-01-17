@@ -146,7 +146,11 @@ function usePersistentChecks(storageKey: string, initial: CheckedState) {
     setState(next);
   }
 
-  return { state, toggle, reset };
+  function replace(next: CheckedState) {
+    setState(next || {});
+  }
+
+  return { state, toggle, reset, replace };
 }
 
 function groupItemIds(groups: ChecklistGroup[]): string[] {
@@ -159,14 +163,101 @@ function groupItemIds(groups: ChecklistGroup[]): string[] {
 
 export default function ChecklistClient() {
   const allIds = useMemo(() => groupItemIds(CHECKLISTS), []);
-  const { state, toggle, reset } = usePersistentChecks('panel_checklists_v1', {});
+  const { state, toggle, reset, replace } = usePersistentChecks('panel_checklists_v1', {});
   const idToItem = useMemo(() => {
     const map: Record<string, ChecklistItem> = {};
     for (const g of CHECKLISTS) for (const it of g.items) map[it.id] = it;
     return map;
   }, []);
   const { planner, setPlanner, save, load, reset: resetPlanner } = usePlanner();
-  const [serverSaveStatus, setServerSaveStatus] = useState<null | 'saving' | 'ok' | 'err'>(null);
+  const [serverSaveStatus, setServerSaveStatus] = useState<null | 'saving' | 'ok' | 'err' | 'unauth' | 'db'>(null);
+  const [localSaveStatus, setLocalSaveStatus] = useState<null | 'ok'>(null);
+
+  // ───────────────────────────── Historia z konta ─────────────────────────────
+  type ServerHistoryItem = {
+    id: string;
+    user_id: string;
+    created_at: string;
+    asset: string | null;
+    timeframe: string | null;
+    horizon: string | null;
+    thesis: string | null;
+    reasons: string[] | null;
+    invalidation_kind: string | null;
+    invalidation_level: string | null;
+    red_flags: string | null;
+    plan_b: string | null;
+    risk: string | null;
+    checks: Record<string, boolean> | null;
+  };
+  const [history, setHistory] = useState<ServerHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState<boolean>(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  async function refreshHistory() {
+    try {
+      setHistoryLoading(true);
+      setHistoryError(null);
+      const res = await fetch('/api/panel/checklists/history', { cache: 'no-store' });
+      if (!res.ok) {
+        const code = res.status;
+        throw new Error(code === 401 ? 'Unauthorized' : code === 503 ? 'Brak połączenia z bazą' : `HTTP ${code}`);
+      }
+      const data = (await res.json().catch(() => ({}))) as { items?: ServerHistoryItem[] };
+      setHistory(Array.isArray(data?.items) ? data.items : []);
+    } catch (e: any) {
+      setHistoryError(String(e?.message || e) || 'Błąd ładowania');
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!mounted) return;
+      await refreshHistory();
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  function inferCategoryForAsset(asset: string | ''): PlannerSelection['category'] {
+    if (!asset) return '';
+    const entries = Object.entries(CATEGORIES) as [CategoryKey, string[]][];
+    for (const [cat, assets] of entries) {
+      if (assets.includes(asset)) return cat;
+    }
+    return '';
+  }
+
+  function applyFromHistory(item: ServerHistoryItem) {
+    const asset = String(item.asset || '');
+    const timeframe = (['H1', 'H4', 'D1'] as Timeframe[]).includes(item.timeframe as Timeframe)
+      ? (item.timeframe as Timeframe)
+      : 'H4';
+    const horizon = (['Dziś (do końca dnia)', '1–2 dni', 'Tydzień'] as Horizon[]).includes(item.horizon as Horizon)
+      ? (item.horizon as Horizon)
+      : 'Dziś (do końca dnia)';
+    const category = inferCategoryForAsset(asset);
+
+    setPlanner((p) => ({
+      ...p,
+      selection: { category, asset, timeframe, horizon },
+      thesis: (item.thesis as PlannerState['thesis']) || '',
+      reasons: [
+        ...(Array.isArray(item.reasons) ? item.reasons.slice(0, 3) : []),
+        '', '', '',
+      ].slice(0, 3),
+      invalidationKind: (item.invalidation_kind as PlannerState['invalidationKind']) || '',
+      invalidationLevel: item.invalidation_level || '',
+      redFlags: item.red_flags || '',
+      planB: item.plan_b || '',
+      risk: (item.risk as PlannerState['risk']) || '',
+    }));
+    replace(item.checks || {});
+  }
 
   async function saveToServer() {
     if (!planner.selection.asset) return;
@@ -187,8 +278,19 @@ export default function ChecklistClient() {
           checks: state,
         }),
       });
-      if (!res.ok) throw new Error(String(res.status));
+      if (!res.ok) {
+        if (res.status === 401) {
+          setServerSaveStatus('unauth');
+        } else if (res.status === 503) {
+          setServerSaveStatus('db');
+        } else {
+          setServerSaveStatus('err');
+        }
+        setTimeout(() => setServerSaveStatus(null), 2500);
+        return;
+      }
       setServerSaveStatus('ok');
+      try { await refreshHistory(); } catch {}
       setTimeout(() => setServerSaveStatus(null), 2000);
     } catch {
       setServerSaveStatus('err');
@@ -396,10 +498,32 @@ export default function ChecklistClient() {
               <div className="mt-1 text-[11px] text-white/60">EDU: dopasuj rozmiar do zmienności i trzymaj limit dzienny.</div>
             </div>
             <div className="mt-4 flex gap-2">
-              <button onClick={save} disabled={!planner.selection.asset} className="rounded-xl bg-white text-slate-900 font-semibold px-4 py-2 text-sm hover:opacity-90 disabled:opacity-50">Zapisz plan</button>
+              <button
+                onClick={() => {
+                  save();
+                  setLocalSaveStatus('ok');
+                  setTimeout(() => setLocalSaveStatus(null), 2000);
+                  // Spróbuj również zapisać na koncie (jeśli zalogowany i DB jest dostępna)
+                  saveToServer();
+                }}
+                disabled={!planner.selection.asset}
+                className="rounded-xl bg-white text-slate-900 font-semibold px-4 py-2 text-sm hover:opacity-90 disabled:opacity-50"
+              >
+                {localSaveStatus === 'ok' ? 'Zapisano ✅' : 'Zapisz plan'}
+              </button>
               <button onClick={resetPlanner} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10">Wyczyść</button>
               <button onClick={saveToServer} disabled={!planner.selection.asset || serverSaveStatus === 'saving'} className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10">
-                {serverSaveStatus === 'saving' ? 'Zapisywanie…' : serverSaveStatus === 'ok' ? 'Zapisano ✅' : serverSaveStatus === 'err' ? 'Błąd zapisu' : 'Zapisz na koncie (beta)'}
+                {serverSaveStatus === 'saving'
+                  ? 'Zapisywanie…'
+                  : serverSaveStatus === 'ok'
+                  ? 'Zapisano ✅'
+                  : serverSaveStatus === 'unauth'
+                  ? 'Zaloguj, aby zapisać'
+                  : serverSaveStatus === 'db'
+                  ? 'Baza niedostępna'
+                  : serverSaveStatus === 'err'
+                  ? 'Błąd zapisu'
+                  : 'Zapisz na koncie (beta)'}
               </button>
             </div>
           </div>
@@ -541,6 +665,74 @@ export default function ChecklistClient() {
           Brak elementów spełniających kryteria filtra.
         </div>
       )}
+
+      {/* ─────────────── Zapisane checklisty (konto) ─────────────── */}
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-semibold">Zapisane checklisty (konto)</div>
+          <button
+            type="button"
+            onClick={() => { refreshHistory(); }}
+            className="text-[11px] text-white/70 underline underline-offset-2 hover:text-white"
+          >
+            Odśwież
+          </button>
+        </div>
+
+        {historyLoading && (
+          <div className="mt-3 text-sm text-white/70">Ładowanie…</div>
+        )}
+        {historyError && (
+          <div className="mt-3 text-sm text-red-300">Błąd: {historyError}</div>
+        )}
+        {!historyLoading && !historyError && history.length === 0 && (
+          <div className="mt-3 text-sm text-white/70">Brak zapisanych pozycji.</div>
+        )}
+        {!historyLoading && !historyError && history.length > 0 && (
+          <ul className="mt-3 space-y-2">
+            {history.map((it) => {
+              const created = new Date(it.created_at);
+              const createdStr = isNaN(created.getTime())
+                ? it.created_at
+                : created.toLocaleString();
+              const checkedCount = Object.values(it.checks || {}).filter(Boolean).length;
+              return (
+                <li key={it.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm text-white/85">
+                      <span className="font-semibold">{it.asset || '—'}</span>
+                      <span className="mx-2 text-white/50">•</span>
+                      <span>{it.timeframe || '—'}</span>
+                      <span className="mx-2 text-white/50">•</span>
+                      <span>{it.horizon || '—'}</span>
+                      <span className="mx-2 text-white/50">•</span>
+                      <span className="text-white/70">{createdStr}</span>
+                      <span className="mx-2 text-white/50">•</span>
+                      <span className="text-white/70">{checkedCount} zaznaczeń</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => applyFromHistory(it)}
+                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/85 hover:bg-white/10"
+                      >
+                        Wczytaj
+                      </button>
+                    </div>
+                  </div>
+                  {(it.thesis || it.plan_b || it.red_flags) && (
+                    <div className="mt-2 text-xs text-white/70">
+                      {it.thesis && <div><span className="text-white/60">Teza:</span> {it.thesis}</div>}
+                      {it.plan_b && <div><span className="text-white/60">Plan B:</span> {it.plan_b}</div>}
+                      {it.red_flags && <div><span className="text-white/60">Czerwone flagi:</span> {it.red_flags}</div>}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import 'server-only';
 import { getIronSession, type SessionOptions } from 'iron-session';
 import crypto from 'crypto';
 import { cookies as nextCookies } from 'next/headers';
-import { findUserById, isDatabaseConfigured } from '@/lib/db';
+import { findUserById, isDatabaseConfigured, touchUserLastActive } from '@/lib/db';
 
 export type SessionData = {
   userId?: string;
@@ -53,6 +53,10 @@ export async function getSession() {
   // Sync plan with DB on every request so admin changes take effect immediately
   try {
     if (session.userId && isDatabaseConfigured()) {
+      // Best-effort: update last activity timestamp for the logged-in user
+      try {
+        await touchUserLastActive(session.userId);
+      } catch {}
       const dbUser = await findUserById(session.userId).catch(() => null);
       if (!dbUser) {
         // User removed → clear session

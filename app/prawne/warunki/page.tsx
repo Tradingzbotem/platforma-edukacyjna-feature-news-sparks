@@ -1,7 +1,11 @@
 // app/prawne/warunki/page.tsx
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { t } from "@/lib/i18n";
 
-export default function Page() {
+export default async function Page() {
+  const cookieStore = await cookies();
+  const lang = cookieStore.get('lang')?.value === 'en' ? 'en' : 'pl';
   const Updated = () => (
     <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-01-02</p>
   );
@@ -81,6 +85,9 @@ export default function Page() {
       {/* 1. Zakres */}
       <section className="space-y-3">
         <H2 id="zakres">1. Zakres i akceptacja</H2>
+        <p className="text-white/80 font-medium">
+          {t(lang as any, 'compliance_disclaimer')}
+        </p>
         <p className="text-white/80">
           Warunki mają zastosowanie do wszystkich użytkowników odwiedzających
           Serwis. Dostęp do Serwisu jest równoznaczny z akceptacją Warunków. Jeżeli

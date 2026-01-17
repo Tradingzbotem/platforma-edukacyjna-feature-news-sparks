@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Markdown from '@/components/redakcja/Markdown';
 import { slugify } from '@/lib/redakcja/admin';
@@ -24,6 +24,7 @@ type Props = {
 
 export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 	const router = useRouter();
+	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 	const [values, setValues] = useState<AdminArticleFormValues>({
 		title: initial?.title || '',
 		slug: initial?.slug || '',
@@ -59,6 +60,87 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 		setValues((v) => ({ ...v, [key]: value }));
 	}
 
+	// ───────── Markdown toolbar helpers ─────────
+	function insertAroundSelection(prefix: string, suffix?: string) {
+		const ta = textareaRef.current;
+		if (!ta) {
+			update('content', (values.content || '') + `${prefix}${suffix ?? ''}` as any);
+			return;
+		}
+		const start = ta.selectionStart ?? 0;
+		const end = ta.selectionEnd ?? 0;
+		const before = (values.content || '').slice(0, start);
+		const selected = (values.content || '').slice(start, end);
+		const after = (values.content || '').slice(end);
+		const post = `${before}${prefix}${selected}${suffix ?? ''}${after}`;
+		update('content', post as any);
+		// Restore focus for smoother editing
+		requestAnimationFrame(() => {
+			try {
+				ta.focus();
+				const caret = start + prefix.length + selected.length + (suffix ? suffix.length : 0);
+				ta.setSelectionRange(caret, caret);
+			} catch {}
+		});
+	}
+
+	function addLinePrefix(prefix: string) {
+		const ta = textareaRef.current;
+		if (!ta) {
+			update('content', `${prefix}${values.content || ''}` as any);
+			return;
+		}
+		const start = ta.selectionStart ?? 0;
+		const end = ta.selectionEnd ?? 0;
+		const text = values.content || '';
+		const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+		const lineEnd = text.indexOf('\n', end);
+		const sliceEnd = lineEnd === -1 ? text.length : lineEnd;
+		const selection = text.slice(lineStart, sliceEnd);
+		const updatedSelection = selection
+			.split('\n')
+			.map((l) => (l.trim().length ? `${prefix}${l.replace(/^\s+/, '')}` : l))
+			.join('\n');
+		const post = text.slice(0, lineStart) + updatedSelection + text.slice(sliceEnd);
+		update('content', post as any);
+		requestAnimationFrame(() => {
+			try {
+				ta.focus();
+				ta.setSelectionRange(lineStart, lineStart + updatedSelection.length);
+			} catch {}
+		});
+	}
+
+	function onBold() { insertAroundSelection('**', '**'); }
+	function onItalic() { insertAroundSelection('_', '_'); }
+	function onInlineCode() { insertAroundSelection('`', '`'); }
+	function onCodeBlock() { insertAroundSelection('\n```\n', '\n```\n'); }
+	function onH1() { addLinePrefix('# '); }
+	function onH2() { addLinePrefix('## '); }
+	function onH3() { addLinePrefix('### '); }
+	function onH4() { addLinePrefix('#### '); }
+	function onH5() { addLinePrefix('##### '); }
+	function onH6() { addLinePrefix('###### '); }
+	function onUl() { addLinePrefix('- '); }
+	function onOl() { addLinePrefix('1. '); }
+	function onQuote() { addLinePrefix('> '); }
+	function onStrike() { insertAroundSelection('~~', '~~'); }
+	function onTask() { addLinePrefix('- [ ] '); }
+	function onHr() { insertAroundSelection('\n\n---\n\n'); }
+	function onTable() {
+		const template = '\n\n| Kolumna 1 | Kolumna 2 |\n| --- | --- |\n|  |  |\n\n';
+		insertAroundSelection(template);
+	}
+	function onLink() {
+		const ta = textareaRef.current;
+		const selected = ta && (values.content || '').slice(ta.selectionStart ?? 0, ta.selectionEnd ?? 0);
+		if (selected && selected.trim().length) {
+			insertAroundSelection('[', `](https://)`);
+		} else {
+			insertAroundSelection('[tekst](https://)');
+		}
+	}
+
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		setError(null);
@@ -81,12 +163,29 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 			delete payload.coverImageAlt;
 			delete payload.excerpt;
 			delete payload.status;
-			const res = await fetch(apiUrl, {
+			let res = await fetch(apiUrl, {
 				method,
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(payload),
 			});
-			const data = await res.json().catch(() => ({}));
+			let data = await res.json().catch(() => ({}));
+
+			// Client-side fallback: if legacy/old article returns 404 on PATCH by id,
+			// try creating a new article (POST) with the same payload.
+			if (!res.ok && res.status === 404 && mode === 'edit') {
+				try {
+					res = await fetch('/api/redakcja/articles', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload),
+					});
+					data = await res.json().catch(() => ({}));
+					if (res.ok) {
+						setNotice('Utworzono nową wersję artykułu (migracja starszego wpisu).');
+					}
+				} catch {}
+			}
+
 			if (!res.ok) {
 				const message =
 					(data as any)?.message ||
@@ -97,23 +196,17 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 			}
 			const saved = data as any;
 			if (saved?._storage === 'file') {
-				// Gdy zapis nastąpił do lokalnego fallbacku (bez bazy),
-				// nie przechodzimy do strony edycji (ta czyta z DB i mogłaby zwrócić 404).
-				// Zamiast tego pokaż jasny komunikat sukcesu i zostawiamy użytkownika na formularzu.
-				setNotice('Artykuł dodany — zapis lokalny (brak połączenia z bazą). Ustaw env DATABASE_URL/POSTGRES_URL, aby zapisywać do bazy.');
+				// Zapis w fallbacku — bezpiecznie wróć do listy, która obsługuje fallback.
+				setNotice('Artykuł zapisany pomyślnie. Przekierowuję…');
+				try { setTimeout(() => router.replace('/admin/redakcja?saved=1'), 50); } catch {}
 				return;
 			}
 			if (onSaved) {
 				onSaved(saved.id);
 			} else {
-				if (mode === 'create') {
-					// Zostań na formularzu i pokaż komunikat sukcesu (bez przekierowania do edycji)
-					setNotice('Artykuł został dodany.');
-					setValues({ title: '', slug: '', content: '', readingTime: '', tags: '' });
-					try { router.refresh(); } catch {}
-				} else {
-					router.refresh();
-				}
+				// Po zapisie pokaż krótką informację i wróć do listy artykułów z flagą powodzenia
+				setNotice('Artykuł zapisany pomyślnie. Przekierowuję…');
+				try { setTimeout(() => router.replace('/admin/redakcja?saved=1'), 50); } catch {}
 			}
 		} catch (err: any) {
 			setError(err?.message || 'Wystąpił błąd');
@@ -235,7 +328,33 @@ export default function AdminArticleForm({ initial, mode, onSaved }: Props) {
 				<div className="space-y-3">
 					<div>
 						<label className="block text-sm text-zinc-400">Treść (Markdown)</label>
+						<div className="mt-1 mb-2 flex flex-wrap items-center gap-2">
+							<button type="button" onClick={onBold} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15 font-semibold" aria-label="Pogrubienie (Ctrl+B)">B</button>
+							<button type="button" onClick={onItalic} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15 italic" aria-label="Kursywa (Ctrl+I)">I</button>
+							<div className="mx-1 h-5 w-px bg-white/10" />
+							<button type="button" onClick={onH1} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Nagłówek H1">H1</button>
+							<button type="button" onClick={onH2} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Nagłówek H2">H2</button>
+							<button type="button" onClick={onH3} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Nagłówek H3">H3</button>
+							<button type="button" onClick={onH4} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Nagłówek H4">H4</button>
+							<button type="button" onClick={onH5} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Nagłówek H5">H5</button>
+							<button type="button" onClick={onH6} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Nagłówek H6">H6</button>
+							<div className="mx-1 h-5 w-px bg-white/10" />
+							<button type="button" onClick={onUl} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Lista wypunktowana">• Lista</button>
+							<button type="button" onClick={onOl} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Lista numerowana">1. Lista</button>
+							<button type="button" onClick={onTask} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Lista zadań">☑ Zadania</button>
+							<button type="button" onClick={onQuote} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Cytat">“ Cytat</button>
+							<div className="mx-1 h-5 w-px bg-white/10" />
+							<button type="button" onClick={onInlineCode} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Kod inline">` Kod</button>
+							<button type="button" onClick={onCodeBlock} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Blok kodu">``` Blok</button>
+							<button type="button" onClick={onStrike} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Przekreślenie">S̶</button>
+							<div className="mx-1 h-5 w-px bg-white/10" />
+							<button type="button" onClick={onTable} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Tabela">┼ Tabela</button>
+							<button type="button" onClick={onHr} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Linia pozioma">— Linia</button>
+							<div className="mx-1 h-5 w-px bg-white/10" />
+							<button type="button" onClick={onLink} className="rounded-md bg-white/10 border border-white/15 px-2 py-1 text-xs hover:bg-white/15" aria-label="Link">🔗 Link</button>
+						</div>
 						<textarea
+							ref={textareaRef}
 							value={values.content}
 							onChange={(e) => update('content', e.target.value)}
 							className="mt-1 w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-white/30 min-h-[260px]"

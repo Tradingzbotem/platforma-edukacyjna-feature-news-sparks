@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNewsDigest } from '../hooks/useNewsDigest';
+import { usePriceChange } from '../hooks/usePriceChange';
 import { usePickStore, type UserPick } from '../hooks/usePickStore';
 import { useXPStore } from '../hooks/useXPStore';
 import { suggestConfidenceFromNews } from '../lib/confidence';
@@ -95,11 +96,15 @@ export default function ChallengeCard({
     }
   }, [now, deadlineMs, nextRefreshByMs]);
 
+  /* ─── PRICE CHANGE TRACKING ─── */
+  const { price, change, direction: priceDirection, loading: priceLoading } = usePriceChange(ticker, challengeKey, deadlineMs);
+
   /* ─── SCORING: po przejściu na closed, jeśli był pick, i nie wysłano jeszcze ─── */
   useEffect(() => {
     if (status === 'closed' && pick && !isResultPosted()) {
-      // 1) Ustal wynik (na razie symulacja – do czasu, aż podepniemy realne ceny)
-      const outcome = simulateOutcome(ticker);
+      // 1) Ustal wynik na podstawie zmiany ceny override (jeśli dostępna), w przeciwnym razie symulacja
+      // Użyj priceDirection tylko jeśli mamy rzeczywistą zmianę ceny
+      const outcome = (priceDirection && change !== null) ? priceDirection : simulateOutcome(ticker);
 
       // 2) Policz "realny" XP wg uzgodnionych zasad:
       //    baza: trafienie +10, remis +3; bonus +1 (≥70%) lub +2 (≥90%) tylko przy trafieniu
@@ -129,10 +134,10 @@ export default function ChallengeCard({
         .then(() => markResultPosted())
         .catch((err) => console.warn('Result save failed', err));
     }
-  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, priceDirection, change]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ─── AUTO NEWS ─── */
-  const { digest, loading } = useNewsDigest({
+  /* ─── AUTO NEWS (fallback jeśli brak ceny) ─── */
+  const { digest, loading: newsLoading } = useNewsDigest({
     aliases: autoNewsFor ?? [],
     limit: 3,
   });
@@ -143,8 +148,9 @@ export default function ChallengeCard({
 
   const disabled = status !== 'open' || msLeft <= 0 || !!pick;
 
-  // ustaw aut. sugestię pewności na bazie skrótu News (po załadowaniu)
+  // ustaw aut. sugestię pewności na bazie skrótu News (po załadowaniu) - tylko jeśli brak ceny
   useEffect(() => {
+    if (price !== null) return; // preferuj cenę nad newsy
     if (!effectiveDigest || effectiveDigest.length === 0) return;
     if (pick) return; // nie nadpisuj, jeśli użytkownik już wybrał
     const s = suggestConfidenceFromNews(
@@ -152,7 +158,7 @@ export default function ChallengeCard({
     );
     setSuggested(s);
     setConfidence(s);
-  }, [effectiveDigest, pick]);
+  }, [effectiveDigest, pick, price]);
 
   /* ─── handler zapisu wyboru ─── */
   function handlePick(dir: 'up' | 'down' | 'flat') {
@@ -175,13 +181,13 @@ export default function ChallengeCard({
   }
 
   return (
-    <div className="group h-full rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md motion-reduce:transition-none">
+    <div className="group h-full rounded-2xl border border-white/10 bg-white/5 transition hover:bg-white/10 motion-reduce:transition-none">
       <div className="flex h-full min-h-[340px] flex-col p-4 sm:min-h-[320px]">
         {/* HEADER */}
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-            <p className="text-xs text-slate-600">
+            <h3 className="text-base font-semibold text-white">{title}</h3>
+            <p className="text-xs text-white/70">
               Instrument: <span className="font-medium">{ticker}</span> • Horyzont: {horizon}
             </p>
           </div>
@@ -191,46 +197,76 @@ export default function ChallengeCard({
         {/* COUNTDOWNS + Twój typ */}
         <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
           {status === 'open' && (
-            <span className="rounded-md bg-slate-100 text-slate-700 px-2 py-1">
+            <span className="rounded-md bg-white/10 text-white/90 px-2 py-1">
               Do zamknięcia: <span className="font-semibold" suppressHydrationWarning>{timeLeft}</span>
             </span>
           )}
           {status === 'settling' && (
-            <span className="rounded-md bg-yellow-50 border border-yellow-200 text-yellow-700 px-2 py-1">
+            <span className="rounded-md bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 px-2 py-1">
               Rozliczanie… {refreshLeft ? (<span suppressHydrationWarning>(≤ {refreshLeft})</span>) : ''}
             </span>
           )}
           {status === 'closed' && (
-            <span className="rounded-md bg-slate-100 text-slate-600 px-2 py-1">
+            <span className="rounded-md bg-white/10 text-white/70 px-2 py-1">
               Zakończone – nowa runda wkrótce
             </span>
           )}
 
           {pick && (
-            <span className="rounded-md border border-slate-200 bg-slate-100 px-2 py-1 text-slate-900">
+            <span className="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white">
               Twój typ: <b>{dirLabel(pick.dir)}</b> <span className="opacity-80">({pick.confidence}%)</span>
             </span>
           )}
         </div>
 
-        {/* NEWS DIGEST */}
+        {/* PRICE CHANGE INFO */}
         <div className="mb-3 min-h-[84px] max-h-[110px] overflow-hidden sm:min-h-[72px] sm:max-h-[96px]">
-          {loading && !effectiveDigest && (
-            <div className="animate-pulse rounded-lg border border-slate-200 p-3 text-xs text-slate-600">
-              Ładuję skrót z News…
+          {priceLoading && (
+            <div className="animate-pulse rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-white/60">
+              Ładuję informacje o cenie…
             </div>
           )}
 
-          {!loading && effectiveDigest && (
-            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-600">
+          {!priceLoading && price !== null && (
+            <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-white/70">Cena override</span>
+                <span className="text-sm font-semibold text-white">{price.toFixed(price < 10 ? 2 : price < 100 ? 2 : 0)}</span>
+              </div>
+              {change !== null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/70">Zmiana od startu</span>
+                  <span
+                    className={`text-sm font-semibold ${
+                      change > 0.3
+                        ? 'text-emerald-300'
+                        : change < -0.3
+                        ? 'text-rose-300'
+                        : 'text-yellow-300'
+                    }`}
+                  >
+                    {change > 0 ? '↑' : change < 0 ? '↓' : '↔'} {Math.abs(change).toFixed(2)}%
+                  </span>
+                </div>
+              )}
+              {change === null && (
+                <div className="text-xs text-white/60 mt-1">
+                  Czekam na pierwszą aktualizację ceny w adminie...
+                </div>
+              )}
+            </div>
+          )}
+
+          {!priceLoading && price === null && effectiveDigest && effectiveDigest.length > 0 && (
+            <ul className="list-disc space-y-1 pl-5 text-sm text-white/80">
               {effectiveDigest.slice(0, 3).map((n, i) => (
-                <li key={i} className="marker:text-slate-400">
+                <li key={i} className="marker:text-white/40">
                   {n.link ? (
                     <a
                       href={n.link}
                       target="_blank"
                       rel="noreferrer"
-                      className="hover:underline"
+                      className="hover:underline hover:text-white"
                       title={n.source || 'Źródło'}
                     >
                       {n.title}
@@ -244,9 +280,9 @@ export default function ChallengeCard({
             </ul>
           )}
 
-          {!loading && !effectiveDigest && (
-            <div className="rounded-lg border border-dashed border-slate-200 p-3 text-xs text-slate-600">
-              Brak skrótu z News — pojawi się automatycznie, gdy system zbierze nagłówki.
+          {!priceLoading && price === null && (!effectiveDigest || effectiveDigest.length === 0) && (
+            <div className="rounded-lg border border-dashed border-white/10 bg-white/5 p-3 text-xs text-white/60">
+              Ustaw override ceny dla {ticker} w panelu admina, aby śledzić zmiany.
             </div>
           )}
         </div>
@@ -255,14 +291,14 @@ export default function ChallengeCard({
         <div className="mt-auto" />
 
         {/* CONTROLS */}
-        <div className="border-t border-slate-200 pt-3">
+        <div className="border-t border-white/10 pt-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => handlePick('up')}
-                className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 md:py-2"
+                className="rounded-xl border border-emerald-500/30 bg-emerald-500/20 px-3 py-3 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed md:py-2 transition-colors"
                 title="Wybierz: wzrost"
               >
                 ↑ Wzrost
@@ -271,7 +307,7 @@ export default function ChallengeCard({
                 type="button"
                 disabled={disabled}
                 onClick={() => handlePick('flat')}
-                className="rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-3 text-sm font-semibold text-yellow-700 hover:bg-yellow-100 disabled:opacity-50 md:py-2"
+                className="rounded-xl border border-yellow-500/30 bg-yellow-500/20 px-3 py-3 text-sm font-semibold text-yellow-300 hover:bg-yellow-500/30 disabled:opacity-50 disabled:cursor-not-allowed md:py-2 transition-colors"
                 title="Wybierz: bez zmian (↔)"
               >
                 ↔ Bez zmian
@@ -280,7 +316,7 @@ export default function ChallengeCard({
                 type="button"
                 disabled={disabled}
                 onClick={() => handlePick('down')}
-                className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50 md:py-2"
+                className="rounded-xl border border-rose-500/30 bg-rose-500/20 px-3 py-3 text-sm font-semibold text-rose-300 hover:bg-rose-500/30 disabled:opacity-50 disabled:cursor-not-allowed md:py-2 transition-colors"
                 title="Wybierz: spadek"
               >
                 ↓ Spadek
@@ -288,8 +324,8 @@ export default function ChallengeCard({
             </div>
 
             <div className="grid w-full gap-1 md:w-64">
-              <label className="text-xs text-slate-600">
-                Pewność prognozy: <span className="font-medium">{confidence}%</span>
+              <label className="text-xs text-white/70">
+                Pewność prognozy: <span className="font-medium text-white">{confidence}%</span>
                 {suggested !== null && (
                   <span className="ml-1 text-[11px] opacity-70">(Sugestia AI: {suggested}%)</span>
                 )}
@@ -302,7 +338,7 @@ export default function ChallengeCard({
                 value={confidence}
                 onChange={(e) => setConfidence(Number(e.target.value))}
                 disabled={disabled}
-                className="accent-blue-400"
+                className="accent-indigo-500"
                 aria-label="Pewność prognozy"
                 title="50–90% (Sugestia AI to start – możesz zmienić)"
               />
@@ -318,9 +354,9 @@ export default function ChallengeCard({
 
 function StatusBadge({ status }: { status: ChallengeStatus }) {
   const map: Record<ChallengeStatus, { label: string; cls: string }> = {
-    open: { label: 'otwarte', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    settling: { label: 'rozliczanie', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-    closed: { label: 'zakończone', cls: 'bg-slate-100 text-slate-600 border-slate-200' },
+    open: { label: 'otwarte', cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+    settling: { label: 'rozliczanie', cls: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
+    closed: { label: 'zakończone', cls: 'bg-white/10 text-white/70 border-white/10' },
   };
   const { label, cls } = map[status];
   return (

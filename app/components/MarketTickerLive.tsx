@@ -155,7 +155,22 @@ export default function MarketTickerLive({
               baseRef.current[sym] = price;
             }
             const base = baseRef.current[sym];
-            const changePct = base > 0 ? ((price - base) / base) * 100 : 0;
+            let changePct = base > 0 ? ((price - base) / base) * 100 : 0;
+            
+            // Walidacja: ogranicz nierealistyczne zmiany (max ±15% dla ropy, ±5% dla forex, ±10% dla innych)
+            const isOil = sym.includes('WTICO') || sym.includes('BCO');
+            const isForex = sym.includes('EUR') || sym.includes('USD') || sym.includes('JPY') || sym.includes('GBP');
+            const maxChange = isOil ? 15 : isForex ? 5 : 10;
+            
+            if (Math.abs(changePct) > maxChange) {
+              // Jeśli zmiana jest nierealistyczna, zachowaj poprzednią wartość lub ogranicz
+              const prevRow = prev[sym];
+              if (prevRow && Math.abs(prevRow.changePct) <= maxChange) {
+                changePct = prevRow.changePct;
+              } else {
+                changePct = Math.max(-maxChange, Math.min(maxChange, changePct));
+              }
+            }
 
             next[sym] = {
               label: item.label,

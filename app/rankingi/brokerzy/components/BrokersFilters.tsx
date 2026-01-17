@@ -43,7 +43,7 @@ export default function BrokersFilters({
   );
 
   return (
-    <div className="rounded-2xl bg-[#0b1220] border border-white/10 p-4 space-y-3">
+    <div className="rounded-2xl bg-[#0b1220] border border-white/10 p-4 space-y-3 relative">
       <div>
         <label className="block text-sm text-white/70 mb-2">Wyszukaj po nazwie / platformie / rynku</label>
         <input
@@ -77,6 +77,13 @@ export default function BrokersFilters({
           <option value="education">Najwięcej edukacji</option>
           <option value="lowCosts">Najniższe koszty (deklarowane)</option>
         </select>
+        <a
+          href="#blacklist"
+          className="absolute bottom-4 right-4 flex items-center justify-center px-2 py-1 bg-red-500 hover:bg-red-600 rounded text-white text-xs font-semibold transition-colors whitespace-nowrap"
+          title="Czarna lista"
+        >
+          BLACKLIST
+        </a>
       </div>
     </div>
   );

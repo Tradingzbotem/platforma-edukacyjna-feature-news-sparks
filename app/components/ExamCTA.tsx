@@ -8,36 +8,25 @@ type Props = {
 
 export default function ExamCTA({ slug }: Props) {
   const hrefMap: Record<Props['slug'], string> = {
-    knf: '/quizy/egzaminy/knf',
-    cysec: '/quizy/egzaminy/cysec',
-    przewodnik: '/quizy/egzaminy/przewodnik',
+    knf: '/kursy/egzaminy/knf/egzamin',
+    cysec: '/kursy/egzaminy/cysec/egzamin',
+    przewodnik: '/kursy/egzaminy/przewodnik/egzamin',
   };
 
   const titleMap: Record<Props['slug'], string> = {
-    knf: 'Egzamin próbny KNF (demo)',
-    cysec: 'Egzamin próbny CySEC (demo)',
-    przewodnik: 'Egzamin próbny – przewodnik (demo)',
-  };
-
-  const openPro = () => {
-    alert('Wersja PRO: pełny egzamin próbny + raport z błędami.');
+    knf: 'Egzamin próbny KNF',
+    cysec: 'Egzamin próbny CySEC',
+    przewodnik: 'Egzamin próbny – przewodnik',
   };
 
   return (
-    <div className="mt-8 grid gap-4 sm:grid-cols-2">
+    <div className="mt-8">
       <Link
         href={hrefMap[slug]}
-        className="inline-flex items-center justify-center rounded-xl bg-white text-slate-900 font-semibold px-4 py-2 hover:opacity-90"
+        className="inline-flex items-center justify-center rounded-xl bg-white text-slate-900 font-semibold px-6 py-3 hover:opacity-90 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
       >
         {titleMap[slug]}
       </Link>
-
-      <button
-        onClick={openPro}
-        className="inline-flex items-center justify-center rounded-xl bg-white/10 border border-white/10 px-4 py-2 hover:bg-white/20"
-      >
-        Odblokuj wersję PRO
-      </button>
     </div>
   );
 }

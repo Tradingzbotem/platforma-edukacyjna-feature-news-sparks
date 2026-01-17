@@ -230,6 +230,32 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     updatedAt: new Date().toISOString(),
   },
   {
+    asset: 'US500',
+    timeframe: 'D1',
+    context:
+      'Na interwale dziennym S&P 500 pozostaje w trendzie zależnym od stóp i wyników. Edukacyjny układ bez sygnałów.',
+    levels: [5400, 5320, 5250, 5140],
+    scenarioA: {
+      if: 'Akceptacja powyżej 5320 przy spokojnym VIX i szerokim breadth.',
+      invalidation: 'Domknięcia pod 5250 bez szybkiego odkupienia.',
+      confirmations: 'Lepsze wyniki mega-capów, stabilne rentowności, brak podaży na wybiciach.',
+      riskNotes: 'Sezon wyników bywa zmienny; potrzebne potwierdzenia z breadth.',
+    },
+    scenarioB: {
+      if: 'Konsolidacja 5250–5320 przed kluczowymi danymi lub wynikami.',
+      invalidation: 'Trwałe wyjście z zakresu bez powrotu.',
+      confirmations: 'Wygaszanie zmienności, mniejsze świece, respekt stref.',
+      riskNotes: 'Wybicia na nagłówkach bywają krótkie bez konfluencji.',
+    },
+    scenarioC: {
+      if: 'Presja risk-off i zejście pod 5250 kierują uwagę na 5140.',
+      invalidation: 'Szybki powrót ponad 5320 i akceptacja.',
+      confirmations: 'Wyższy VIX, mocniejszy USD, rotacja do defensywy.',
+      riskNotes: 'Zwroty w drugiej części sesji są możliwe.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
     asset: 'DE40',
     timeframe: 'H4',
     context:
@@ -252,6 +278,32 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
       invalidation: 'Powrót ponad 18450 i brak presji podaży.',
       confirmations: 'Słabsze PMI, większy DXY, zjazdy na ryzyku.',
       riskNotes: 'Ruchy bywają poszarpane w okolicach publikacji.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    asset: 'DE40',
+    timeframe: 'D1',
+    context:
+      'Na D1 DAX odzwierciedla oczekiwania wobec EZ i krzywej bundów. Edukacyjny, bez sygnałów.',
+    levels: [18800, 18600, 18250, 17950],
+    scenarioA: {
+      if: 'Akceptacja powyżej 18600 przy stabilnych PMI i poprawie sentymentu w EZ.',
+      invalidation: 'Domknięcie pod 18250 i brak szybkiego powrotu.',
+      confirmations: 'Lepsze PMI, spokojniejsze bundy, rotacja do cyklicznych.',
+      riskNotes: 'Wrażliwość na USD i dane z USA pozostaje wysoka.',
+    },
+    scenarioB: {
+      if: 'Konsolidacja 18250–18600 w oczekiwaniu na dane/posiedzenia EBC.',
+      invalidation: 'Wybicie z akceptacją poza zakres.',
+      confirmations: 'Niższa zmienność, wąskie korpusy, respekt poziomów.',
+      riskNotes: 'Wybicia na danych bywają fałszywe bez potwierdzeń.',
+    },
+    scenarioC: {
+      if: 'Przy pogorszeniu koniunktury zejście pod 18250 kieruje uwagę na 17950.',
+      invalidation: 'Powrót nad 18600 i uspokojenie świec.',
+      confirmations: 'Słabsze PMI, mocniejszy USD, risk-off na ryzyku.',
+      riskNotes: 'Zwroty po nagłówkach makro są możliwe.',
     },
     updatedAt: new Date().toISOString(),
   },
@@ -309,6 +361,32 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     updatedAt: new Date().toISOString(),
   },
   {
+    asset: 'XAUUSD',
+    timeframe: 'H4',
+    context:
+      'Na H4 złoto reaguje na real yields i USD; układ edukacyjny bez sygnałów.',
+    levels: [2335, 2310, 2290, 2268],
+    scenarioA: {
+      if: 'Spadek real yields i słabszy USD, utrzymanie nad 2310.',
+      invalidation: 'Akceptacja pod 2290 bez reakumulacji.',
+      confirmations: 'Popyt w metalach, spokojniejsze świece, risk-off w akcjach.',
+      riskNotes: 'Publikacje CPI/NFP potrafią odwracać ruchy intraday.',
+    },
+    scenarioB: {
+      if: 'Konsolidacja 2290–2310 przed danymi i brak kierunku.',
+      invalidation: 'Trwałe wybicie poza zakres i brak powrotu.',
+      confirmations: 'Malejąca zmienność, węższe korpusy.',
+      riskNotes: 'Fałszywe wybicia w oknie danych się zdarzają.',
+    },
+    scenarioC: {
+      if: 'Przy mocniejszym USD spadek pod 2290 kieruje uwagę na 2268.',
+      invalidation: 'Powrót nad 2310 i brak podaży na retestach.',
+      confirmations: 'Wyższy DXY, podaż na metalach.',
+      riskNotes: 'Zwroty po nagłówkach geopolitycznych są możliwe.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  {
     asset: 'WTI',
     timeframe: 'H4',
     context:
@@ -331,6 +409,33 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
       invalidation: 'Szybki powrót ponad 82.',
       confirmations: 'Mocniejszy USD, słabsze ryzyko, większe czerwone świece.',
       riskNotes: 'Zwroty intraday zdarzają się po nagłówkach.',
+    },
+    updatedAt: new Date().toISOString(),
+  },
+  // ───────────── FX (rozszerzenia TF) ─────────────
+  {
+    asset: 'EURUSD',
+    timeframe: 'H1',
+    context:
+      'EURUSD na H1 wrażliwy na intraday dane i komentarze; edukacyjny układ.',
+    levels: ['1.1050', '1.1000', '1.0950', '1.0900'],
+    scenarioA: {
+      if: 'Akceptacja ponad 1.1000 przy słabszym DXY i stabilnych rentownościach.',
+      invalidation: 'Domknięcie pod 1.0950 bez powrotu.',
+      confirmations: 'Słabszy DXY, risk-on, spokojniejsze świece.',
+      riskNotes: 'W oknie danych CPI/PMI zdarzają się fałszywe wybicia.',
+    },
+    scenarioB: {
+      if: 'Konsolidacja 1.0950–1.1000 bez impulsu.',
+      invalidation: 'Wyjście z akceptacją i brak powrotu.',
+      confirmations: 'Zwężenie ATR, wąskie świece, respekt poziomów.',
+      riskNotes: 'Nagłe komentarze banków centralnych potrafią rozerwać zakres.',
+    },
+    scenarioC: {
+      if: 'Przy mocniejszym USD zejście pod 1.0950 może celować w 1.0900.',
+      invalidation: 'Powrót ponad 1.1000 i akceptacja.',
+      confirmations: 'Wyższy DXY, słabsze indeksy europejskie.',
+      riskNotes: 'Zwroty intraday częste po danych.',
     },
     updatedAt: new Date().toISOString(),
   },

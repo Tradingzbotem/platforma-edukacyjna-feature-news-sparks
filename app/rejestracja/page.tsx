@@ -98,6 +98,7 @@ export default function Page() {
   const [pass, setPass] = useState('');
   const [pass2, setPass2] = useState('');
   const [agree, setAgree] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
 
   const [showPass, setShowPass] = useState(false);
   const [showPass2, setShowPass2] = useState(false);
@@ -184,23 +185,45 @@ export default function Page() {
           <section className="order-2 lg:order-1">
             <h1 className="text-3xl md:text-4xl font-bold">Załóż konto</h1>
             <p className="text-white/70 mt-2">
-              Dołącz za darmo i odblokuj śledzenie postępów, quizy, checklisty oraz egzamin próbny.
+              Rozpocznij naukę rynków finansowych z dostępem do kursów, quizów, materiałów edukacyjnych oraz ścieżek przygotowujących do egzaminów regulacyjnych.
             </p>
 
             <div className="mt-6 space-y-3">
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <h3 className="font-semibold">Co zyskasz?</h3>
+                <h3 className="font-semibold">Co otrzymujesz?</h3>
                 <ul className="mt-2 list-disc pl-5 text-slate-300 space-y-1">
-                  <li>Zapisywanie postępów w kursach i quizach.</li>
-                  <li>Pełne wersje ścieżek (np. KNF, CySEC) i materiały do pobrania.</li>
-                  <li>Wkrótce: tablica wyników i certyfikaty ukończenia.</li>
+                  <li>Dostęp do kursów: Forex, CFD, Zaawansowane oraz Regulacje i egzaminy.</li>
+                  <li>Quizy sprawdzające wiedzę z zakresu podstaw, rynków i regulacji (KNF, CySEC, MiFID II).</li>
+                  <li>Śledzenie postępów w nauce i zapisywanie wyników testów.</li>
+                  <li>Pełne ścieżki przygotowujące do egzaminów regulacyjnych z materiałami do pobrania.</li>
                 </ul>
               </div>
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <h3 className="font-semibold">Bezpieczeństwo</h3>
+                <h3 className="font-semibold">Płatne pakiety wsparcia</h3>
+                <p className="mt-2 text-slate-300 text-sm mb-2">
+                  Rozszerz swoją naukę o dodatkowe narzędzia edukacyjne dostępne w pakietach:
+                </p>
+                <ul className="mt-2 list-disc pl-5 text-slate-300 space-y-1 text-sm">
+                  <li><strong>STARTER EDU</strong> — kalendarz wydarzeń, scenariusze A/B/C, checklisty decyzyjne</li>
+                  <li><strong>PRO EDU</strong> — wszystko ze Starter + mapy techniczne, playbooki eventowe, analizy makro</li>
+                  <li><strong>ELITE EDU</strong> — wszystko z Pro + Coach AI oraz raporty miesięczne</li>
+                </ul>
+                <p className="mt-3 text-xs text-slate-400">
+                  Szczegóły pakietów znajdziesz w{' '}
+                  <Link href="/cennik" className="underline hover:no-underline text-slate-300">
+                    cenniku
+                  </Link>
+                  {' '}lub{' '}
+                  <Link href="/kontakt?topic=zakup-pakietu" className="underline hover:no-underline text-slate-300">
+                    skontaktuj się z nami
+                  </Link>
+                  .
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <h3 className="font-semibold">Bezpieczeństwo danych</h3>
                 <p className="mt-2 text-slate-300 text-sm">
-                  Nigdy nie udostępniamy Twoich danych osobom trzecim. Hasła są przechowywane w
-                  postaci zaszyfrowanej.
+                  Twoje dane są chronione zgodnie z najlepszymi praktykami bezpieczeństwa. Hasła przechowujemy w postaci zaszyfrowanej i nie udostępniamy informacji osobom trzecim.
                 </p>
               </div>
             </div>
@@ -348,6 +371,20 @@ export default function Page() {
                     politykę prywatności
                   </a>
                   .
+                </span>
+              </label>
+
+              <label className="mt-3 flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="accent-white mt-0.5"
+                  checked={marketingConsent}
+                  onChange={(e) => setMarketingConsent(e.target.checked)}
+                  name="marketing_consent"
+                  value="1"
+                />
+                <span className="text-white/70">
+                  Chcę otrzymywać informacje o nowych kursach, materiałach edukacyjnych i ofertach specjalnych (zgoda opcjonalna, można ją w każdej chwili wycofać).
                 </span>
               </label>
 

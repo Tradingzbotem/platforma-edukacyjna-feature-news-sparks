@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LESSONS, type LessonMeta } from "./data";
 
 const AUTH_KEY = 'auth:pro';
@@ -17,7 +18,7 @@ function LockOverlay({ show }:{show:boolean}) {
       <div className="text-3xl">🔒</div>
       <p className="mt-2 text-center text-slate-200">Moduł dla zalogowanych (lub DEV odblokuj).</p>
       <div className="mt-3 flex gap-3">
-        <Link href="/konto" className="px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90">Zaloguj / Zarejestruj</Link>
+        <Link href="/logowanie" className="px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90">Zaloguj / Zarejestruj</Link>
         <button onClick={()=>{localStorage.setItem(AUTH_KEY,'1');location.reload();}} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">Odblokuj (DEV)</button>
       </div>
     </div>
@@ -25,18 +26,59 @@ function LockOverlay({ show }:{show:boolean}) {
 }
 
 export default function Page(){
+  const router = useRouter();
   const [isPro,setIsPro]=useState(false);
   const [active,setActive]=useState<string>(LESSONS[0].slug);
   const [done,setDone]=useState<string[]>([]);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  // Sprawdź autoryzację po stronie klienta
+  useEffect(() => {
+    let isActive = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/session', {
+          cache: 'no-store',
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          if (isActive) router.push('/logowanie');
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!Boolean((data as any)?.isLoggedIn)) {
+          if (isActive) router.push('/logowanie');
+          return;
+        }
+        if (isActive) setIsAuthChecked(true);
+      } catch {
+        if (isActive) router.push('/logowanie');
+      }
+    })();
+    return () => { isActive = false; };
+  }, [router]);
+
   useEffect(()=>{ setIsPro(localStorage.getItem(AUTH_KEY)==='1');
     const raw=localStorage.getItem(PROGRESS_KEY); if(raw) setDone(JSON.parse(raw));},[]);
-  const lesson=LESSONS.find(l=>l.slug===active)!; const locked=!isPro && !!(lesson as any).pro;
+
+  // Wszystkie hooki muszą być przed warunkowym returnem
+  const lesson=LESSONS.find(l=>l.slug===active)!;
+  const locked=false; // Odblokowane - wszystkie treści dostępne po zalogowaniu
   const progress=useMemo(()=>Math.round(done.length/LESSONS.length*100),[done]);
   const toggle=()=>{ const key = lesson.slug; const next=done.includes(key)?done.filter(x=>x!==key):Array.from(new Set([...done,key]));
     setDone(next); localStorage.setItem(PROGRESS_KEY,JSON.stringify(next)); };
 
+  if (!isAuthChecked) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="text-center">Sprawdzanie dostępu...</div>
+      </main>
+    );
+  }
+
   return (
-    <main className="mx-auto max-w-6xl p-6 md:p-8 text-white">
+    <main className="min-h-screen bg-slate-950 text-white">
+      <div className="mx-auto max-w-6xl p-6 md:p-8 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <Link href="/kursy" className="text-sm underline">← Wróć do kursów</Link>
@@ -54,29 +96,23 @@ export default function Page(){
         <Card>
           <h2 className="text-lg font-semibold">Program kursu</h2>
           <ul className="mt-4 space-y-2">
-            {LESSONS.map(l=>{
-              const activeNow=l.slug===active; const isLocked=!isPro && !!(l as any).pro; const isDone=done.includes(l.slug);
+            {LESSONS.map((lesson, index) => {
+              const activeNow = lesson.slug === active;
+              const isDone = done.includes(lesson.slug);
               return (
-                <li key={l.slug}>
-                  <button onClick={()=>setActive(l.slug)} className={`w-full text-left rounded-xl px-3 py-2 border ${activeNow?'bg-white text-slate-900 border-white':'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                <li key={`${lesson.slug}-${index}`}>
+                  <button onClick={() => setActive(lesson.slug)} className={`w-full text-left rounded-xl px-3 py-2 border transition-all duration-200 ${activeNow ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-200 shadow-md' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:shadow-sm text-white'}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm">{l.title}</span>
-                        {!((l as any).pro) && <span className="text-xs rounded bg-emerald-500/20 border border-emerald-400/30 px-1.5 py-0.5">preview</span>}
-                        {isLocked && <span title="lock">🔒</span>}
+                        <span className="text-sm">{lesson.title}</span>
                       </div>
-                      <span className="text-xs text-slate-300">{l.minutes} min {isDone?'• ✓':''}</span>
+                      <span className="text-xs text-slate-300">{lesson.minutes} min {isDone ? '• ✓' : ''}</span>
                     </div>
                   </button>
                 </li>
-              );})}
+              );
+            })}
           </ul>
-          {!isPro && (
-            <div className="mt-4 space-y-2">
-              <Link href="/konto" className="w-full inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90">Zarejestruj i odblokuj</Link>
-              <button onClick={()=>{localStorage.setItem(AUTH_KEY,'1');setIsPro(true);}} className="w-full px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">Odblokuj (DEV)</button>
-            </div>
-          )}
         </Card>
 
         <div className="relative">
@@ -104,12 +140,19 @@ export default function Page(){
               </ul>
             </Card>
             <Card>
-              <h3 className="text-lg font-semibold">Egzamin próbny</h3>
-              <p className="text-slate-300">15–20 pytań, wyjaśnienia, wynik.</p>
-              <div className="mt-3"><Link href="/kursy/egzaminy/przewodnik/egzamin" className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 inline-block">Uruchom test</Link></div>
+              <h3 className="text-lg font-semibold">Egzaminy</h3>
+              <p className="text-slate-300">5 wersji testów po 20 pytań każda, wyjaśnienia, wyniki.</p>
+              <div className="mt-3 space-y-2">
+                <Link href="/kursy/egzaminy/przewodnik/egzamin?v=1" className="block px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-200 hover:shadow-md text-sm">Wersja 1: Podstawy regulacyjne</Link>
+                <Link href="/kursy/egzaminy/przewodnik/egzamin?v=2" className="block px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-200 hover:shadow-md text-sm">Wersja 2: Ochrona klienta i testy</Link>
+                <Link href="/kursy/egzaminy/przewodnik/egzamin?v=3" className="block px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-200 hover:shadow-md text-sm">Wersja 3: Marketing i compliance</Link>
+                <Link href="/kursy/egzaminy/przewodnik/egzamin?v=4" className="block px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-200 hover:shadow-md text-sm">Wersja 4: Best Execution i konflikty</Link>
+                <Link href="/kursy/egzaminy/przewodnik/egzamin?v=5" className="block px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-200 hover:shadow-md text-sm">Wersja 5: Materiały i egzamin</Link>
+              </div>
             </Card>
           </div>
         </div>
+      </div>
       </div>
     </main>
   );

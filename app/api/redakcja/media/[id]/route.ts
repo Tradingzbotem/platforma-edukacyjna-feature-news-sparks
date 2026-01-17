@@ -1,19 +1,21 @@
 import { NextResponse } from 'next/server';
 import { getIsAdmin } from '@/lib/admin';
 import { getPrisma } from '@/lib/prisma';
-import { updateFallbackMediaAsset } from '@/lib/redakcja/mediaFallbackStore';
+import { deleteFallbackMediaAsset, updateFallbackMediaAsset } from '@/lib/redakcja/mediaFallbackStore';
 import { isDatabaseConfigured } from '@/lib/db';
-import { ensureMediaAssetTable } from '@/lib/redakcja/ensureDb';
+import { ensureMediaAssetBlobTable, ensureMediaAssetTable } from '@/lib/redakcja/ensureDb';
 import { sql } from '@vercel/postgres';
+import fs from 'fs';
 
 export const runtime = 'nodejs';
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: Request, { params }: Params) {
 	const isAdmin = await getIsAdmin();
 	if (!isAdmin) return NextResponse.json({ ok: false, error: 'FORBIDDEN', message: 'Forbidden' }, { status: 403 });
 	const prisma = getPrisma();
+	const { id } = await params;
 	try {
 		const data = await req.json().catch(() => ({}));
 		const alt = typeof data?.alt === 'string' ? data.alt : undefined;
@@ -26,7 +28,7 @@ export async function PATCH(req: Request, { params }: Params) {
 				: undefined;
 		if (prisma) {
 			const updated = await prisma.mediaAsset.update({
-				where: { id: params.id },
+				where: { id },
 				data: {
 					...(alt !== undefined ? { alt } : {}),
 					...(notes !== undefined ? { notes } : {}),
@@ -40,13 +42,13 @@ export async function PATCH(req: Request, { params }: Params) {
 				await ensureMediaAssetTable();
 				// Perform safe sequential updates for provided fields
 				if (alt !== undefined) {
-					await sql`UPDATE "MediaAsset" SET alt = ${alt}, "updatedAt" = NOW() WHERE id = ${params.id}`;
+					await sql`UPDATE "MediaAsset" SET alt = ${alt}, "updatedAt" = NOW() WHERE id = ${id}`;
 				}
 				if (notes !== undefined) {
-					await sql`UPDATE "MediaAsset" SET notes = ${notes}, "updatedAt" = NOW() WHERE id = ${params.id}`;
+					await sql`UPDATE "MediaAsset" SET notes = ${notes}, "updatedAt" = NOW() WHERE id = ${id}`;
 				}
 				if (archived !== undefined) {
-					await sql`UPDATE "MediaAsset" SET "isArchived" = ${archived}, "updatedAt" = NOW() WHERE id = ${params.id}`;
+					await sql`UPDATE "MediaAsset" SET "isArchived" = ${archived}, "updatedAt" = NOW() WHERE id = ${id}`;
 				}
 				const { rows } = await sql<{
 					id: string;
@@ -62,7 +64,7 @@ export async function PATCH(req: Request, { params }: Params) {
 				}>`
           SELECT id, url, pathname, "contentType", size, alt, notes, "isArchived", "createdAt", "updatedAt"
           FROM "MediaAsset"
-          WHERE id = ${params.id}
+          WHERE id = ${id}
           LIMIT 1
         `;
 				const updated = rows[0];
@@ -72,7 +74,7 @@ export async function PATCH(req: Request, { params }: Params) {
 				// fall through to file-based
 			}
 		}
-		const updated = await updateFallbackMediaAsset(params.id, { alt, notes, archived });
+		const updated = await updateFallbackMediaAsset(id, { alt, notes, archived });
 		if (!updated) return NextResponse.json({ ok: false, error: 'NOT_FOUND', message: 'Not found' }, { status: 404 });
 		return NextResponse.json({ ok: true, ...updated });
 	} catch {
@@ -80,6 +82,62 @@ export async function PATCH(req: Request, { params }: Params) {
 	}
 }
 
-// No DELETE: media are never hard-deleted (history preserved).
+export async function DELETE(_req: Request, { params }: Params) {
+	const isAdmin = await getIsAdmin();
+	if (!isAdmin) return NextResponse.json({ ok: false, error: 'FORBIDDEN', message: 'Forbidden' }, { status: 403 });
+	const prisma = getPrisma();
+	const { id } = await params;
+	try {
+		if (prisma) {
+			try {
+				await prisma.$executeRaw`DELETE FROM "MediaAssetBlob" WHERE id = ${id}`;
+			} catch {
+				// ignore blob deletion errors
+			}
+			try {
+				const deleted = await prisma.mediaAsset.delete({ where: { id } });
+				return NextResponse.json({ ok: true, ...deleted });
+			} catch {
+				// fall through to SQL/fallback
+			}
+		}
+		if (isDatabaseConfigured()) {
+			try {
+				await ensureMediaAssetTable();
+				await ensureMediaAssetBlobTable();
+				const existing = await sql<{ pathname: string | null }>`
+          SELECT pathname
+          FROM "MediaAsset"
+          WHERE id = ${id}
+          LIMIT 1
+        `;
+				const res = await sql<{ id: string }>`
+          DELETE FROM "MediaAsset"
+          WHERE id = ${id}
+          RETURNING id
+        `;
+				await sql`DELETE FROM "MediaAssetBlob" WHERE id = ${id}`;
+				const deletedId = res.rows[0]?.id;
+				if (!deletedId) return NextResponse.json({ ok: false, error: 'NOT_FOUND', message: 'Not found' }, { status: 404 });
+				const pathname = existing.rows[0]?.pathname;
+				if (pathname) {
+					try {
+						fs.unlinkSync(pathname);
+					} catch {
+						// ignore missing file
+					}
+				}
+				return NextResponse.json({ ok: true, id: deletedId });
+			} catch {
+				// fall through to file-based store
+			}
+		}
+		const removed = await deleteFallbackMediaAsset(id);
+		if (!removed) return NextResponse.json({ ok: false, error: 'NOT_FOUND', message: 'Not found' }, { status: 404 });
+		return NextResponse.json({ ok: true, ...removed });
+	} catch {
+		return NextResponse.json({ ok: false, error: 'DELETE_FAILED', message: 'Delete failed' }, { status: 500 });
+	}
+}
 
 

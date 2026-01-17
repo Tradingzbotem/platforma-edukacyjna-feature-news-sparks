@@ -123,12 +123,12 @@ export default async function ArticlePage({ params }: Params) {
 				</div>
 			</header>
 
-			<div className="relative mb-6 h-60 w-full overflow-hidden rounded-lg border border-zinc-800">
+			<div className="relative mb-6 w-full aspect-video overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900">
 				<CoverImage
 					src={coverUrl}
 					alt={article.title}
 					fill
-					className="object-cover"
+					className="object-contain"
 					sizes="(max-width: 768px) 100vw, 768px"
 					priority={false}
 				/>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { QuizPack } from '@/data/quizzes';
 import { QUIZZES } from '@/data/quizzes';
 import { QuizListClient } from '@/components/QuizListClient';
+import AccessGuard from '../components/AccessGuard';
 
 type CardMeta = {
   slug: string;
@@ -39,7 +40,7 @@ function getCount(slug: string): number {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm text-white/80">
+    <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 px-3 py-2 text-sm text-white/80 shadow-sm hover:shadow-md transition-all duration-200">
       <span className="text-white font-semibold">{value}</span>{' '}
       <span className="text-white/60">{label}</span>
     </div>
@@ -75,28 +76,30 @@ export default async function Page({
   const totalQuestions = CARDS.reduce((acc, c) => acc + getCount(c.slug), 0);
 
   return (
-    <main className="mx-auto max-w-7xl p-6 md:p-8">
-      {/* Powrót */}
-      <nav className="mb-4">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10"
-        >
-          <span aria-hidden>←</span> Strona główna
-        </Link>
-      </nav>
+    <AccessGuard required="auth">
+      <main className="min-h-screen bg-slate-950 text-white">
+        <div className="mx-auto max-w-7xl p-6 md:p-8 animate-fade-in">
+        {/* Powrót */}
+        <nav className="mb-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 hover:scale-105 border border-white/10 transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            <span aria-hidden>←</span> Strona główna
+          </Link>
+        </nav>
 
-      {/* Nagłówek + statystyki */}
-      <header className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-semibold">Quizy</h1>
-        <p className="mt-2 text-slate-300">
-          <b>Tryb otwarty</b> — wszystkie dostępne quizy są odblokowane. Kliknij „Rozpocznij”, aby wejść.
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Stat label="dostępnych quizów" value={totalOpen + '/' + CARDS.length} />
-          <Stat label="pytań łącznie" value={totalQuestions} />
-        </div>
-      </header>
+        {/* Nagłówek + statystyki */}
+        <header className="mb-6">
+          <h1 className="text-3xl md:text-4xl font-semibold text-white">Quizy</h1>
+          <p className="mt-2 text-slate-300">
+            <b>Tryb otwarty</b> — wszystkie dostępne quizy są odblokowane. Kliknij „Rozpocznij”, aby wejść.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Stat label="dostępnych quizów" value={totalOpen + '/' + CARDS.length} />
+            <Stat label="pytań łącznie" value={totalQuestions} />
+          </div>
+        </header>
 
       <QuizListClient
         cards={cardsFiltered.map((c) => ({
@@ -108,6 +111,8 @@ export default async function Page({
           live: Boolean(getPack(c.slug)),
         }))}
       />
+      </div>
     </main>
+    </AccessGuard>
   );
 }

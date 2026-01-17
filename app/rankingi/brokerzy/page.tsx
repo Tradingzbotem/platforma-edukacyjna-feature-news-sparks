@@ -6,6 +6,7 @@ import BrokerCard from "./components/BrokerCard";
 import BrokersFilters, { type BrokersFiltersState, type BrokersSortKey } from "./components/BrokersFilters";
 import BrokerChecklistPanel from "./components/BrokerChecklistPanel";
 import BrokersFAQ from "./components/BrokersFAQ";
+import BlacklistSection from "./components/BlacklistSection";
 import { BROKERS, type Broker } from "../../../data/brokers";
 
 /* ───────────────────────── helpers ───────────────────────── */
@@ -85,14 +86,22 @@ export default function RankingsPage() {
     <main className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-10 space-y-8">
         {/* header */}
-        <header className="space-y-3">
-          <Link href="/" className="text-sm underline">← Strona główna</Link>
-          <h1 className="text-3xl sm:text-4xl font-bold">Rankingi brokerów (CFD / Forex)</h1>
-          <p className="text-white/80 leading-relaxed max-w-3xl">
-            Zebraliśmy znane marki działające na rynku CFD/Forex. <span className="font-semibold underline decoration-rose-300/70">To nie jest rekomendacja</span> ani porada inwestycyjna.
-            Warunki (spready, prowizje, finansowanie, opłaty) i dostępne rynki różnią się w zależności od kraju i typu rachunku.
-            <strong> Zawsze weryfikuj ofertę na oficjalnej stronie brokera oraz wymagania regulacyjne.</strong>
-          </p>
+        <header className="space-y-4">
+          <Link href="/" className="text-sm underline hover:text-white/80 transition">← Strona główna</Link>
+          <div className="space-y-3 text-center">
+            <h1 className="text-3xl sm:text-4xl font-bold">Rankingi brokerów (CFD / Forex)</h1>
+            <div className="space-y-2 text-white/80 leading-relaxed max-w-3xl mx-auto">
+              <p>
+                Zebraliśmy znane marki działające na rynku CFD/Forex. <span className="font-semibold underline decoration-rose-300/70">To nie jest rekomendacja</span> ani porada inwestycyjna.
+              </p>
+              <p>
+                Warunki (spready, prowizje, finansowanie, opłaty) i dostępne rynki różnią się w zależności od kraju i typu rachunku.
+              </p>
+              <p className="font-semibold text-white/90">
+                Zawsze weryfikuj ofertę na oficjalnej stronie brokera oraz wymagania regulacyjne.
+              </p>
+            </div>
+          </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <Card><p className="text-sm font-semibold mb-1">Weryfikuj regulację</p><p className="text-sm text-white/80">Sprawdź rejestry (np. UE/CySEC) i podmiot umowy.</p></Card>
             <Card><p className="text-sm font-semibold mb-1">Porównuj koszty</p><p className="text-sm text-white/80">Spread, prowizje, swapy, opłaty nieaktywności.</p></Card>
@@ -109,6 +118,57 @@ export default function RankingsPage() {
           sortKey={sortKey}
           onSortKeyChange={setSortKey}
         />
+
+        {/* Broker verification service callout */}
+        <div id="weryfikacja-fxedulab" className="scroll-mt-8">
+        <Link 
+          href="/kontakt?topic=ogolne&subject=Weryfikacja brokera"
+          className="block rounded-2xl border-2 border-blue-400/40 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 p-6 hover:border-blue-400/60 hover:from-blue-500/15 hover:to-indigo-500/15 transition-all"
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 rounded-xl bg-blue-500/20 p-3">
+              <svg className="w-6 h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-white mb-2">Chcesz zweryfikować brokera przed inwestycją?</h2>
+              <p className="text-white/90 mb-3 leading-relaxed">
+                Platforma fxedulab może sprawdzić wybranego przez Ciebie brokera. Jeśli planujesz inwestować u danego brokera i chcesz mieć pewność co do jego wiarygodności, napisz do nas. 
+                Zajmiemy się kompleksową weryfikacją i umieścimy taki podmiot na naszej liście z pełną oceną.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2 text-sm text-white/80 mb-4">
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-300 mt-0.5">✓</span>
+                  <span>Założenie konta i test platformy</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-300 mt-0.5">✓</span>
+                  <span>Weryfikacja wypłat i wpłat</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-300 mt-0.5">✓</span>
+                  <span>Test tradingu i warunków</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-300 mt-0.5">✓</span>
+                  <span>Ocena obsługi klienta</span>
+                </div>
+                <div className="flex items-start gap-2 sm:col-span-2">
+                  <span className="text-blue-300 mt-0.5">✓</span>
+                  <span>Weryfikacja biura i regulacji</span>
+                </div>
+              </div>
+              <div className="inline-flex items-center gap-2 text-blue-300 font-semibold hover:text-blue-200 transition">
+                <span>Napisz do nas i zamów weryfikację</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </Link>
+        </div>
 
         {/* mobile checklist */}
         <div className="lg:hidden">
@@ -137,6 +197,9 @@ export default function RankingsPage() {
           Handel instrumentami z dźwignią wiąże się z wysokim ryzykiem szybkiej utraty środków. Zanim założysz rachunek,
           sprawdź wymogi regulacyjne, koszty i ryzyka właściwe dla Twojej sytuacji i jurysdykcji.
         </div>
+
+        {/* Blacklist Section */}
+        <BlacklistSection />
 
         {/* FAQ */}
         <BrokersFAQ />

@@ -4,6 +4,7 @@ export const revalidate = 0;
 
 import { notFound } from 'next/navigation';
 import ExamRunner, { type ExamQuestion } from '@/components/ExamRunner';
+import AccessGuard from '@/app/components/AccessGuard';
 import * as CYSEC from '@/data/exams/cysec';
 
 function getMeta() {
@@ -24,15 +25,20 @@ export default function Page() {
     answers: q.options,
     correctIndex: q.correctIndex,
     explanation: q.explanation,
+    hint: q.hint,
   }));
 
   return (
-    <ExamRunner
-      slug="cysec"
-      title={meta.title}
-      questions={normalized}
-      backHref="/kursy/egzaminy/cysec"
-      /* isPro domyślnie false → wersja demo; ustaw isPro={true} jeśli chcesz pełny test */
-    />
+    <AccessGuard required="auth">
+      <ExamRunner
+        slug="cysec"
+        title={meta.title}
+        questions={normalized}
+        backHref="/kursy/egzaminy/cysec"
+        isPro={true}
+        durationMinutes={25}
+        description="Egzamin sprawdzający wiedzę z zakresu praktyki compliance, procesów operacyjnych i zarządzania ryzykiem zgodnie z wymogami CySEC. Skupia się na best execution, konfliktach interesów, KYC/AML oraz ochronie klienta."
+      />
+    </AccessGuard>
   );
 }

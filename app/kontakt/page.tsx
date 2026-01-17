@@ -8,10 +8,13 @@ export default function KontaktPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const MIN_MESSAGE_LEN = 10;
 
   const preset = useMemo(() => {
     const topicRaw = (searchParams?.get("topic") || "").toLowerCase();
     const plan = (searchParams?.get("plan") || "").toLowerCase();
+    const subjectFromQuery = (searchParams?.get("subject") || "").trim();
+    const messageFromQuery = (searchParams?.get("message") || "").trim();
 
     const topic =
       topicRaw === "rejestracja"
@@ -20,17 +23,20 @@ export default function KontaktPage() {
         ? "zakup-pakietu"
         : "ogolne";
 
-    const subject =
+    const subjectFromTopic =
       topic === "rejestracja"
         ? "Rejestracja"
         : topic === "zakup-pakietu"
         ? "Zakup pakietu" + (plan ? ` (${plan.toUpperCase()})` : "")
         : "Pytanie ogólne";
 
-    const message =
-      topic === "zakup-pakietu" && plan
-        ? `Dzień dobry,\n\nChcę kupić pakiet: ${plan.toUpperCase()}.\nProszę o kontakt.\n\nPozdrawiam,\n`
-        : "";
+    const subject = subjectFromQuery || subjectFromTopic;
+
+    const message = messageFromQuery
+      ? decodeURIComponent(messageFromQuery)
+      : topic === "zakup-pakietu" && plan
+      ? `Dzień dobry,\n\nChcę kupić pakiet: ${plan.toUpperCase()}.\nProszę o kontakt.\n\nPozdrawiam,\n`
+      : "";
 
     return { topic, subject, message };
   }, [searchParams]);
@@ -90,6 +96,13 @@ export default function KontaktPage() {
     e.preventDefault();
     setStatus("loading");
     setError(null);
+
+    // Client-side validation to avoid API 400 for too-short messages
+    if ((message || "").trim().length < MIN_MESSAGE_LEN) {
+      setStatus("error");
+      setError(`Wiadomość musi mieć co najmniej ${MIN_MESSAGE_LEN} znaków.`);
+      return;
+    }
 
     const form = e.currentTarget;
     const formData = new FormData(form);
@@ -226,12 +239,15 @@ export default function KontaktPage() {
                 id="message"
                 name="message"
                 required
+                minLength={MIN_MESSAGE_LEN}
                 rows={7}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-white/30"
               />
-              <div className="mt-1 text-xs text-white/50">{message.length}/5000</div>
+              <div className={`mt-1 text-xs ${message.length < MIN_MESSAGE_LEN ? "text-rose-400" : "text-white/50"}`}>
+                {message.length}/5000 {message.length < MIN_MESSAGE_LEN ? `(min. ${MIN_MESSAGE_LEN})` : ""}
+              </div>
             </div>
 
             <div className="flex items-start gap-3 text-sm">
@@ -270,6 +286,12 @@ export default function KontaktPage() {
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-white/80">Alternatywy</h3>
             <ul className="text-sm text-white/70 list-disc pl-5 space-y-1">
+              <li>
+                Email:{" "}
+                <a className="underline" href="mailto:kontakt@platforma-edukacyjna.com">
+                  kontakt@platforma-edukacyjna.com
+                </a>
+              </li>
               <li>FAQ: <Link href="/zasoby/faq" className="underline">Najczęstsze pytania</Link></li>
               <li>Regulamin: <Link href="/prawne/warunki-korzystania" className="underline">Warunki korzystania</Link></li>
               <li>Prywatność: <Link href="/prawne/polityka-prywatnosci" className="underline">Polityka prywatności</Link></li>

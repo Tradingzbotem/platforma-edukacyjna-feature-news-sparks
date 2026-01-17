@@ -20,6 +20,8 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     "Challenge": "Challenge",
     "News": "News",
     "Przejdź do treści": "Skip to content",
+    "Nowa wersja →": "New version →",
+    "← Stara wersja": "← Old version",
 
     // Hero
     "Decyzje oparte o potwierdzenia, nie emocje": "Decisions based on confirmations, not emotions",
@@ -88,6 +90,7 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     "Średniozaawansowany": "Intermediate",
     "Zaawansowany": "Advanced",
     "Rozpocznij": "Start",
+    "Test": "Test",
 
     // Home: decision strip aphorisms
     "Zasada cierpliwości": "Rule of patience",
@@ -111,12 +114,40 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
 
     // AI section
     "Bądź na bieżąco z AI": "Stay up to date with AI",
+    "Rynek na czas": "Timely market",
+    "RYNEK NA CZAS": "TIMELY MARKET",
+    "Rynek w pigułce: co dziś rusza ceny": "Market in a nutshell: what’s moving prices today",
     "Szybkie info od AI": "Quick updates from AI",
     "Na bieżąco skanujemy wiarygodne źródła i podajemy najważniejsze informacje, zwięźle i bez rekomendacji inwestycyjnych.":
       "We continuously scan credible sources and provide key information, concise and without investment recommendations.",
+    "Na bieżąco skanujemy wiarygodne źródła i podajemy najważniejsze informacje — zwięźle i bez rekomendacji inwestycyjnych.":
+      "We continuously scan credible sources and provide key information — concise and without investment recommendations.",
     "Odśwież teraz": "Refresh now",
     "Edukacyjnie — bez rekomendacji inwestycyjnych.":
       "Educational — no investment recommendations.",
+    "Dziś w pigułce": "Today in a nutshell",
+    "Kalendarz makro (godziny + wpływ)": "Macro calendar (times + impact)",
+    "Najważniejsze nagłówki (kontekst)": "Top headlines (context)",
+    "Poziomy techniczne (reakcje rynku)": "Technical levels (market reactions)",
+    "Zmienność / sentyment (krótko)": "Volatility / sentiment (short)",
+    "Wykresy dostarcza:": "Charts provided by:",
+    "Źródło wykresów na platformie.": "Chart source on the platform.",
+
+    // Homepage: broker verification (regulators)
+    "Weryfikacja brokera": "Broker verification",
+    "WERYFIKACJA BROKERA": "BROKER VERIFICATION",
+    "Sprawdź brokera zanim zainwestujesz": "Check your broker before you invest",
+    "Zweryfikuj licencję i ostrzeżenia w oficjalnych rejestrach nadzoru. Kliknij instytucję:":
+      "Verify licenses and warnings in official supervisory registers. Click an institution:",
+    "PL · Oficjalna strona": "PL · Official site",
+    "UK · Rejestr": "UK · Register",
+    "CY · Rejestr": "CY · Register",
+    "DE · Oficjalna strona": "DE · Official site",
+    "CH · Rejestr": "CH · Register",
+    "LU · Oficjalna strona": "LU · Official site",
+    "BE · Ostrzeżenia": "BE · Warnings",
+    "Linki mają charakter informacyjny. Serwis nie jest powiązany z regulatorami i nie stanowi rekomendacji ani doradztwa inwestycyjnego.":
+      "Links are informational. The site is not affiliated with regulators and does not constitute investment advice.",
 
     // CTA
     "Dołącz i odblokuj pełny program": "Join and unlock the full program",
@@ -1220,6 +1251,213 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     , "Porównaj pakiety": "Compare plans"
     , "Treści edukacyjne. Brak doradztwa inwestycyjnego.": "Educational content. No investment advice."
     , "Treści mają charakter edukacyjny i informacyjny. Nie stanowią rekomendacji inwestycyjnej ani doradztwa.": "Content is for educational and informational purposes. It does not constitute investment recommendations or advice."
+
+    // Homepage hero section
+    , "RYNEK NIE SPEŁNIA OCZEKIWAŃ. RYNEK STWARZA WARUNKI.": "THE MARKET DOESN'T MEET EXPECTATIONS. THE MARKET CREATES CONDITIONS."
+    , "Rynek nie spełnia oczekiwań. Rynek stwarza warunki.": "The market doesn't meet expectations. The market creates conditions."
+    , "Inwestor nie decyduje — inwestor reaguje.": "The investor doesn't decide — the investor reacts."
+    , "Dlaczego tracisz na giełdzie, a nie zarabiasz?": "Why are you losing in the market instead of earning?"
+    , "Bo większość inwestorów próbuje decydować, zamiast reagować na warunki, które tworzy rynek.": "Because most investors try to decide instead of reacting to the conditions the market creates."
+    // (Hero old version uses highlighted spans, so the sentence is split into multiple text nodes)
+    , "Bo większość inwestorów próbuje": "Because most investors try to"
+    , "decydować": "decide"
+    , ", zamiast": ", instead of"
+    , "reagować": "react"
+    , "na warunki, które tworzy rynek.": "to the conditions the market creates."
+    , "Rynek nie jest maszyną do spełniania oczekiwań.": "The market is not a machine for meeting expectations."
+    , "To dynamiczny system oparty na czasie, zmienności, wolumenie i przepływie informacji. Zarabiają ci, którzy potrafią rozpoznać moment, gdy te elementy zaczynają się układać w przewagę.": "It's a dynamic system based on time, volatility, volume and information flow. Those who can recognize the moment when these elements begin to align into an advantage earn."
+    , "Rynek nie jest maszyną do spełniania oczekiwań. To dynamiczny system oparty na czasie, zmienności, wolumenie i przepływie informacji. Zarabiają ci, którzy potrafią rozpoznać moment, gdy te elementy zaczynają się układać w przewagę.": "The market is not a machine for meeting expectations. It's a dynamic system based on time, volatility, volume and information flow. Those who can recognize the moment when these elements begin to align into an advantage earn."
+    // (Hero old version: another highlighted sentence split into nodes)
+    , "To dynamiczny system oparty na": "It's a dynamic system based on"
+    , "czasie": "time"
+    , "zmienności": "volatility"
+    , "wolumenie": "volume"
+    , "przepływie informacji": "information flow"
+    , "Zarabiają ci, którzy potrafią rozpoznać moment, gdy te elementy zaczynają się układać w przewagę.": "Those who can recognize when these elements begin to align into an advantage are the ones who earn."
+    , "FXEduLab porządkuje ten proces.": "FXEduLab organizes this process."
+    // (Hero old version: 'FXEduLab' is separate node from the rest)
+    , "porządkuje ten proces.": "organizes this process."
+    , "Nie pytasz \"co rynek zrobi?\". Pytasz:": "You don't ask 'what will the market do?'. You ask:"
+    , "Nie pytasz „co rynek zrobi?”. Pytasz:": "You don't ask 'what will the market do?'. You ask:"
+    // (Hero old/new versions: split quote / separate nodes)
+    , "Nie pytasz": "You don't ask"
+    , "„co rynek zrobi?”": "“what will the market do?”"
+    , "Nie pytasz „co rynek zrobi?”": "You don't ask “what will the market do?”"
+    , "Nie pytasz „co rynek zrobi?”.": "You don't ask “what will the market do?”."
+    , "Pytasz:": "You ask:"
+    , "Czy pojawiło się momentum?": "Has momentum appeared?"
+    , "Czy wolumen potwierdza ruch?": "Does volume confirm the move?"
+    , "Jakie są scenariusze A/B/C?": "What are scenarios A/B/C?"
+    , "Czy makro i newsy wspierają czy podważają ten kierunek?": "Do macro and news support or undermine this direction?"
+    // (Hero old version: bullet items split into text nodes because of highlighted spans)
+    , "Czy pojawiło się": "Has"
+    , "momentum": "momentum"
+    , "Czy": "Does"
+    , "wolumen": "volume"
+    , "potwierdza ruch?": "confirm the move?"
+    , "Jakie są": "What are"
+    , "scenariusze A/B/C": "scenarios A/B/C"
+    , "makro i newsy": "macro and news"
+    , "wspierają czy podważają ten kierunek?": "support or undermine this direction?"
+    , "Dopiero wtedy podejmujesz decyzję.": "Only then do you make a decision."
+    , "Nie handlujesz prognozy. Handlujesz warunki, które rynek właśnie tworzy.": "You don't trade forecasts. You trade the conditions the market is creating right now."
+    , "Nie handlujesz prognozy.": "You don't trade forecasts."
+    , "Handlujesz warunki, które rynek właśnie tworzy.": "You trade the conditions the market is creating right now."
+    , "Zobacz, jak wygląda panel": "See what the panel looks like"
+    , "Poznaj pakiety": "Explore packages"
+    , "Treści mają charakter edukacyjny i analityczny. Decyzje inwestycyjne podejmujesz samodzielnie.": "Content is educational and analytical. You make investment decisions independently."
+    , "Materiały edukacyjne. Bez rekomendacji inwestycyjnych i sygnałów rynkowych.": "Educational materials. No investment recommendations or trading signals."
+
+    // Panel przed decyzją
+    , "Panel przed decyzją": "Panel before decision"
+    , "Szybki kontekst, zanim określisz swoją decyzję.": "Quick context before you make your decision."
+    , "Trend i struktura ceny": "Trend and price structure"
+    , "Wolumen i momentum": "Volume and momentum"
+    , "Kontekst makro / news": "Macro / news context"
+    , "Kalendarz wydarzeń": "Events calendar"
+    , "Scenariusze A / B": "Scenarios A / B"
+    , "Co daje pakiet": "What the package offers"
+    , "Potwierdzenia z analizy technicznej i fundamentalnej": "Confirmations from technical and fundamental analysis"
+    , "Momentum i ograniczenie ryzyka": "Momentum and risk limitation"
+    , "Pakiety:": "Packages:"
+    , "Wybrano:": "Selected:"
+    , "Wybrano": "Selected"
+    , "Wybierz": "Choose"
+    , "Bez rekomendacji — decyzja po Twojej stronie.": "No recommendations — the decision is yours."
+    , "Podgląd — pełny kontekst w panelu i materiałach.": "Preview — full context in the panel and materials."
+
+    // Decision strip aphorisms
+    , "Zasada cierpliwości": "Rule of patience"
+    , "Brak decyzji to też decyzja": "No decision is also a decision"
+    , "Powiedzenie rynku": "Market saying"
+    , "Kupuj plotki, sprzedawaj fakty": "Buy the rumor, sell the fact"
+    , "Higiena tradingu": "Trading hygiene"
+    , "Emocje nie są dobrym doradcą": "Emotions are not a good advisor"
+    , "Perspektywa dynamiki": "Dynamics perspective"
+    , "Rynek to organizm, nie maszyna": "The market is an organism, not a machine"
+
+    // Featured courses
+    , "Polecane kursy": "Featured courses"
+    , "Zacznij od podstaw i przechodź do bardziej zaawansowanych tematów.": "Start with the basics and move on to more advanced topics."
+    , "Zobacz wszystkie": "See all"
+    , "PODSTAWY": "BASICS"
+    , "CFD": "CFD"
+    , "ZAAWANSOWANE": "ADVANCED"
+    , "Wprowadzenie do rynku Forex": "Introduction to the Forex market"
+    , "Zarządzanie ryzykiem i wielkość pozycji": "Risk management and position sizing"
+    , "CFD na indeksy i surowce – praktyka": "CFD on indices and commodities – practice"
+    , "Testowanie strategii: od hipotezy do wyników": "Strategy testing: from hypothesis to results"
+    , "Poznaj strukturę rynku, uczestników, płynność i interwały.": "Learn market structure, participants, liquidity and timeframes."
+    , "Obliczaj wielkość pozycji w pips/lot i trzymaj się R-multiple.": "Calculate position size in pips/lot and stick to R-multiple."
+    , "Finansowanie overnight, poślizg, sesje – praktyczne przykłady.": "Overnight financing, slippage, sessions – practical examples."
+    , "Stabilność statystyczna, out-of-sample, walk-forward (koncepcje).": "Statistical stability, out-of-sample, walk-forward (concepts)."
+    , "Lekcje": "Lessons"
+    , "Początkujący": "Beginner"
+    , "Średniozaawansowany": "Intermediate"
+    , "Zaawansowany": "Advanced"
+    , "Rozpocznij": "Start"
+    , "Zagraj próbny test": "Take a practice test"
+
+    // AI section
+    , "Rynek na czas": "Timely market"
+    , "Rynek w pigułce: co dziś rusza ceny": "Market in a nutshell: what's moving prices today"
+    , "Na bieżąco skanujemy wiarygodne źródła i podajemy najważniejsze informacje — zwięźle i bez rekomendacji inwestycyjnych.": "We continuously scan credible sources and provide the most important information — concise and without investment recommendations."
+    , "Bądź na bieżąco z AI": "Stay up to date with AI"
+    , "Odśwież teraz": "Refresh now"
+    , "Dziś w pigułce": "Today in a nutshell"
+    , "Kalendarz makro (godziny + wpływ)": "Macro calendar (times + impact)"
+    , "Najważniejsze nagłówki (kontekst)": "Top headlines (context)"
+    , "Poziomy techniczne (reakcje rynku)": "Technical levels (market reactions)"
+    , "Zmienność / sentyment (krótko)": "Volatility / sentiment (brief)"
+    , "Edukacyjnie — bez rekomendacji.": "Educational — no recommendations."
+    , "Wykresy dostarcza:": "Charts provided by:"
+    , "Źródło wykresów na platformie.": "Chart source on the platform."
+    , "Edukacyjnie — bez rekomendacji inwestycyjnych.": "Educational — no investment recommendations."
+
+    // Broker verification section
+    , "Weryfikacja brokera": "Broker verification"
+    , "Sprawdź brokera zanim zainwestujesz": "Check your broker before you invest"
+    , "Zweryfikuj licencję i ostrzeżenia w oficjalnych rejestrach nadzoru. Kliknij instytucję:": "Verify licenses and warnings in official supervisory registers. Click an institution:"
+    , "PL · Oficjalna strona": "PL · Official site"
+    , "UK · Rejestr": "UK · Register"
+    , "CY · Rejestr": "CY · Register"
+    , "DE · Oficjalna strona": "DE · Official site"
+    , "CH · Rejestr": "CH · Register"
+    , "LU · Oficjalna strona": "LU · Official site"
+    , "BE · Ostrzeżenia": "BE · Warnings"
+    , "Linki mają charakter informacyjny. Serwis nie jest powiązany z regulatorami i nie stanowi rekomendacji ani doradztwa inwestycyjnego.": "Links are informational. The service is not affiliated with regulators and does not constitute recommendations or investment advice."
+
+    // Quiz modal
+    , "pytań": "questions"
+    , "Wynik:": "Score:"
+    , "Zaznacz odpowiedzi i sprawdź wynik.": "Select answers and check your score."
+    , "Sprawdź odpowiedzi": "Check answers"
+    , "Zamknij": "Close"
+    , "Quiz": "Quiz"
+    , "Próbny test": "Practice test"
+
+    // Quiz questions
+    , "Ile pipsów ma ruch EURUSD z 1.0750 do 1.0762?": "How many pips is the EURUSD move from 1.0750 to 1.0762?"
+    , "Co opisuje dźwignia 1:30?": "What does leverage 1:30 describe?"
+    , "Wartość 1 pipsa na 0.10 lota EURUSD to ok.:": "The value of 1 pip for 0.10 lots EURUSD is approx.:"
+    , "Bid/Ask 1.0850/1.0853 — spread to:": "Bid/Ask 1.0850/1.0853 — spread is:"
+    , "Najwięcej płynności zwykle na sesji:": "Most liquidity usually during session:"
+    , "Rollover (swap) najczęściej potrójny jest w:": "Rollover (swap) is most often triple on:"
+    , "SL powinien być:": "SL should be:"
+    , "1 lot na rynku FX to standardowo:": "1 lot in the FX market is standardly:"
+    , "Po publikacji danych makro typowe są:": "After macro data publication, typical are:"
+    , "Wartość pipsa rośnie wraz z:": "Pip value increases with:"
+    , "Który raport zwykle najmocniej wpływa na USD w 1. piątek miesiąca?": "Which report usually has the strongest impact on USD on the 1st Friday of the month?"
+    , "Zlecenie LIMIT kupna realizuje się, gdy cena jest:": "A LIMIT buy order executes when price is:"
+    , "ATR (Average True Range) to miara:": "ATR (Average True Range) is a measure of:"
+    , "Różnica między equity a free margin to m.in.:": "The difference between equity and free margin includes:"
+    , "Na USD/JPY 1 pips to zazwyczaj:": "On USD/JPY 1 pip is usually:"
+
+    // Quiz options
+    , "Gwarantuje 30% zysku": "Guarantees 30% profit"
+    , "Ekspozycja do 30× depozytu": "Exposure up to 30× deposit"
+    , "Limit 30 pozycji": "Limit of 30 positions"
+    , "Zmianę spreadu x30": "Spread change x30"
+    , "1 pips": "1 pip"
+    , "2 pipsy": "2 pips"
+    , "3 pipsy": "3 pips"
+    , "0.3 pipsa": "0.3 pips"
+    , "Sydney": "Sydney"
+    , "Tokio": "Tokyo"
+    , "Londyn": "London"
+    , "Weekend": "Weekend"
+    , "Poniedziałek": "Monday"
+    , "Wtorek": "Tuesday"
+    , "Środę": "Wednesday"
+    , "Piątek": "Friday"
+    , "Losowy": "Random"
+    , "Za ostatnim swingiem/SR": "Behind the last swing/SR"
+    , "Zawsze 10 pips": "Always 10 pips"
+    , "Niepotrzebny": "Unnecessary"
+    , "1 000 jednostek": "1,000 units"
+    , "10 000 jednostek": "10,000 units"
+    , "100 000 jednostek": "100,000 units"
+    , "1 000 000 jednostek": "1,000,000 units"
+    , "Niższe spready": "Lower spreads"
+    , "Poślizgi i rozszerzenie spreadu": "Slippage and spread widening"
+    , "Brak zmian": "No changes"
+    , "Stała zmienność": "Constant volatility"
+    , "Mniejszym lotem": "Smaller lot"
+    , "Większym lotem": "Larger lot"
+    , "Wyższym spreadem": "Higher spread"
+    , "Niższym ATR": "Lower ATR"
+    , "Wyższa lub równa limitowi": "Higher or equal to limit"
+    , "Niższa lub równa limitowi": "Lower or equal to limit"
+    , "Dokładnie równa limitowi": "Exactly equal to limit"
+    , "Zawsze natychmiast": "Always immediately"
+    , "Trendów": "Trends"
+    , "Wolumenu": "Volume"
+    , "Zmienności": "Volatility"
+    , "Kosztów swapu": "Swap costs"
+    , "Free margin = equity + margin": "Free margin = equity + margin"
+    , "Equity = saldo + P/L bieżący": "Equity = balance + current P/L"
+    , "Equity = free margin − margin": "Equity = free margin − margin"
+    , "Free margin nie zależy od margin": "Free margin does not depend on margin"
   },
 };
 

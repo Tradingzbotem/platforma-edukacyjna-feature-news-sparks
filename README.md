@@ -30,6 +30,16 @@ NEXT_PUBLIC_CHALLENGE_TEST=0
 # optional
 OPENAI_API_KEY=
 FINNHUB_API_KEY=
+# email (optional, enables sending messages to kontakt@)
+CONTACT_EMAIL_ENABLED=true
+SMTP_HOST=smtp.yourhost.com
+SMTP_PORT=587
+SMTP_USER=kontakt@platforma-edukacyjna.com
+SMTP_PASS=your_smtp_password
+# if using port 465:
+# SMTP_SECURE=true
+SMTP_FROM="Platforma Edukacyjna <kontakt@platforma-edukacyjna.com>"
+CONTACT_TO=kontakt@platforma-edukacyjna.com
 ```
 
 ### Media uploads (production)
@@ -41,6 +51,14 @@ BLOB_READ_WRITE_TOKEN=vercel_blob_rw_token_here
 ```
 
 The upload API will automatically store files in Blob and save the public URL in `MediaAsset.url`. Without this token, uploads fall back to local filesystem (works in dev only).
+
+### Media library (do not change)
+
+The admin media library upload/preview flow is considered stable. Do not modify the media upload, media list, or media file endpoints without explicit approval.
+
+### Email (Kontakt)
+
+If `CONTACT_EMAIL_ENABLED=true` and SMTP variables above are configured, the contact form (`/kontakt`) will store the message in the database and also send a notification email to `CONTACT_TO` (defaults to `kontakt@platforma-edukacyjna.com`). If disabled or SMTP is not configured, messages are still stored and visible in the admin panel (`/admin/kontakt`).
 
 ## Learn More
 

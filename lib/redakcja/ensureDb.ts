@@ -80,4 +80,28 @@ export async function ensureMediaAssetTable(): Promise<void> {
 	await sql`CREATE UNIQUE INDEX IF NOT EXISTS "MediaAsset_url_key" ON "MediaAsset"(url);`;
 }
 
+// Store binary bytes for MediaAsset in Neon/Postgres (so uploads work on serverless without filesystem).
+export async function ensureMediaAssetBlobTable(): Promise<void> {
+	if (!isDatabaseConfigured()) return;
+	try {
+		await sql`
+      CREATE TABLE IF NOT EXISTS "MediaAssetBlob" (
+        id TEXT PRIMARY KEY,
+        data BYTEA NOT NULL,
+        "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+        "updatedAt" TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+	} catch (e: any) {
+		const msg = String(e?.message || '').toLowerCase();
+		const code = e?.code || e?.originalError?.code;
+		if (code !== '42P07' && !msg.includes('already exists')) {
+			throw e;
+		}
+	}
+	await sql`ALTER TABLE "MediaAssetBlob" ADD COLUMN IF NOT EXISTS data BYTEA;`;
+	await sql`ALTER TABLE "MediaAssetBlob" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMPTZ DEFAULT NOW();`;
+	await sql`ALTER TABLE "MediaAssetBlob" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMPTZ DEFAULT NOW();`;
+}
+
 

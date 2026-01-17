@@ -57,12 +57,27 @@ const ADV: Course = {
   ],
 };
 
+const REGULACJE: Course = {
+  slug: 'regulacje',
+  title: 'Regulacje i egzaminy',
+  subtitle: 'MiFID II, ESMA, KNF, testy adekwatności, best execution, compliance.',
+  lessons: [
+    { id: 'reg-01', title: 'Podstawy regulacyjne: MiFID II i ESMA', duration: '15:00' },
+    { id: 'reg-02', title: 'Testy adekwatności i odpowiedniości', duration: '12:30' },
+    { id: 'reg-03', title: 'Best execution i konflikty interesów', duration: '11:20' },
+    { id: 'reg-04', title: 'Ochrona klienta: limity dźwigni i negative balance', duration: '10:15' },
+    { id: 'reg-05', title: 'Marketing i compliance: KID/KIID, materiały promocyjne', duration: '13:45' },
+    { id: 'reg-06', title: 'Kategoryzacja klientów i opt-up', duration: '09:30' },
+  ],
+};
+
 // Możesz później dodać kolejne kursy (np. "materialy") – byle ID lekcji
 // były zdefiniowane w data/lessons/index.ts.
 export const COURSES: Record<string, Course> = {
   [FOREX.slug]: FOREX,
   [CFD.slug]: CFD,
   [ADV.slug]: ADV,
+  [REGULACJE.slug]: REGULACJE,
 } as const;
 
 // Wygodna lista (np. do mapowania po wszystkich kursach)

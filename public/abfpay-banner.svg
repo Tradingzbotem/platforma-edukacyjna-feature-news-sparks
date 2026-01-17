@@ -1,0 +1,123 @@
+<svg
+  width="320"
+  height="420"
+  viewBox="0 0 320 420"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1f2a" />
+      <stop offset="100%" stop-color="#0f3d3a" />
+    </linearGradient>
+
+    <radialGradient id="glow" cx="70%" cy="35%" r="45%">
+      <stop offset="0%" stop-color="#34f5c5" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#34f5c5" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="320" height="420" rx="16" fill="url(#bg)" />
+
+  <!-- Subtle glow -->
+  <rect width="320" height="420" rx="16" fill="url(#glow)" />
+
+  <!-- Logo -->
+  <text
+    x="20"
+    y="36"
+    font-size="18"
+    font-weight="600"
+    fill="#9ae8d3"
+    font-family="Inter, system-ui, sans-serif"
+  >
+    ABF<tspan fill="#4fd1c5">Pay</tspan>
+  </text>
+
+  <!-- Headline -->
+  <text
+    x="20"
+    y="80"
+    font-size="22"
+    font-weight="700"
+    fill="#ffffff"
+    font-family="Inter, system-ui, sans-serif"
+  >
+    payments without
+  </text>
+  <text
+    x="20"
+    y="108"
+    font-size="22"
+    font-weight="700"
+    fill="#ffffff"
+    font-family="Inter, system-ui, sans-serif"
+  >
+    borders
+  </text>
+
+  <!-- Description -->
+  <text
+    x="20"
+    y="150"
+    font-size="13"
+    fill="#cdeee6"
+    font-family="Inter, system-ui, sans-serif"
+  >
+    <tspan x="20" dy="0">
+      ABF Pay to nowoczesna
+    </tspan>
+    <tspan x="20" dy="18">
+      platforma płatnicza
+    </tspan>
+    <tspan x="20" dy="18">
+      wspierająca bezpieczne
+    </tspan>
+    <tspan x="20" dy="18">
+      transakcje międzynarodowe.
+    </tspan>
+  </text>
+
+  <!-- CTA -->
+  <rect
+    x="20"
+    y="310"
+    rx="22"
+    ry="22"
+    width="180"
+    height="44"
+    fill="#34f5c5"
+  />
+  <text
+    x="110"
+    y="338"
+    text-anchor="middle"
+    font-size="14"
+    font-weight="600"
+    fill="#06352f"
+    font-family="Inter, system-ui, sans-serif"
+  >
+    Explore ABF Pay
+  </text>
+
+  <!-- Decorative globe (abstract) -->
+  <circle
+    cx="240"
+    cy="200"
+    r="70"
+    fill="none"
+    stroke="#34f5c5"
+    stroke-opacity="0.35"
+    stroke-width="2"
+  />
+  <circle
+    cx="240"
+    cy="200"
+    r="45"
+    fill="none"
+    stroke="#34f5c5"
+    stroke-opacity="0.2"
+    stroke-width="1.5"
+  />
+</svg>
+

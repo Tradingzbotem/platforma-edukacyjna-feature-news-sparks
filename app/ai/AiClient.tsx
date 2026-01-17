@@ -291,7 +291,7 @@ export default function AiClient() {
 
           <Card title="Nawigacja">
             <div className="flex flex-col gap-2 text-sm">
-              <Link href="/konto" className="underline underline-offset-2 hover:text-white/90">← Wróć do konta</Link>
+              <Link href="/client" className="underline underline-offset-2 hover:text-white/90">← Wróć do konta</Link>
               <Link href="/news" className="underline underline-offset-2 hover:text-white/90">Przejdź do News</Link>
             </div>
           </Card>

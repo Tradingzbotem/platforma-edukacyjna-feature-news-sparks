@@ -10,23 +10,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Show tool versions
+        run: |
+          node -v
+          npm -v
+
       - name: Refresh news pipeline
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           NEWS_BASE_URL: ${{ secrets.NEWS_BASE_URL }}
         run: |
           BASE="${NEWS_BASE_URL:-https://platforma-edukacyjna-feature-news-s.vercel.app}"
-          URL="$BASE/api/jobs/news/refresh"
-
-          echo "Pinging: $URL"
-          echo "CRON_SECRET set? $([ -n "$CRON_SECRET" ] && echo yes || echo no)"
-
+          echo "Pinging: $BASE/api/jobs/news/refresh"
           curl -sS -i --fail-with-body -L \
             --max-time 180 --connect-timeout 15 \
             --retry 3 --retry-delay 3 --retry-connrefused --retry-all-errors \
-            -X POST \
             -H "x-cron-secret: ${CRON_SECRET}" \
-            -H "Content-Type: application/json" \
-            --data '{}' \
-            "$URL" \
+            "$BASE/api/jobs/news/refresh" \
             -w "\nHTTP_STATUS:%{http_code}\n"

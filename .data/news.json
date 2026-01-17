@@ -1,108 +1,12 @@
 {
   "items": [
     {
-      "id": "bfbd1b5b96121a2ee033c2002bd2cca2042af948",
-      "url": "https://example.com/covid",
-      "title": "COVID-19: nowe ograniczenia aktywności gospodarczej",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T17:22:35.526Z",
-      "createdAt": "2026-01-03T17:22:35.526Z",
-      "summaryShort": "Lockdowny ograniczają aktywność, skok awersji do ryzyka.",
-      "category": "Makro",
-      "instruments": [
-        "US100",
-        "SPX",
-        "XAUUSD"
-      ],
-      "sentiment": "negative",
-      "impact": 5,
-      "timeEdge": 8,
-      "whyItMatters": "Zdarzenie o istotnym znaczeniu dla krótkoterminowych nastrojów.",
-      "watch": [
-        "Śledź potwierdzenia w kolejnych nagłówkach",
-        "Zwróć uwagę na zmienność po publikacji"
-      ],
-      "enrichedAt": "2026-01-03T17:22:35.526Z"
-    },
-    {
-      "id": "131b26c0bb3f729a1fb9f8a0860b91a79ee6cd2d",
-      "url": "https://example.com/ukraine",
-      "title": "Rosja atakuje Ukrainę – ryzyko podaży energii",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T15:22:35.526Z",
-      "createdAt": "2026-01-03T15:22:35.526Z",
-      "summaryShort": "Szok podażowy na rynku energii, sankcje i niepewność.",
-      "category": "Geo",
-      "instruments": [
-        "UKOIL",
-        "NG",
-        "EURUSD"
-      ],
-      "sentiment": "negative",
-      "impact": 5,
-      "timeEdge": 9,
-      "whyItMatters": "Zdarzenie o istotnym znaczeniu dla krótkoterminowych nastrojów.",
-      "watch": [
-        "Śledź potwierdzenia w kolejnych nagłówkach",
-        "Zwróć uwagę na zmienność po publikacji"
-      ],
-      "enrichedAt": "2026-01-03T15:22:35.526Z"
-    },
-    {
-      "id": "632946054db21f854a70d86306eadac1775e9f34",
-      "url": "https://example.com/covid",
-      "title": "COVID-19: nowe ograniczenia aktywności gospodarczej — aktualizacja 1",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T14:22:35.526Z",
-      "createdAt": "2026-01-03T14:22:35.526Z",
-      "summaryShort": "Lockdowny ograniczają aktywność, skok awersji do ryzyka.",
-      "category": "Makro",
-      "instruments": [
-        "US100",
-        "SPX",
-        "XAUUSD"
-      ],
-      "sentiment": "negative",
-      "impact": 5,
-      "timeEdge": 6,
-      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
-      "watch": [
-        "Sprawdź rewizje i komunikację instytucji",
-        "Obserwuj instrumenty z ekspozycją na temat"
-      ],
-      "enrichedAt": "2026-01-03T14:22:35.526Z"
-    },
-    {
-      "id": "c0a4aeb110c3c3679d141c9d1f3a9b46f9a0de43",
-      "url": "https://example.com/tariffs",
-      "title": "USA ogłaszają cła na Chiny",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T13:22:35.526Z",
-      "createdAt": "2026-01-03T13:22:35.526Z",
-      "summaryShort": "Eskalacja napięć handlowych uderza w eksporterów.",
-      "category": "Geo",
-      "instruments": [
-        "USDCNH",
-        "US100",
-        "SOXX"
-      ],
-      "sentiment": "negative",
-      "impact": 4,
-      "timeEdge": 7,
-      "whyItMatters": "Zdarzenie o istotnym znaczeniu dla krótkoterminowych nastrojów.",
-      "watch": [
-        "Śledź potwierdzenia w kolejnych nagłówkach",
-        "Zwróć uwagę na zmienność po publikacji"
-      ],
-      "enrichedAt": "2026-01-03T13:22:35.526Z"
-    },
-    {
-      "id": "92740ff2b1f65d38576785cf17a7ed345d687aaf",
+      "id": "edca067d6dfd6d6d6d7df95651bea54dd602d34f",
       "url": "https://example.com/cpi",
       "title": "Zaskakująco niska inflacja CPI",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T11:22:35.526Z",
-      "createdAt": "2026-01-03T11:22:35.526Z",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-17T14:57:46.093Z",
+      "createdAt": "2026-01-17T14:57:46.093Z",
       "summaryShort": "Odczyt CPI poniżej oczekiwań, spada presja na stopy.",
       "category": "Makro",
       "instruments": [
@@ -118,39 +22,15 @@
         "Śledź potwierdzenia w kolejnych nagłówkach",
         "Zwróć uwagę na zmienność po publikacji"
       ],
-      "enrichedAt": "2026-01-03T11:22:35.526Z"
+      "enrichedAt": "2026-01-17T14:57:46.093Z"
     },
     {
-      "id": "79ce132da05f3f4e4ad4869eaf1c31d429daf323",
-      "url": "https://example.com/ukraine",
-      "title": "Rosja atakuje Ukrainę – ryzyko podaży energii — aktualizacja 2",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T11:22:35.526Z",
-      "createdAt": "2026-01-03T11:22:35.526Z",
-      "summaryShort": "Szok podażowy na rynku energii, sankcje i niepewność.",
-      "category": "Geo",
-      "instruments": [
-        "UKOIL",
-        "NG",
-        "EURUSD"
-      ],
-      "sentiment": "negative",
-      "impact": 5,
-      "timeEdge": 7,
-      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
-      "watch": [
-        "Sprawdź rewizje i komunikację instytucji",
-        "Obserwuj instrumenty z ekspozycją na temat"
-      ],
-      "enrichedAt": "2026-01-03T11:22:35.526Z"
-    },
-    {
-      "id": "68f8e375b59835a17b28d1dc65f4e09f9a3f086e",
+      "id": "b86c013b6f9c9f13c526b162817e266cc14bb007",
       "url": "https://example.com/oil",
       "title": "Wzrost zapasów ropy w USA",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T09:22:35.526Z",
-      "createdAt": "2026-01-03T09:22:35.526Z",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-17T12:57:46.093Z",
+      "createdAt": "2026-01-17T12:57:46.093Z",
       "summaryShort": "Zapasy rosną, presja na ceny ropy.",
       "category": "Surowce",
       "instruments": [
@@ -165,85 +45,15 @@
         "Śledź potwierdzenia w kolejnych nagłówkach",
         "Zwróć uwagę na zmienność po publikacji"
       ],
-      "enrichedAt": "2026-01-03T09:22:35.526Z"
+      "enrichedAt": "2026-01-17T12:57:46.093Z"
     },
     {
-      "id": "68e226d9f96a9a4e18c15786a08ca2d36cadd0dd",
-      "url": "https://example.com/tariffs",
-      "title": "USA ogłaszają cła na Chiny — aktualizacja 3",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T08:22:35.526Z",
-      "createdAt": "2026-01-03T08:22:35.526Z",
-      "summaryShort": "Eskalacja napięć handlowych uderza w eksporterów.",
-      "category": "Geo",
-      "instruments": [
-        "USDCNH",
-        "US100",
-        "SOXX"
-      ],
-      "sentiment": "negative",
-      "impact": 4,
-      "timeEdge": 5,
-      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
-      "watch": [
-        "Sprawdź rewizje i komunikację instytucji",
-        "Obserwuj instrumenty z ekspozycją na temat"
-      ],
-      "enrichedAt": "2026-01-03T08:22:35.526Z"
-    },
-    {
-      "id": "c5492d20d0a9d1881be302f20434ad1f14f3a664",
-      "url": "https://example.com/nfp",
-      "title": "Silniejsze od prognoz NFP",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T07:22:35.526Z",
-      "createdAt": "2026-01-03T07:22:35.526Z",
-      "summaryShort": "Rynek pracy zaskakuje w górę; dolar umacnia się.",
-      "category": "Makro",
-      "instruments": [
-        "DXY",
-        "EURUSD",
-        "US10Y"
-      ],
-      "sentiment": "positive",
-      "impact": 4,
-      "timeEdge": 6,
-      "whyItMatters": "Zdarzenie o istotnym znaczeniu dla krótkoterminowych nastrojów.",
-      "watch": [
-        "Śledź potwierdzenia w kolejnych nagłówkach",
-        "Zwróć uwagę na zmienność po publikacji"
-      ],
-      "enrichedAt": "2026-01-03T07:22:35.526Z"
-    },
-    {
-      "id": "508ab5397647588ae87146139e5923493d4e6e9d",
-      "url": "https://example.com/gold",
-      "title": "Złoto jako bezpieczna przystań po wzroście ryzyka",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T05:22:35.526Z",
-      "createdAt": "2026-01-03T05:22:35.526Z",
-      "summaryShort": "Popyt na aktywa bezpieczne po skoku awersji do ryzyka.",
-      "category": "Surowce",
-      "instruments": [
-        "XAUUSD"
-      ],
-      "sentiment": "positive",
-      "impact": 3,
-      "timeEdge": 5,
-      "whyItMatters": "Zdarzenie o istotnym znaczeniu dla krótkoterminowych nastrojów.",
-      "watch": [
-        "Śledź potwierdzenia w kolejnych nagłówkach",
-        "Zwróć uwagę na zmienność po publikacji"
-      ],
-      "enrichedAt": "2026-01-03T05:22:35.526Z"
-    },
-    {
-      "id": "7bb0b958364175dbdf10c3b2cf81e448eb5de285",
+      "id": "64ca92c1dc1791084c2a917d34b6955efbe83638",
       "url": "https://example.com/cpi",
-      "title": "Zaskakująco niska inflacja CPI — aktualizacja 4",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T05:22:35.526Z",
-      "createdAt": "2026-01-03T05:22:35.526Z",
+      "title": "Zaskakująco niska inflacja CPI — aktualizacja 1",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-17T11:57:46.093Z",
+      "createdAt": "2026-01-17T11:57:46.093Z",
       "summaryShort": "Odczyt CPI poniżej oczekiwań, spada presja na stopy.",
       "category": "Makro",
       "instruments": [
@@ -259,15 +69,84 @@
         "Sprawdź rewizje i komunikację instytucji",
         "Obserwuj instrumenty z ekspozycją na temat"
       ],
-      "enrichedAt": "2026-01-03T05:22:35.526Z"
+      "enrichedAt": "2026-01-17T11:57:46.093Z"
     },
     {
-      "id": "45a3c688ab1193f1ab4d7240918b5c02c2707347",
+      "id": "cde5b68b646fd6aa99a48e15d90f016a69ad488f",
+      "url": "https://example.com/nfp",
+      "title": "Silniejsze od prognoz NFP",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-17T10:57:46.093Z",
+      "createdAt": "2026-01-17T10:57:46.093Z",
+      "summaryShort": "Rynek pracy zaskakuje w górę; dolar umacnia się.",
+      "category": "Makro",
+      "instruments": [
+        "DXY",
+        "EURUSD",
+        "US10Y"
+      ],
+      "sentiment": "positive",
+      "impact": 4,
+      "timeEdge": 6,
+      "whyItMatters": "Zdarzenie o istotnym znaczeniu dla krótkoterminowych nastrojów.",
+      "watch": [
+        "Śledź potwierdzenia w kolejnych nagłówkach",
+        "Zwróć uwagę na zmienność po publikacji"
+      ],
+      "enrichedAt": "2026-01-17T10:57:46.093Z"
+    },
+    {
+      "id": "5fa571cad4f19202b79a555b991266df87afb2cc",
+      "url": "https://example.com/gold",
+      "title": "Złoto jako bezpieczna przystań po wzroście ryzyka",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-17T08:57:46.093Z",
+      "createdAt": "2026-01-17T08:57:46.093Z",
+      "summaryShort": "Popyt na aktywa bezpieczne po skoku awersji do ryzyka.",
+      "category": "Surowce",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "sentiment": "positive",
+      "impact": 3,
+      "timeEdge": 5,
+      "whyItMatters": "Zdarzenie o istotnym znaczeniu dla krótkoterminowych nastrojów.",
+      "watch": [
+        "Śledź potwierdzenia w kolejnych nagłówkach",
+        "Zwróć uwagę na zmienność po publikacji"
+      ],
+      "enrichedAt": "2026-01-17T08:57:46.093Z"
+    },
+    {
+      "id": "d1f4020e1b931875f4c77840ce634e2fb8c7ad32",
+      "url": "https://example.com/oil",
+      "title": "Wzrost zapasów ropy w USA — aktualizacja 2",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-17T08:57:46.093Z",
+      "createdAt": "2026-01-17T08:57:46.093Z",
+      "summaryShort": "Zapasy rosną, presja na ceny ropy.",
+      "category": "Surowce",
+      "instruments": [
+        "UKOIL",
+        "WTI"
+      ],
+      "sentiment": "negative",
+      "impact": 3,
+      "timeEdge": 3,
+      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
+      "watch": [
+        "Sprawdź rewizje i komunikację instytucji",
+        "Obserwuj instrumenty z ekspozycją na temat"
+      ],
+      "enrichedAt": "2026-01-17T08:57:46.093Z"
+    },
+    {
+      "id": "8941b3551dc8b543fa05de7cefcfdd9517a64ff0",
       "url": "https://example.com/earn",
       "title": "Wyniki dużej spółki technologicznej powyżej oczekiwań",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T03:22:35.526Z",
-      "createdAt": "2026-01-03T03:22:35.526Z",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-17T06:57:46.093Z",
+      "createdAt": "2026-01-17T06:57:46.093Z",
       "summaryShort": "Lepsze przychody i marże; sektor tech zyskuje.",
       "category": "Spółki",
       "instruments": [
@@ -281,38 +160,15 @@
         "Śledź potwierdzenia w kolejnych nagłówkach",
         "Zwróć uwagę na zmienność po publikacji"
       ],
-      "enrichedAt": "2026-01-03T03:22:35.526Z"
+      "enrichedAt": "2026-01-17T06:57:46.093Z"
     },
     {
-      "id": "ddf52cbdbb0fee7dc0ff067fcfef0d36eb80f549",
-      "url": "https://example.com/oil",
-      "title": "Wzrost zapasów ropy w USA — aktualizacja 5",
-      "source": "EDU",
-      "publishedAt": "2026-01-03T02:22:35.526Z",
-      "createdAt": "2026-01-03T02:22:35.526Z",
-      "summaryShort": "Zapasy rosną, presja na ceny ropy.",
-      "category": "Surowce",
-      "instruments": [
-        "UKOIL",
-        "WTI"
-      ],
-      "sentiment": "negative",
-      "impact": 3,
-      "timeEdge": 3,
-      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
-      "watch": [
-        "Sprawdź rewizje i komunikację instytucji",
-        "Obserwuj instrumenty z ekspozycją na temat"
-      ],
-      "enrichedAt": "2026-01-03T02:22:35.526Z"
-    },
-    {
-      "id": "3ca42c53a3a9c3c43bc83c843c543dd93ca94d07",
+      "id": "f98e1aa6ba5ee769dba927c9c35b45ff6b0d984b",
       "url": "https://example.com/nfp",
-      "title": "Silniejsze od prognoz NFP — aktualizacja 6",
-      "source": "EDU",
-      "publishedAt": "2026-01-02T23:22:35.526Z",
-      "createdAt": "2026-01-02T23:22:35.526Z",
+      "title": "Silniejsze od prognoz NFP — aktualizacja 3",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-17T05:57:46.093Z",
+      "createdAt": "2026-01-17T05:57:46.093Z",
       "summaryShort": "Rynek pracy zaskakuje w górę; dolar umacnia się.",
       "category": "Makro",
       "instruments": [
@@ -328,15 +184,15 @@
         "Sprawdź rewizje i komunikację instytucji",
         "Obserwuj instrumenty z ekspozycją na temat"
       ],
-      "enrichedAt": "2026-01-02T23:22:35.526Z"
+      "enrichedAt": "2026-01-17T05:57:46.093Z"
     },
     {
-      "id": "f15e43a99cf47f3e9135a26b0622634d5c401e61",
+      "id": "82985d3b725278fb7fee10bf394e9ba5f0470f04",
       "url": "https://example.com/gold",
-      "title": "Złoto jako bezpieczna przystań po wzroście ryzyka — aktualizacja 7",
-      "source": "EDU",
-      "publishedAt": "2026-01-02T20:22:35.526Z",
-      "createdAt": "2026-01-02T20:22:35.526Z",
+      "title": "Złoto jako bezpieczna przystań po wzroście ryzyka — aktualizacja 4",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-17T02:57:46.093Z",
+      "createdAt": "2026-01-17T02:57:46.093Z",
       "summaryShort": "Popyt na aktywa bezpieczne po skoku awersji do ryzyka.",
       "category": "Surowce",
       "instruments": [
@@ -350,15 +206,15 @@
         "Sprawdź rewizje i komunikację instytucji",
         "Obserwuj instrumenty z ekspozycją na temat"
       ],
-      "enrichedAt": "2026-01-02T20:22:35.526Z"
+      "enrichedAt": "2026-01-17T02:57:46.093Z"
     },
     {
-      "id": "1f6483d487aa4acbcffc40a713e9f81f228a2152",
+      "id": "be177923c02a8d5f6c6c8741764d6ae7e3594e73",
       "url": "https://example.com/earn",
-      "title": "Wyniki dużej spółki technologicznej powyżej oczekiwań — aktualizacja 8",
-      "source": "EDU",
-      "publishedAt": "2026-01-02T17:22:35.526Z",
-      "createdAt": "2026-01-02T17:22:35.526Z",
+      "title": "Wyniki dużej spółki technologicznej powyżej oczekiwań — aktualizacja 5",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-16T23:57:46.093Z",
+      "createdAt": "2026-01-16T23:57:46.093Z",
       "summaryShort": "Lepsze przychody i marże; sektor tech zyskuje.",
       "category": "Spółki",
       "instruments": [
@@ -372,87 +228,15 @@
         "Sprawdź rewizje i komunikację instytucji",
         "Obserwuj instrumenty z ekspozycją na temat"
       ],
-      "enrichedAt": "2026-01-02T17:22:35.526Z"
+      "enrichedAt": "2026-01-16T23:57:46.093Z"
     },
     {
-      "id": "5886f3c4e20071b33fcc7069bb3475accfee0881",
-      "url": "https://example.com/covid",
-      "title": "COVID-19: nowe ograniczenia aktywności gospodarczej — aktualizacja 9",
-      "source": "EDU",
-      "publishedAt": "2026-01-02T14:22:35.526Z",
-      "createdAt": "2026-01-02T14:22:35.526Z",
-      "summaryShort": "Lockdowny ograniczają aktywność, skok awersji do ryzyka.",
-      "category": "Makro",
-      "instruments": [
-        "US100",
-        "SPX",
-        "XAUUSD"
-      ],
-      "sentiment": "negative",
-      "impact": 5,
-      "timeEdge": 6,
-      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
-      "watch": [
-        "Sprawdź rewizje i komunikację instytucji",
-        "Obserwuj instrumenty z ekspozycją na temat"
-      ],
-      "enrichedAt": "2026-01-02T14:22:35.526Z"
-    },
-    {
-      "id": "194998d48d222ac1ecdf850c01c3cb295aa7b90d",
-      "url": "https://example.com/ukraine",
-      "title": "Rosja atakuje Ukrainę – ryzyko podaży energii — aktualizacja 10",
-      "source": "EDU",
-      "publishedAt": "2026-01-02T11:22:35.526Z",
-      "createdAt": "2026-01-02T11:22:35.526Z",
-      "summaryShort": "Szok podażowy na rynku energii, sankcje i niepewność.",
-      "category": "Geo",
-      "instruments": [
-        "UKOIL",
-        "NG",
-        "EURUSD"
-      ],
-      "sentiment": "negative",
-      "impact": 5,
-      "timeEdge": 7,
-      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
-      "watch": [
-        "Sprawdź rewizje i komunikację instytucji",
-        "Obserwuj instrumenty z ekspozycją na temat"
-      ],
-      "enrichedAt": "2026-01-02T11:22:35.526Z"
-    },
-    {
-      "id": "c3b13e18bc3d56ce4fa153c4ced8e80f0eb24f5f",
-      "url": "https://example.com/tariffs",
-      "title": "USA ogłaszają cła na Chiny — aktualizacja 11",
-      "source": "EDU",
-      "publishedAt": "2026-01-02T08:22:35.526Z",
-      "createdAt": "2026-01-02T08:22:35.526Z",
-      "summaryShort": "Eskalacja napięć handlowych uderza w eksporterów.",
-      "category": "Geo",
-      "instruments": [
-        "USDCNH",
-        "US100",
-        "SOXX"
-      ],
-      "sentiment": "negative",
-      "impact": 4,
-      "timeEdge": 5,
-      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
-      "watch": [
-        "Sprawdź rewizje i komunikację instytucji",
-        "Obserwuj instrumenty z ekspozycją na temat"
-      ],
-      "enrichedAt": "2026-01-02T08:22:35.526Z"
-    },
-    {
-      "id": "6a802512406a5394fe86b064c23d66c9d34ff24f",
+      "id": "ea91fba6c25287c1c421c81433256f17c2d24f32",
       "url": "https://example.com/cpi",
-      "title": "Zaskakująco niska inflacja CPI — aktualizacja 12",
-      "source": "EDU",
-      "publishedAt": "2026-01-02T05:22:35.526Z",
-      "createdAt": "2026-01-02T05:22:35.526Z",
+      "title": "Zaskakująco niska inflacja CPI — aktualizacja 6",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-16T20:57:46.093Z",
+      "createdAt": "2026-01-16T20:57:46.093Z",
       "summaryShort": "Odczyt CPI poniżej oczekiwań, spada presja na stopy.",
       "category": "Makro",
       "instruments": [
@@ -468,7 +252,145 @@
         "Sprawdź rewizje i komunikację instytucji",
         "Obserwuj instrumenty z ekspozycją na temat"
       ],
-      "enrichedAt": "2026-01-02T05:22:35.526Z"
+      "enrichedAt": "2026-01-16T20:57:46.093Z"
+    },
+    {
+      "id": "166c66493c3b5a37dc90718fbc46d0f59cd2ad04",
+      "url": "https://example.com/oil",
+      "title": "Wzrost zapasów ropy w USA — aktualizacja 7",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-16T17:57:46.093Z",
+      "createdAt": "2026-01-16T17:57:46.093Z",
+      "summaryShort": "Zapasy rosną, presja na ceny ropy.",
+      "category": "Surowce",
+      "instruments": [
+        "UKOIL",
+        "WTI"
+      ],
+      "sentiment": "negative",
+      "impact": 3,
+      "timeEdge": 3,
+      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
+      "watch": [
+        "Sprawdź rewizje i komunikację instytucji",
+        "Obserwuj instrumenty z ekspozycją na temat"
+      ],
+      "enrichedAt": "2026-01-16T17:57:46.093Z"
+    },
+    {
+      "id": "24dcf3d139143a026fa788641969d5e2c1ca0340",
+      "url": "https://example.com/nfp",
+      "title": "Silniejsze od prognoz NFP — aktualizacja 8",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-16T14:57:46.093Z",
+      "createdAt": "2026-01-16T14:57:46.093Z",
+      "summaryShort": "Rynek pracy zaskakuje w górę; dolar umacnia się.",
+      "category": "Makro",
+      "instruments": [
+        "DXY",
+        "EURUSD",
+        "US10Y"
+      ],
+      "sentiment": "positive",
+      "impact": 4,
+      "timeEdge": 4,
+      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
+      "watch": [
+        "Sprawdź rewizje i komunikację instytucji",
+        "Obserwuj instrumenty z ekspozycją na temat"
+      ],
+      "enrichedAt": "2026-01-16T14:57:46.093Z"
+    },
+    {
+      "id": "061f1fa972aff301fc90e9368f4aa3b3fee7ddad",
+      "url": "https://example.com/gold",
+      "title": "Złoto jako bezpieczna przystań po wzroście ryzyka — aktualizacja 9",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-16T11:57:46.093Z",
+      "createdAt": "2026-01-16T11:57:46.093Z",
+      "summaryShort": "Popyt na aktywa bezpieczne po skoku awersji do ryzyka.",
+      "category": "Surowce",
+      "instruments": [
+        "XAUUSD"
+      ],
+      "sentiment": "positive",
+      "impact": 3,
+      "timeEdge": 3,
+      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
+      "watch": [
+        "Sprawdź rewizje i komunikację instytucji",
+        "Obserwuj instrumenty z ekspozycją na temat"
+      ],
+      "enrichedAt": "2026-01-16T11:57:46.093Z"
+    },
+    {
+      "id": "4e1b630046b23518673e2d8aa15d150de2e7aba2",
+      "url": "https://example.com/earn",
+      "title": "Wyniki dużej spółki technologicznej powyżej oczekiwań — aktualizacja 10",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-16T08:57:46.093Z",
+      "createdAt": "2026-01-16T08:57:46.093Z",
+      "summaryShort": "Lepsze przychody i marże; sektor tech zyskuje.",
+      "category": "Spółki",
+      "instruments": [
+        "US100"
+      ],
+      "sentiment": "positive",
+      "impact": 3,
+      "timeEdge": 2,
+      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
+      "watch": [
+        "Sprawdź rewizje i komunikację instytucji",
+        "Obserwuj instrumenty z ekspozycją na temat"
+      ],
+      "enrichedAt": "2026-01-16T08:57:46.093Z"
+    },
+    {
+      "id": "481d5398f8374ad41e14fd3c21d1f27f90f794ba",
+      "url": "https://example.com/cpi",
+      "title": "Zaskakująco niska inflacja CPI — aktualizacja 11",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-16T05:57:46.093Z",
+      "createdAt": "2026-01-16T05:57:46.093Z",
+      "summaryShort": "Odczyt CPI poniżej oczekiwań, spada presja na stopy.",
+      "category": "Makro",
+      "instruments": [
+        "US100",
+        "XAUUSD",
+        "DXY"
+      ],
+      "sentiment": "positive",
+      "impact": 4,
+      "timeEdge": 4,
+      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
+      "watch": [
+        "Sprawdź rewizje i komunikację instytucji",
+        "Obserwuj instrumenty z ekspozycją na temat"
+      ],
+      "enrichedAt": "2026-01-16T05:57:46.093Z"
+    },
+    {
+      "id": "96c065c103b6c76b18d1c5b3656b3223de364071",
+      "url": "https://example.com/oil",
+      "title": "Wzrost zapasów ropy w USA — aktualizacja 12",
+      "source": "EDU-SEED",
+      "publishedAt": "2026-01-16T02:57:46.093Z",
+      "createdAt": "2026-01-16T02:57:46.093Z",
+      "summaryShort": "Zapasy rosną, presja na ceny ropy.",
+      "category": "Surowce",
+      "instruments": [
+        "UKOIL",
+        "WTI"
+      ],
+      "sentiment": "negative",
+      "impact": 3,
+      "timeEdge": 3,
+      "whyItMatters": "Aktualizacja tematu; rynek kalibruje oczekiwania.",
+      "watch": [
+        "Sprawdź rewizje i komunikację instytucji",
+        "Obserwuj instrumenty z ekspozycją na temat"
+      ],
+      "enrichedAt": "2026-01-16T02:57:46.093Z"
     }
   ]
 }

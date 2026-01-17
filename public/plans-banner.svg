@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="285" height="160" viewBox="0 0 285 160" role="img" aria-label="Baner planów: Starter, Pro, Elite">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#070A12"/>
+      <stop offset="1" stop-color="#0B1433"/>
+    </linearGradient>
+
+    <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
+      <stop offset="1" stop-color="rgba(232,193,106,0.18)"/>
+    </linearGradient>
+
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8C16A"/>
+      <stop offset="1" stop-color="#B8892B"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#E8C16A" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="285" height="160" rx="16" fill="url(#bg)"/>
+  <rect x="8" y="8" width="269" height="144" rx="14" fill="rgba(255,255,255,0.03)" stroke="url(#stroke)"/>
+
+  <!-- Header row -->
+  <text x="18" y="34"
+        font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+        font-size="15" font-weight="900" fill="#E5E7EB">Wybierz plan EDU</text>
+
+  <!-- Tiny billing selector (text only) -->
+  <g transform="translate(18,44)">
+    <rect x="0" y="0" width="118" height="20" rx="10" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.10)"/>
+    <circle cx="13" cy="10" r="5" fill="rgba(255,255,255,0.70)"/>
+    <text x="26" y="14"
+          font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+          font-size="9.5" font-weight="800" fill="#E5E7EB">Miesięcznie</text>
+
+    <text x="132" y="14"
+          font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+          font-size="9.5" font-weight="800" fill="#E8C16A">Rocznie (+2)</text>
+  </g>
+
+  <!-- Plan chips -->
+  <g transform="translate(18,74)" filter="url(#shadow)">
+    <!-- chip 1 -->
+    <g>
+      <rect x="0" y="0" width="79" height="48" rx="12" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.10)"/>
+      <text x="12" y="18"
+            font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+            font-size="10" font-weight="900" fill="#E5E7EB">STARTER</text>
+      <text x="12" y="38"
+            font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+            font-size="18" font-weight="900" fill="#E5E7EB">59</text>
+      <text x="44" y="37"
+            font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+            font-size="9" font-weight="800" fill="#AAB2C5">PLN</text>
+    </g>
+
+    <!-- chip 2 (featured) -->
+    <g transform="translate(86,0)" filter="url(#soft)">
+      <rect x="0" y="0" width="79" height="48" rx="12" fill="rgba(11,31,58,0.85)" stroke="rgba(232,193,106,0.28)"/>
+      <rect x="10" y="6" width="59" height="14" rx="7" fill="rgba(232,193,106,0.16)"/>
+      <text x="39.5" y="16" text-anchor="middle"
+            font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+            font-size="8.5" font-weight="900" fill="#E8C16A">POPULARNY</text>
+      <text x="12" y="38"
+            font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+            font-size="18" font-weight="900" fill="#E5E7EB">110</text>
+      <text x="52" y="37"
+            font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+            font-size="9" font-weight="800" fill="#AAB2C5">PLN</text>
+      <text x="12" y="18"
+            font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+            font-size="10" font-weight="900" fill="#E5E7EB">PRO</text>
+    </g>
+
+    <!-- chip 3 -->
+    <g transform="translate(172,0)">
+      <rect x="0" y="0" width="79" height="48" rx="12" fill="rgba(42,32,17,0.75)" stroke="rgba(232,193,106,0.22)"/>
+      <text x="12" y="18"
+            font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+            font-size="10" font-weight="900" fill="#E5E7EB">ELITE</text>
+      <text x="12" y="38"
+            font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+            font-size="18" font-weight="900" fill="#E5E7EB">199</text>
+      <text x="54" y="37"
+            font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+            font-size="9" font-weight="800" fill="#C9C2B2">PLN</text>
+    </g>
+  </g>
+
+  <!-- One-line value prop -->
+  <text x="18" y="135"
+        font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+        font-size="10.5" font-weight="700" fill="#AAB2C5">
+    Edu + checklisty + kontekst rynku (EDU)
+  </text>
+
+  <!-- CTA -->
+  <g transform="translate(18,140)">
+    <rect x="0" y="0" width="249" height="18" rx="9" fill="url(#accent)" opacity="0.95"/>
+    <text x="124.5" y="13" text-anchor="middle"
+          font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial"
+          font-size="10.5" font-weight="900" fill="#0B1220">
+      Zobacz szczegóły
+    </text>
+  </g>
+</svg>
+
+

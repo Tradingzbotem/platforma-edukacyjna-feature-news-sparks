@@ -384,6 +384,34 @@ export default function QuizRunner({
     if (exam.enabled && exam.finishAt && Date.now() < exam.finishAt) {
       setExam((e) => ({ ...e, finishAt: Date.now() }));
     }
+    
+    // Send detailed answers to server
+    try {
+      let score = 0;
+      const answersData = items.map((item, i) => {
+        const userAnswer = answers[i];
+        const correctAnswer = item.correctDisplayIndex;
+        const isCorrect = userAnswer !== null && userAnswer === correctAnswer;
+        if (isCorrect) score++;
+        return {
+          questionId: item.q.id,
+          userAnswer: userAnswer,
+          correctAnswer: correctAnswer,
+          isCorrect: isCorrect,
+        };
+      });
+      
+      fetch('/api/progress/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug,
+          score: score,
+          total: total,
+          answers: answersData,
+        }),
+      }).catch(() => {}); // fire-and-forget
+    } catch {}
   }
   function reset() {
     setIdx(0);
@@ -454,17 +482,19 @@ export default function QuizRunner({
   // ===== 12) BRAK PYTAŃ =====
   if (!total) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <nav className="mb-4">
-          <a
-            href={backHref}
-            className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10"
-          >
-            <span aria-hidden>←</span> Wróć do listy
-          </a>
-        </nav>
-        <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>
-        <p className="mt-2 opacity-80">Brak pytań do wyświetlenia.</p>
+      <div className="min-h-screen bg-slate-950 text-white">
+        <div className="mx-auto max-w-3xl px-4 py-8 animate-fade-in">
+          <nav className="mb-4">
+            <a
+              href={backHref}
+              className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 hover:scale-105 border border-white/10 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <span aria-hidden>←</span> Wróć do listy
+            </a>
+          </nav>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">{title}</h1>
+          <p className="mt-2 text-white/70">Brak pytań do wyświetlenia.</p>
+        </div>
       </div>
     );
   }
@@ -473,37 +503,38 @@ export default function QuizRunner({
   if (checked) {
     const pct = scorePct;
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <nav className="mb-4">
-          <a
-            href={backHref}
-            className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10"
-          >
-            <span aria-hidden>←</span> Wróć do listy
-          </a>
-        </nav>
+      <div className="min-h-screen bg-slate-950 text-white">
+        <div className="mx-auto max-w-4xl px-4 py-8 animate-fade-in">
+          <nav className="mb-4">
+            <a
+              href={backHref}
+              className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 hover:scale-105 border border-white/10 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <span aria-hidden>←</span> Wróć do listy
+            </a>
+          </nav>
 
-        <header className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>
-          <p className="mt-2 text-lg">
-            <span>Twój wynik:</span> <b>{correctCount}</b> / <span>{total}</span> (<b>{pct}%</b>)
-          </p>
-          {exam.enabled && (
-            <p className="mt-1 text-sm opacity-70">
-              <span>Tryb egzaminu:</span> <span>{Math.round(exam.durationMs / 60000)}</span> <span>min</span>
-              {exam.startedAt && exam.finishAt && (
-                <> · <span>czas wykorzystany:</span> <span>{formatTime(exam.finishAt - (exam.startedAt || 0))}</span> </>
-              )}
+          <header className="mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">{title}</h1>
+            <p className="mt-2 text-lg text-white">
+              <span>Twój wynik:</span> <b>{correctCount}</b> / <span>{total}</span> (<b>{pct}%</b>)
             </p>
-          )}
-          {(cfg.shuffleQ || cfg.shuffleO) && (
-            <p className="mt-1 text-sm opacity-70">
-              Układ mieszany (seed: <code>{cfg.seed}</code>, pytania: {cfg.shuffleQ ? "TAK" : "NIE"}, opcje:{" "}
-              {cfg.shuffleO ? "TAK" : "NIE"}).
-            </p>
-          )}
-          <div id="quiz-aria-live" aria-live="polite" className="sr-only" />
-        </header>
+            {exam.enabled && (
+              <p className="mt-1 text-sm opacity-70">
+                <span>Tryb egzaminu:</span> <span>{Math.round(exam.durationMs / 60000)}</span> <span>min</span>
+                {exam.startedAt && exam.finishAt && (
+                  <> · <span>czas wykorzystany:</span> <span>{formatTime(exam.finishAt - (exam.startedAt || 0))}</span> </>
+                )}
+              </p>
+            )}
+            {(cfg.shuffleQ || cfg.shuffleO) && (
+              <p className="mt-1 text-sm opacity-70">
+                Układ mieszany (seed: <code>{cfg.seed}</code>, pytania: {cfg.shuffleQ ? "TAK" : "NIE"}, opcje:{" "}
+                {cfg.shuffleO ? "TAK" : "NIE"}).
+              </p>
+            )}
+            <div id="quiz-aria-live" aria-live="polite" className="sr-only" />
+          </header>
 
         <section className="space-y-4">
           {items.map((item, i) => {
@@ -513,8 +544,8 @@ export default function QuizRunner({
               <article
                 key={item.q.id}
                 className={[
-                  "rounded-2xl border p-5",
-                  ok ? "border-green-500/50 bg-green-500/5" : "border-red-500/50 bg-red-500/5",
+                  "rounded-2xl border p-5 backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-200",
+                  ok ? "border-emerald-500/50 bg-emerald-500/5 hover:bg-emerald-500/10" : "border-rose-500/50 bg-rose-500/5 hover:bg-rose-500/10",
                 ].join(" ")}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -523,8 +554,8 @@ export default function QuizRunner({
                   </h3>
                   <span
                     className={[
-                      "inline-flex min-w-[80px] items-center justify-center rounded-full border px-2 py-1 text-xs font-semibold",
-                      ok ? "border-green-400 text-green-200" : "border-red-400 text-red-200",
+                      "inline-flex min-w-[80px] items-center justify-center rounded-full border px-2 py-1 text-xs font-semibold shadow-sm",
+                      ok ? "border-emerald-400 text-emerald-200 bg-emerald-400/10" : "border-rose-400 text-rose-200 bg-rose-400/10",
                     ].join(" ")}
                   >
                     {ok ? "✔ Poprawna" : "✖ Niepoprawna"}
@@ -558,8 +589,8 @@ export default function QuizRunner({
                 </ul>
 
                 {item.q.explanation && (
-                  <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 text-sm">
-                    <b>Wyjaśnienie:</b> {item.q.explanation}
+                  <div className="mt-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-3 text-sm shadow-sm">
+                    <b className="text-white">Wyjaśnienie:</b> <span className="text-white/80">{item.q.explanation}</span>
                   </div>
                 )}
               </article>
@@ -571,24 +602,25 @@ export default function QuizRunner({
           <button
             type="button"
             onClick={reset}
-            className="rounded-xl bg-white px-5 py-2 font-semibold text-slate-900 hover:opacity-90"
+            className="rounded-xl bg-white px-5 py-2 font-semibold text-slate-900 hover:opacity-90 hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
           >
             Powtórz quiz
           </button>
           <a
             href={`${backHref}?mode=quick`}
-            className="rounded-xl bg-emerald-400 px-4 py-2 font-semibold text-slate-900 hover:bg-emerald-300"
+            className="rounded-xl bg-emerald-400 px-4 py-2 font-semibold text-slate-900 hover:bg-emerald-300 hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
           >
             Szybka powtórka (10)
           </a>
           <button
             type="button"
             onClick={() => clearState(slug)}
-            className="rounded-xl border px-4 py-2 hover:bg-white/10"
+            className="rounded-xl border border-white/10 px-4 py-2 hover:bg-white/10 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md"
             title="Usuń zapis z urządzenia"
           >
             Wyczyść zapis
           </button>
+        </div>
         </div>
       </div>
     );
@@ -596,85 +628,86 @@ export default function QuizRunner({
 
   // ===== 14) EKRAN GŁÓWNY =====
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      {resume && (
-        <div className="mb-4 rounded-2xl border border-white/20 bg-yellow-500/10 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm">
-              Znaleziono niedokończony quiz.
-              {resume.exam?.enabled && resume.exam.finishAt && (
-                <> Pozostały czas: <b>{formatTime(resume.exam.finishAt - Date.now())}</b>.</>
-              )}{" "}
-              Wrócić do pytania <b>{Math.min(resume.idx + 1, total)}</b>?
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={resumeFromSaved}
-                className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:opacity-90"
-              >
-                Kontynuuj
-              </button>
-              <button
-                onClick={discardSaved}
-                className="rounded-xl border px-4 py-2 text-sm hover:bg-white/10"
-              >
-                Zacznij od nowa
-              </button>
+    <div className="min-h-screen bg-slate-950 text-white">
+      <div className="mx-auto max-w-3xl px-4 py-8 animate-fade-in">
+        {resume && (
+          <div className="mb-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 backdrop-blur-sm p-4 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-white">
+                Znaleziono niedokończony quiz.
+                {resume.exam?.enabled && resume.exam.finishAt && (
+                  <> Pozostały czas: <b>{formatTime(resume.exam.finishAt - Date.now())}</b>.</>
+                )}{" "}
+                Wrócić do pytania <b>{Math.min(resume.idx + 1, total)}</b>?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={resumeFromSaved}
+                  className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:opacity-90 hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
+                >
+                  Kontynuuj
+                </button>
+                <button
+                  onClick={discardSaved}
+                  className="rounded-xl border border-white/10 px-4 py-2 text-sm hover:bg-white/10 hover:scale-105 transition-all duration-200 shadow-sm hover:shadow-md"
+                >
+                  Zacznij od nowa
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <nav className="mb-4">
-        <a
-          href={backHref}
-          className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10"
-        >
-          <span aria-hidden>←</span> Wróć do listy
-        </a>
-      </nav>
+        <nav className="mb-4">
+          <a
+            href={backHref}
+            className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 hover:scale-105 border border-white/10 transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            <span aria-hidden>←</span> Wróć do listy
+          </a>
+        </nav>
 
-      <header className="mb-6">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>
-            <p className="mt-1 opacity-80">
-              <span>{total}</span> <span>pytań jednokrotnego wyboru. Skróty: ← → oraz A/B/C/D.</span>
-            </p>
-            {(cfg.shuffleQ || cfg.shuffleO) && (
-              <p className="mt-1 text-xs opacity-70">
-                Układ mieszany (seed: <code>{cfg.seed}</code>, pytania: {cfg.shuffleQ ? "TAK" : "NIE"}, opcje:{" "}
-                {cfg.shuffleO ? "TAK" : "NIE"}).
+        <header className="mb-6">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-white">{title}</h1>
+              <p className="mt-1 text-white/70">
+                <span>{total}</span> <span>pytań jednokrotnego wyboru. Skróty: ← → oraz A/B/C/D.</span>
               </p>
+              {(cfg.shuffleQ || cfg.shuffleO) && (
+                <p className="mt-1 text-xs opacity-70">
+                  Układ mieszany (seed: <code>{cfg.seed}</code>, pytania: {cfg.shuffleQ ? "TAK" : "NIE"}, opcje:{" "}
+                  {cfg.shuffleO ? "TAK" : "NIE"}).
+                </p>
+              )}
+            </div>
+
+            {exam.enabled && (
+              <div
+                className={[
+                  "rounded-xl border px-4 py-2 text-sm font-semibold backdrop-blur-sm shadow-md",
+                  timeLeftMs <= 60_000 ? "border-rose-400 text-rose-200 bg-rose-500/10 animate-pulse-glow" : "border-white/20 text-white/90 bg-white/5",
+                ].join(" ")}
+                aria-live="polite"
+              >
+                <span>⏳ </span><span>Pozostało:</span> <span>{formatTime(timeLeftMs)}</span>
+              </div>
             )}
           </div>
 
-          {exam.enabled && (
-            <div
-              className={[
-                "rounded-xl border px-4 py-2 text-sm font-semibold",
-                timeLeftMs <= 60_000 ? "border-red-400 text-red-200" : "border-white/20 opacity-90",
-              ].join(" ")}
-              aria-live="polite"
-            >
-              <span>⏳ </span><span>Pozostało:</span> <span>{formatTime(timeLeftMs)}</span>
-            </div>
-          )}
+        <div className="mt-4 h-2 w-full rounded-full bg-white/10 shadow-inner" aria-hidden>
+          <div className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500 shadow-sm" style={{ width: `${progressPct}%` }} />
         </div>
-
-        <div className="mt-4 h-2 w-full rounded-full bg-white/10" aria-hidden>
-          <div className="h-2 rounded-full bg-white" style={{ width: `${progressPct}%` }} />
-        </div>
-        <div className="mt-1 text-xs opacity-70">
+        <div className="mt-1 text-xs text-white/70">
           <span>Pytanie</span> <span>{idx + 1}</span> / <span>{total}</span> {exam.enabled && <span>· <span>Tryb egzaminu</span></span>}
         </div>
       </header>
 
-      <article className="rounded-2xl border border-white/10 bg-[#0b1220] p-5">
+      <article className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0b1220] to-[#0a0f1a] backdrop-blur-sm p-5 shadow-lg">
         <h2
           ref={qRef}
           tabIndex={-1}
-          className="text-lg font-semibold leading-snug focus:outline-none focus:ring-2 focus:ring-white/40 rounded-md"
+          className="text-lg font-semibold leading-snug text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded-md"
         >
           {current.q.question}
         </h2>
@@ -688,16 +721,15 @@ export default function QuizRunner({
                   type="button"
                   onClick={() => selectOption(i)}
                   className={[
-                    "w-full text-left rounded-xl border px-4 py-3 transition",
-                    isSelected ? "bg-white text-slate-900" : "hover:bg-white/10",
-                    !isSelected ? "border-white/10" : "border-white",
+                    "w-full text-left rounded-xl border px-4 py-3 transition-all duration-200 shadow-sm hover:shadow-md",
+                    isSelected ? "bg-white text-slate-900 border-white shadow-md" : "hover:bg-white/10 border-white/10",
                   ].join(" ")}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border">
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 bg-white/5">
                       {String.fromCharCode(65 + i)}
                     </span>
-                    <span>{current.q.options[origIdx]}</span>
+                    <span className={isSelected ? "text-slate-900 font-medium" : "text-white"}>{current.q.options[origIdx]}</span>
                   </div>
                 </button>
               </li>
@@ -706,11 +738,11 @@ export default function QuizRunner({
         </ul>
 
         {answers[idx] !== null && current.q.explanation && (
-          <details className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3 text-sm">
-            <summary className="cursor-pointer list-none">
+          <details className="mt-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-3 text-sm shadow-sm">
+            <summary className="cursor-pointer list-none text-white font-medium">
               <span className="underline decoration-dotted">Wyjaśnienie</span>
             </summary>
-            <div className="mt-2">{current.q.explanation}</div>
+            <div className="mt-2 text-white/80">{current.q.explanation}</div>
           </details>
         )}
       </article>
@@ -720,7 +752,7 @@ export default function QuizRunner({
           <button
             type="button"
             onClick={prev}
-            className="rounded-xl border px-4 py-2 hover:bg-white/10 disabled:opacity-40"
+            className="rounded-xl border border-white/10 px-4 py-2 hover:bg-white/10 hover:scale-105 disabled:opacity-40 transition-all duration-200 shadow-sm hover:shadow-md"
             disabled={idx === 0 || exam.enabled}
             title={exam.enabled ? "W trybie egzaminu nie można cofać." : undefined}
           >
@@ -729,7 +761,7 @@ export default function QuizRunner({
           <button
             type="button"
             onClick={next}
-            className="rounded-xl border px-4 py-2 hover:bg-white/10 disabled:opacity-40"
+            className="rounded-xl border border-white/10 px-4 py-2 hover:bg-white/10 hover:scale-105 disabled:opacity-40 transition-all duration-200 shadow-sm hover:shadow-md"
             disabled={idx === total - 1}
           >
             Następne →
@@ -739,11 +771,12 @@ export default function QuizRunner({
         <button
           type="button"
           onClick={submit}
-          className="rounded-xl bg-white px-5 py-2 font-semibold text-slate-900 hover:opacity-90 disabled:opacity-40"
+          className="rounded-xl bg-white px-5 py-2 font-semibold text-slate-900 hover:opacity-90 hover:scale-105 disabled:opacity-40 transition-all duration-200 shadow-md hover:shadow-lg"
           disabled={answers.every((a) => a === null)}
         >
           Zakończ / Sprawdź
         </button>
+      </div>
       </div>
     </div>
   );

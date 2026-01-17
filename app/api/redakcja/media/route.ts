@@ -17,15 +17,7 @@ export async function GET(req: Request) {
 	const archivedParam = url.searchParams.get('archived');
 	const isArchived = archivedParam === '1' ? true : archivedParam === '0' ? false : undefined;
 	try {
-		if (prisma) {
-			const items = await prisma.mediaAsset.findMany({
-				take: limit,
-				where: typeof isArchived === 'boolean' ? { isArchived } : undefined,
-				orderBy: { createdAt: 'desc' },
-			});
-			return NextResponse.json({ ok: true, items, nextCursor: null });
-		}
-		// Direct Neon SQL when Prisma is not available
+		// Direct Neon SQL first (align with registration and upload paths)
 		if (isDatabaseConfigured()) {
 			try {
 				await ensureMediaAssetTable();
@@ -83,6 +75,26 @@ export async function GET(req: Request) {
 				}
 				return NextResponse.json({ ok: true, items: rows, nextCursor: null });
 			} catch {
+				// fall through to prisma/file-based paths
+			}
+		}
+		if (prisma) {
+			try {
+				const items = await prisma.mediaAsset.findMany({
+					take: limit,
+					where: typeof isArchived === 'boolean' ? { isArchived } : undefined,
+					orderBy: { createdAt: 'desc' },
+				});
+				return NextResponse.json({ ok: true, items, nextCursor: null });
+			} catch (e: any) {
+				// Known Prisma connection errors (P1000–P1017) or missing table/schema issues → fall back
+				const code = e?.code;
+				const msg = String(e?.message || '').toLowerCase();
+				const connectionErrors = new Set(['P1000', 'P1001', 'P1002', 'P1003', 'P1011', 'P1017']);
+				const isMissingTable = code === 'P2021' || msg.includes('does not exist') || msg.includes('no such table');
+				if (!connectionErrors.has(code) && !isMissingTable) {
+					throw e;
+				}
 				// fall through to file-based store
 			}
 		}

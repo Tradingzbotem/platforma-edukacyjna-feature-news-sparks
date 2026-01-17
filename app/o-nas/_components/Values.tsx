@@ -29,21 +29,23 @@ export default function Values() {
   ];
 
   return (
-    <section className="mt-14">
-      <h2 className="text-2xl md:text-3xl font-bold">Nasze wartości</h2>
-      <div className="mt-6 grid md:grid-cols-2 gap-6">
+    <section className="py-12 lg:py-16">
+      <div className="text-center mb-10">
+        <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Nasze wartości</h2>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2">
         {items.map(({ title, desc, Icon }) => (
           <div
             key={title}
-            className="rounded-2xl bg-slate-900/60 border border-white/10 shadow-xl shadow-black/30 p-6"
+            className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/50 to-slate-950/50 backdrop-blur-sm p-6 hover:border-white/20 transition-colors"
           >
-            <div className="flex items-center gap-3">
-              <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/10">
-                <Icon className="w-5 h-5" />
+            <div className="flex items-start gap-3 mb-3">
+              <span className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-400/10 border border-emerald-400/20 flex-shrink-0">
+                <Icon className="w-6 h-6 text-emerald-300" />
               </span>
-              <h3 className="font-semibold">{title}</h3>
+              <h3 className="text-xl font-bold">{title}</h3>
             </div>
-            <p className="mt-2 text-white/80 text-sm">{desc}</p>
+            <p className="text-white/70 text-sm leading-relaxed">{desc}</p>
           </div>
         ))}
       </div>

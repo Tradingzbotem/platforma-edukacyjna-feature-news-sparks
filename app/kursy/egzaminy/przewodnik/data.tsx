@@ -23,7 +23,6 @@ const M1 = (
       <li><strong>Polityka egzekucji</strong>, <strong>konflikty interesów</strong>, <strong>koszty ex-ante/ex-post</strong>.</li>
       <li><strong>Ostrzeżenia o ryzyku</strong> (zwłaszcza CFD) – format wg ESMA.</li>
     </ul>
-    <p className="text-slate-300">Moduł jest <em>preview</em> – reszta po zalogowaniu/aktywacji.</p>
   </div>
 );
 

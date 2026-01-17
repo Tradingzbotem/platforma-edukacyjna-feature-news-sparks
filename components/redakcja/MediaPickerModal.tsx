@@ -12,6 +12,7 @@ type Props = {
 export default function MediaPickerModal({ open, onClose, onPickCover, onInsertMarkdown }: Props) {
 	const [items, setItems] = useState<MediaItem[]>([]);
 	const [loading, setLoading] = useState(false);
+	const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
 	useEffect(() => {
 		if (!open) return;
@@ -48,8 +49,23 @@ export default function MediaPickerModal({ open, onClose, onPickCover, onInsertM
 				<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
 					{items.map((m) => (
 						<div key={m.id} className="rounded-lg border border-white/10 bg-white/5 overflow-hidden">
-							<div className="aspect-video bg-black/30">
-								<img src={m.url} alt={m.alt || ''} className="h-full w-full object-cover" />
+							<div className="aspect-video bg-black/30 relative flex items-center justify-center">
+								{failedImages.has(m.id) ? (
+									<div className="flex flex-col items-center justify-center text-white/40 text-xs p-4 text-center">
+										<svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+										</svg>
+										<div>Nie można załadować obrazu</div>
+									</div>
+								) : (
+									<img 
+										src={m.url} 
+										alt={m.alt || ''} 
+										className="h-full w-full object-cover" 
+										onError={() => setFailedImages(prev => new Set(prev).add(m.id))}
+										loading="lazy"
+									/>
+								)}
 							</div>
 							<div className="p-2 text-xs text-white/80 space-y-1">
 								<div className="truncate" title={m.alt || ''}>{m.alt || '—'}</div>

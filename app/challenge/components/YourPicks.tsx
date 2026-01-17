@@ -23,21 +23,21 @@ export default function YourPicks() {
 
   if (keys.length === 0)
     return (
-      <p className="text-center text-xs text-slate-500 mt-6">
+      <p className="text-center text-xs text-white/60 mt-6">
         Brak zapisanych typów na dzisiaj.
       </p>
     );
 
   return (
-    <div className="mx-auto mt-10 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="mb-3 text-center font-semibold text-slate-900">Twoje typy (ostatnie 20)</h3>
-      <ul className="divide-y divide-slate-200 text-sm leading-6">
+    <div className="mx-auto mt-10 w-full max-w-3xl rounded-2xl border border-white/10 bg-white/5 p-4">
+      <h3 className="mb-3 text-center font-semibold text-white">Twoje typy (ostatnie 20)</h3>
+      <ul className="divide-y divide-white/10 text-sm leading-6">
         {keys.map((k) => {
           const p = picks[k];
           return (
             <li key={k} className="flex justify-between py-1">
-              <span className="text-slate-900 truncate max-w-[70%]">{k}</span>
-              <span className="text-slate-600">
+              <span className="text-white truncate max-w-[70%]">{k}</span>
+              <span className="text-white/70">
                 {dirLabel(p.dir)} ({p.confidence}%)
               </span>
             </li>

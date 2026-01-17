@@ -309,7 +309,7 @@ export async function GET(req: Request) {
                       },
                       { role: "user", content: JSON.stringify({ title }) },
                     ],
-                    // @ts-expect-error
+                    // @ts-expect-error OpenAI SDK typings don't accept AbortSignal here (runtime supports it)
                     signal: ac.signal,
                   }).catch(() => null as any);
                   clearTimeout(to);

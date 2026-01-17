@@ -25,7 +25,7 @@ export default function MediaUploader({ onUploaded }: { onUploaded?: () => void 
 			const res = await fetch('/api/redakcja/upload', { method: 'POST', body: form });
 			if (!res.ok) {
 				const data = await res.json().catch(() => ({}));
-				throw new Error((data as any)?.error || 'Upload failed');
+				throw new Error((data as any)?.message || (data as any)?.error || 'Upload failed');
 			}
 			onUploaded?.();
 			if (altRef.current) altRef.current.value = '';

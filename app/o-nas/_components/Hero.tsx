@@ -17,47 +17,51 @@ export default function Hero() {
   ];
 
   return (
-    <section className="mt-6">
-      <div className="grid lg:grid-cols-12 gap-10 items-start">
-        <div className="lg:col-span-7">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+    <section className="py-12 lg:py-16">
+      <div className="grid lg:grid-cols-2 lg:gap-12 items-center">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 mb-4">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-300" />
+            <span className="tracking-wide">O NAS</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-6">
             O nas
           </h1>
-          <p className="mt-4 text-white/80 max-w-2xl">
+          <p className="text-lg md:text-xl text-white/80 leading-relaxed mb-8 max-w-2xl">
             Uczymy procesu i zarządzania ryzykiem, nie gonienia wyniku. Tworzymy narzędzia,
             które pomagają podejmować bardziej świadome decyzje: checklisty, scenariusze,
             quizy i praktyczne zadania — bez doradztwa inwestycyjnego.
           </p>
 
-          <ul className="mt-6 grid sm:grid-cols-2 gap-3">
+          <ul className="mb-8 grid sm:grid-cols-2 gap-4">
             {bullets.map(({ label, Icon }) => (
               <li key={label} className="flex items-center gap-3">
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10">
-                  <Icon className="w-4 h-4" />
+                <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-400/10 border border-emerald-400/20">
+                  <Icon className="w-5 h-5 text-emerald-300" />
                 </span>
                 <span className="text-white/90">{label}</span>
               </li>
             ))}
           </ul>
 
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Link
               href="/ebooki#plany"
               aria-label="Zobacz pakiety"
-              className="inline-flex items-center justify-center rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white px-5 py-3 font-semibold focus:outline-none focus:ring-2 focus:ring-white/40"
+              className="inline-flex items-center justify-center rounded-xl bg-white text-slate-900 font-semibold px-6 py-3 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40 transition-opacity"
             >
               Zobacz pakiety
             </Link>
             <Link
               href="#jak-pracujemy"
               aria-label="Poznaj ścieżkę nauki"
-              className="inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/15 text-white px-5 py-3 font-semibold border border-white/10 backdrop-blur focus:outline-none focus:ring-2 focus:ring-white/40"
+              className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/5 text-white font-semibold px-6 py-3 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40 transition-colors"
             >
               Poznaj ścieżkę nauki
             </Link>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="text-white/60 mr-1">Czego NIE robimy:</span>
             {['Nie dajemy sygnałów', 'Nie prowadzimy doradztwa', 'Nie obiecujemy wyników'].map(
               (b) => (
@@ -72,15 +76,15 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="lg:col-span-5">
-          <div className="grid sm:grid-cols-2 gap-4">
+        <div>
+          <div className="grid sm:grid-cols-2 gap-6">
             {trust.map((card) => (
               <div
                 key={card.title}
-                className="rounded-2xl bg-white/5 border border-white/10 shadow-xl shadow-black/30 p-5"
+                className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/50 to-slate-950/50 backdrop-blur-sm p-6 hover:border-white/20 transition-colors"
               >
-                <div className="text-base font-semibold">{card.title}</div>
-                <div className="text-sm text-white/70 mt-1">{card.desc}</div>
+                <div className="text-base font-semibold mb-2">{card.title}</div>
+                <div className="text-sm text-white/70">{card.desc}</div>
               </div>
             ))}
           </div>

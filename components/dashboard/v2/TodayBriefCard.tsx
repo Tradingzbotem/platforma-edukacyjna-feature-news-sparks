@@ -93,7 +93,7 @@ export default function TodayBriefCard() {
   }, [items]);
 
   return (
-    <section className="rounded-2xl bg-white border border-slate-200 shadow-sm p-5">
+    <section className="rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 p-5 hover:-translate-y-0.5">
       <h3 className="text-lg font-semibold text-slate-900">Dzisiejszy brief</h3>
       <div className="mt-3 space-y-2">
         {aiNote ? (
@@ -105,7 +105,7 @@ export default function TodayBriefCard() {
 
         {/* 1 z 4 wydarzeń dnia (carousel) */}
         {items && items.length > 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 shadow-sm">
             <div className="flex items-start gap-2 text-sm text-slate-800 min-h-[40px]">
               <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500 shrink-0" aria-hidden />
               <span className="font-medium">
@@ -130,7 +130,7 @@ export default function TodayBriefCard() {
                 <button
                   type="button"
                   onClick={() => setIdx((i) => (i - 1 + Math.min(4, items.length)) % Math.min(4, items.length))}
-                  className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50 hover:scale-110 transition-all duration-150 shadow-sm hover:shadow-md"
                   aria-label="Poprzedni"
                 >
                   ←
@@ -138,7 +138,7 @@ export default function TodayBriefCard() {
                 <button
                   type="button"
                   onClick={() => setIdx((i) => (i + 1) % Math.min(4, items.length))}
-                  className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                  className="h-7 w-7 inline-flex items-center justify-center rounded-md border border-slate-200 bg-white hover:bg-slate-50 hover:scale-110 transition-all duration-150 shadow-sm hover:shadow-md"
                   aria-label="Następny"
                 >
                   →
@@ -151,7 +151,7 @@ export default function TodayBriefCard() {
         )}
       </div>
       <div className="mt-3">
-        <Link href="/news" className="text-sm underline underline-offset-4 decoration-slate-300 hover:decoration-slate-500">
+        <Link href="/news" className="text-sm underline underline-offset-4 decoration-slate-300 hover:decoration-emerald-500 transition-colors duration-150 font-medium">
           Więcej o briefie →
         </Link>
       </div>

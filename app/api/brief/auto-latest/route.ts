@@ -187,8 +187,10 @@ export async function GET(req: Request) {
         all
           .filter((b) => (b.type || 'GEN') === 'GEN')
           .sort((a, b) => new Date(b.ts_iso).getTime() - new Date(a.ts_iso).getTime())[0] || null;
-      // If still missing metrics (required) or otherwise not useful -> synthesize from sparkline as a fallback
-      const stillBad = requireMetrics ? !hasMetricsOnly(latestGen) : !hasUsefulData(latestGen);
+      // If still stale OR missing metrics (required) OR otherwise not useful -> synthesize from sparkline as a fallback
+      const stillBad =
+        !isFresh(latestGen?.ts_iso) ||
+        (requireMetrics ? !hasMetricsOnly(latestGen) : !hasUsefulData(latestGen));
       if (stillBad) {
         latestGen = (await synthesizeFromSpark(base)) || latestGen;
       }

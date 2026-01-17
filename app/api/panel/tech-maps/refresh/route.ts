@@ -40,16 +40,24 @@ function systemFor(asset: string, tf: Tf) {
 }
 
 async function generateMap(openai: OpenAI, asset: string, tf: Tf) {
-	const completion = await openai.chat.completions.create({
-		model: 'gpt-4o-mini',
-		temperature: 0.35,
-		response_format: { type: 'json_object' },
-		messages: [
-			{ role: 'system', content: systemFor(asset, tf) },
-			{ role: 'user', content: 'Wygeneruj JSON zgodny ze specyfikacją.' },
-		],
-		max_tokens: 600,
-	});
+	async function gen(model: string) {
+		return openai.chat.completions.create({
+			model,
+			temperature: 0.35,
+			response_format: { type: 'json_object' },
+			messages: [
+				{ role: 'system', content: systemFor(asset, tf) },
+				{ role: 'user', content: 'Wygeneruj JSON zgodny ze specyfikacją.' },
+			],
+			max_tokens: 600,
+		});
+	}
+	let completion: any = null;
+	try {
+		completion = await gen('gpt-4o-mini');
+	} catch {
+		completion = await gen('gpt-4.1-mini');
+	}
 	const content = completion.choices?.[0]?.message?.content ?? '{}';
 	let parsed: any = {};
 	try {
@@ -75,7 +83,8 @@ export async function GET() {
 			return NextResponse.json({ ok: true, refreshed: count, mode: 'static' });
 		}
 
-		const openai = new OpenAI({ apiKey, organization: process.env.OPENAI_ORG_ID, project: process.env.OPENAI_PROJECT });
+		// Użyj wyłącznie apiKey — bez nagłówków organization/project, aby uniknąć 401 Project mismatch
+		const openai = new OpenAI({ apiKey });
 
 		// Zbierz unikalne aktywa z obecnych map
 		const assets = Array.from(new Set(TECH_MAPS.map((m) => m.asset)));

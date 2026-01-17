@@ -34,6 +34,8 @@ export function middleware(req: NextRequest) {
   const isPublicAbout = pathname.startsWith('/o-nas');
   // Strona cennika dostępna publicznie
   const isPublicPricing = pathname.startsWith('/cennik');
+  // Sekcja redakcji dostępna publicznie
+  const isPublicRedakcja = pathname.startsWith('/redakcja');
   // Strony prawne i FAQ dostępne publicznie
   const isPublicTerms = pathname.startsWith('/prawne/warunki-korzystania');
   const isPublicPrivacy = pathname.startsWith('/prawne/polityka-prywatnosci');
@@ -52,6 +54,7 @@ export function middleware(req: NextRequest) {
     isPublicContact ||
     isPublicAbout ||
     isPublicPricing ||
+    isPublicRedakcja ||
     isPublicTerms ||
     isPublicPrivacy ||
     isPublicCookies ||

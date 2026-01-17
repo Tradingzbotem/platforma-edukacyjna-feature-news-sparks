@@ -167,6 +167,26 @@ export default async function Page() {
         {/* divider */}
         <div className="mt-6 border-t border-white/10" />
 
+        {/* quick summary link */}
+        {isTierAtLeast(effectiveTier, 'starter') && (
+          <div className="mt-6 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-emerald-200">Podsumowanie modułów</h3>
+                <p className="mt-1 text-sm text-emerald-200/80">
+                  Zobacz wszystkie najważniejsze informacje z Twoich modułów w jednym miejscu
+                </p>
+              </div>
+              <Link
+                href="/konto/panel-rynkowy/podsumowanie"
+                className="inline-flex items-center justify-center rounded-lg bg-emerald-500 text-white font-semibold px-5 py-2.5 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+              >
+                Otwórz podsumowanie →
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* modules */}
         <div className="mt-8">
           <h2 className="text-xl md:text-2xl font-bold">Moduły</h2>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
+import GenerateArticleButton from "@/components/redakcja/GenerateArticleButton";
 import { getPrisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { listFallbackArticles, deleteFallbackArticleById } from "@/lib/redakcja/fallbackStore";
@@ -12,6 +13,8 @@ export const dynamic = "force-dynamic";
 type SearchParams = {
 	searchParams?: Promise<{
 		q?: string;
+		saved?: string;
+		s?: string;
 	}>;
 };
 
@@ -20,6 +23,7 @@ export default async function AdminRedakcjaList({ searchParams }: SearchParams) 
 	const sp = (await searchParams) || {};
 	const q = (sp.q || "").trim();
 	const hasPrisma = !!prisma;
+	const savedFlag = (sp.saved || sp.s || "").trim() === "1";
 
 	// ───── Server Action: delete article ─────
 	async function deleteArticleAction(formData: FormData) {
@@ -68,18 +72,23 @@ export default async function AdminRedakcjaList({ searchParams }: SearchParams) 
 		updatedAt: Date | string;
 	}> = [];
 
+	// Collect from all sources (DB via Prisma, direct SQL, and fallback file store),
+	// then merge, dedupe and sort — to mirror the public listing behaviour.
+	const collected: any[] = [];
+
 	if (prisma) {
 		try {
-			items = await prisma.article.findMany({
+			const prismaItems = await prisma.article.findMany({
 				where,
-				orderBy: { updatedAt: "desc" },
+				orderBy: { updatedAt: "asc" }, // order doesn't matter before merge/sort
 			});
+			collected.push(...prismaItems);
 		} catch {
-			// fall through to SQL/file
+			// ignore and continue
 		}
 	}
-	// If Prisma is not available or failed, try direct SQL (Neon)
-	if ((!items || items.length === 0) && isDatabaseConfigured()) {
+
+	if (isDatabaseConfigured()) {
 		try {
 			await ensureArticleTable();
 			const { rows } = await sql<{
@@ -90,39 +99,47 @@ export default async function AdminRedakcjaList({ searchParams }: SearchParams) 
 			}>`
         SELECT id, slug, title, "updatedAt"
         FROM "Article"
-        ORDER BY "updatedAt" DESC
       `;
-			let list = rows as any[];
-			if (q) {
-				const qq = q.toLowerCase();
-				list = list.filter(
-					(it) =>
-						String(it.title || "").toLowerCase().includes(qq) ||
-						String(it.slug || "").toLowerCase().includes(qq),
-				);
-			}
-			items = list as any;
+			collected.push(...(rows as any));
 		} catch {
-			// fall through to file
+			// ignore and continue
 		}
 	}
-	// Final fallback: local file store (dev or DB unavailable)
-	if (!items || items.length === 0) {
-		const all = await listFallbackArticles();
-		// manual filter/sort to mirror prisma/SQL branches
-		let filtered = all as any[];
-		if (q) {
-			const qq = q.toLowerCase();
-			filtered = filtered.filter(
-				(it) =>
-					String(it.title || "").toLowerCase().includes(qq) ||
-					String(it.slug || "").toLowerCase().includes(qq),
-			);
-		}
-		items = filtered.sort(
-			(a, b) => new Date(b.updatedAt as any).getTime() - new Date(a.updatedAt as any).getTime(),
-		) as any;
+
+	try {
+		const fileItems = await listFallbackArticles();
+		collected.push(...fileItems);
+	} catch {
+		// ignore
 	}
+
+	// Dedupe by id (preferred) else by slug
+	const byKey = new Map<string, any>();
+	for (const it of collected) {
+		const key = String((it as any).id || "") || `slug:${String((it as any).slug || "")}`;
+		if (!key) continue;
+		if (!byKey.has(key)) byKey.set(key, it);
+	}
+	let merged = Array.from(byKey.values());
+
+	// Optional in-memory search filter after merge
+	if (q) {
+		const qq = q.toLowerCase();
+		merged = merged.filter(
+			(it: any) =>
+				String(it.title || "").toLowerCase().includes(qq) ||
+				String(it.slug || "").toLowerCase().includes(qq),
+		);
+	}
+
+	// Sort desc by updatedAt/createdAt (fallback to created if needed)
+	merged.sort((a: any, b: any) => {
+		const ad = new Date((a as any).updatedAt || (a as any).createdAt || 0).getTime();
+		const bd = new Date((b as any).updatedAt || (b as any).createdAt || 0).getTime();
+		return bd - ad;
+	});
+
+	items = merged as any;
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-8">
@@ -134,9 +151,15 @@ export default async function AdminRedakcjaList({ searchParams }: SearchParams) 
 				<div className="flex items-center gap-2">
 					<BackButton variant="pill" fallbackHref="/admin" />
 					<Link href="/redakcja" className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/15 border border-white/15">Zobacz publicznie</Link>
+					<GenerateArticleButton />
 					<Link href="/admin/redakcja/nowy" className="rounded-lg bg-white text-slate-900 px-3 py-2 text-sm font-semibold hover:opacity-90">Nowy</Link>
 				</div>
 			</div>
+			{savedFlag && (
+				<div className="mb-4 rounded-md border border-green-500/30 bg-green-950/30 px-3 py-2 text-green-100">
+					Artykuł zapisany pomyślnie.
+				</div>
+			)}
 
 			<form className="mb-4 grid gap-2 sm:grid-cols-3">
 				<input

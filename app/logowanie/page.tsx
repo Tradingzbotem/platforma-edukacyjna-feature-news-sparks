@@ -50,7 +50,8 @@ export default function Page() {
           if (typeof data?.redirect === 'string') target = data.redirect;
         }
         setOk(true);
-        router.replace(target);
+        // Użyj pełnego przeładowania strony aby cookie sesji był dostępny i SiteHeader się odświeżył
+        window.location.href = target;
         return;
       }
 

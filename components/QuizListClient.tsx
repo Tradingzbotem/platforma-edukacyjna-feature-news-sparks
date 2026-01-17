@@ -89,8 +89,8 @@ export function QuizListClient({ cards }: { cards: QuizCardMeta[] }) {
                 type="button"
                 onClick={() => onToggleTag(t.key)}
                 aria-pressed={active}
-                className={`text-xs px-3 py-1.5 rounded-lg border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
-                  active ? 'bg-white text-slate-900 border-white' : 'bg-white/5 text-white/80 border-white/10 hover:bg-white/10'
+                className={`text-xs px-3 py-1.5 rounded-lg border transition-all duration-200 hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 shadow-sm hover:shadow-md ${
+                  active ? 'bg-white text-slate-900 border-white shadow-md' : 'bg-white/5 backdrop-blur-sm text-white/80 border-white/10 hover:bg-white/10'
                 }`}
               >
                 {t.label}
@@ -103,7 +103,7 @@ export function QuizListClient({ cards }: { cards: QuizCardMeta[] }) {
           <label className="text-xs opacity-70" htmlFor="quiz-mode">Tryb:&nbsp;</label>
           <select
             id="quiz-mode"
-            className="rounded-xl bg-white/5 border border-white/10 px-2 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 px-2 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 shadow-sm hover:shadow-md transition-all duration-200"
             value={mode}
             onChange={(e) => setMode(e.target.value as any)}
             aria-label="Wybierz tryb startu quizu"
@@ -117,7 +117,7 @@ export function QuizListClient({ cards }: { cards: QuizCardMeta[] }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Szukaj: np. pips, CFD, MiFID…"
-            className="w-64 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-white/30"
+            className="w-64 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400/50 shadow-sm hover:shadow-md transition-all duration-200"
             aria-label="Szukaj w tytułach i opisach"
           />
         </div>
@@ -129,7 +129,7 @@ export function QuizListClient({ cards }: { cards: QuizCardMeta[] }) {
         ))}
 
         {filtered.length === 0 && (
-          <div className="col-span-full rounded-2xl bg-[#0b1220] border border-white/10 p-6 text-sm text-white/70">
+          <div className="col-span-full rounded-2xl bg-gradient-to-br from-[#0b1220] to-[#0a0f1a] backdrop-blur-sm border border-white/10 p-6 text-sm text-white/70 shadow-lg">
             Brak wyników dla wybranych filtrów. Zmień frazę lub kategorię.
           </div>
         )}

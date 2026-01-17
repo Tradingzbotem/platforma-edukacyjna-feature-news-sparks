@@ -1,0 +1,35 @@
+name: Redakcja — automatyczne generowanie artykułu
+
+on:
+  schedule:
+    # Codziennie o 06:00 UTC (08:00 czasu polskiego)
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  generate-article:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Show tool versions
+        run: |
+          node -v
+          npm -v
+
+      - name: Generate daily article
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          echo "Generating article: /api/jobs/redakcja/generate"
+          curl -sS -i --fail-with-body \
+            --max-time 120 --connect-timeout 10 \
+            --retry 2 --retry-delay 2 --retry-connrefused \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            "https://platforma-edukacyjna-feature-news-s.vercel.app/api/jobs/redakcja/generate" \
+            -w "\nHTTP_STATUS:%{http_code}\n"

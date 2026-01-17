@@ -8,12 +8,18 @@ import { isDatabaseConfigured } from "@/lib/db";
 import { ensureArticleTable } from "@/lib/redakcja/ensureDb";
 import { sql } from "@vercel/postgres";
 
-type Params = { params: Promise<{ id: string }> };
+type Params = { 
+	params: Promise<{ id: string }>;
+	searchParams?: Promise<{ generated?: string; tmpImage?: string }>;
+};
 
-export default async function AdminRedakcjaEditPage({ params }: Params) {
+export default async function AdminRedakcjaEditPage({ params, searchParams }: Params) {
 	const isAdmin = await getIsAdmin();
 	if (!isAdmin) return redirect("/");
 	const { id } = await params;
+	const sp = await searchParams;
+	const generated = sp?.generated === '1';
+	const tmpImage = sp?.tmpImage === '1';
 	const prisma = getPrisma();
 	let item: any = null;
 	if (prisma) {
@@ -53,6 +59,16 @@ export default async function AdminRedakcjaEditPage({ params }: Params) {
 					<BackButton variant="pill" fallbackHref="/admin/redakcja" />
 				</div>
 			</div>
+			{generated && (
+				<div className="mb-4 rounded-md border border-green-500/30 bg-green-950/30 px-3 py-2 text-green-100">
+					Artykuł został wygenerowany pomyślnie! Możesz go teraz edytować.
+				</div>
+			)}
+			{tmpImage && (
+				<div className="mb-4 rounded-md border border-yellow-500/40 bg-yellow-950/40 px-3 py-2 text-yellow-100">
+					Uwaga: obraz jest tymczasowy i nie został zapisany w bibliotece mediów. Rozważ dodanie własnego zdjęcia.
+				</div>
+			)}
 			<AdminArticleForm
 				mode="edit"
 				initial={{

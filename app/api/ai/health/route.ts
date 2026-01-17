@@ -20,15 +20,26 @@ export async function GET() {
 			);
 		}
 
-		const openai = new OpenAI({ apiKey, organization: process.env.OPENAI_ORG_ID, project: process.env.OPENAI_PROJECT });
+		// Użyj wyłącznie apiKey — bez nagłówków organization/project, aby uniknąć 401 Project mismatch
+		const openai = new OpenAI({ apiKey });
 
-		// Minimalne, tanie zapytanie (1-2 tokeny)
-		const completion = await openai.chat.completions.create({
-			model: 'gpt-4o-mini',
-			messages: [{ role: 'user', content: 'ping' }],
-			max_tokens: 1,
-			temperature: 0,
-		});
+		// Minimalne, tanie zapytanie (1-2 tokeny) z bezpiecznym fallbackiem modelu
+		async function tryModel(model: string) {
+			return openai.chat.completions.create({
+				model,
+				messages: [{ role: 'user', content: 'ping' }],
+				max_tokens: 1,
+				temperature: 0,
+			});
+		}
+
+		let completion: any = null;
+		try {
+			completion = await tryModel('gpt-4o-mini');
+		} catch {
+			// Fallback na szerzej dostępny model
+			completion = await tryModel('gpt-4.1-mini');
+		}
 
 		const reachable = !!completion?.choices?.length;
 		return NextResponse.json(

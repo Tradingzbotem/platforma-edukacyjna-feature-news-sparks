@@ -21,7 +21,8 @@ function inferValidFor(tf: TechMapItem['timeframe']): '1d' | '1w' | '1m' {
 
 export async function ensureTechMapsTable() {
   if (!isDatabaseConfigured()) return;
-  await sql`
+  try {
+    await sql`
 CREATE TABLE IF NOT EXISTS tech_maps (
   id TEXT PRIMARY KEY,
   asset TEXT NOT NULL,
@@ -30,25 +31,37 @@ CREATE TABLE IF NOT EXISTS tech_maps (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 `;
+  } catch {
+    // DB unreachable/misconfigured — allow caller to fallback to static maps
+    return;
+  }
 }
 
 export async function upsertTechMaps(items: TechMapItem[]) {
   if (!isDatabaseConfigured()) return;
-  await ensureTechMapsTable();
+  try {
+    await ensureTechMapsTable();
+  } catch {
+    return;
+  }
   const rows = items.map((m) => ({
     ...m,
     validFor: m.validFor ?? inferValidFor(m.timeframe),
   }));
-  for (const m of rows) {
-    await sql`
-      INSERT INTO tech_maps (id, asset, timeframe, data, updated_at)
-      VALUES (${m.id}, ${m.asset}, ${m.timeframe}, ${JSON.stringify(m)}, NOW())
-      ON CONFLICT (id) DO UPDATE
-      SET asset = EXCLUDED.asset,
-          timeframe = EXCLUDED.timeframe,
-          data = EXCLUDED.data,
-          updated_at = NOW();
-    `;
+  try {
+    for (const m of rows) {
+      await sql`
+        INSERT INTO tech_maps (id, asset, timeframe, data, updated_at)
+        VALUES (${m.id}, ${m.asset}, ${m.timeframe}, ${JSON.stringify(m)}, NOW())
+        ON CONFLICT (id) DO UPDATE
+        SET asset = EXCLUDED.asset,
+            timeframe = EXCLUDED.timeframe,
+            data = EXCLUDED.data,
+            updated_at = NOW();
+      `;
+    }
+  } catch {
+    // ignore writes when DB is not reachable
   }
 }
 
@@ -60,17 +73,22 @@ export async function getTechMaps(): Promise<TechMapItem[]> {
   }));
 
   if (!isDatabaseConfigured()) return enforceCanonicalLevels(base);
-  await ensureTechMapsTable();
-  const { rows } = await sql<{ data: any }>`SELECT data FROM tech_maps`;
-  if (!rows?.length) return enforceCanonicalLevels(base);
+  try {
+    await ensureTechMapsTable();
+    const { rows } = await sql<{ data: any }>`SELECT data FROM tech_maps`;
+    if (!rows?.length) return enforceCanonicalLevels(base);
 
-  const byId = new Map<string, TechMapItem>();
-  base.forEach((m) => byId.set(m.id, m));
-  for (const r of rows) {
-    const m = r.data as TechMapItem;
-    byId.set(m.id, m);
+    const byId = new Map<string, TechMapItem>();
+    base.forEach((m) => byId.set(m.id, m));
+    for (const r of rows) {
+      const m = r.data as TechMapItem;
+      byId.set(m.id, m);
+    }
+    return enforceCanonicalLevels(Array.from(byId.values()));
+  } catch {
+    // Fallback entirely to static maps when DB fetch fails
+    return enforceCanonicalLevels(base);
   }
-  return enforceCanonicalLevels(Array.from(byId.values()));
 }
 
 export async function refreshTechMapsFromStatic() {

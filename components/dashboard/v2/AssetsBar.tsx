@@ -59,6 +59,36 @@ function marketLabel(it: UiItem): string {
   return 'MARKET';
 }
 
+// Oblicz zmianę procentową z ostatnich 24h z serii danych
+function computeChangePct24h(series: Array<[number, number]>): number | null {
+  if (!series?.length || series.length < 2) return null;
+  // Sortuj po czasie (timestamp)
+  const sorted = series.slice().sort((a, b) => a[0] - b[0]);
+  if (sorted.length < 2) return null;
+  
+  // Znajdź punkt sprzed 24h
+  const now = sorted[sorted.length - 1][0];
+  const targetTime = now - (24 * 3600 * 1000);
+  
+  // Znajdź najbliższy punkt przed targetTime
+  let startIdx = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    if (sorted[i][0] <= targetTime) {
+      startIdx = i;
+    } else {
+      break;
+    }
+  }
+  
+  // Użyj pierwszego punktu jeśli nie znaleziono odpowiedniego (ale tylko jeśli seria jest krótka)
+  if (startIdx === sorted.length - 1) startIdx = 0;
+  
+  const first = sorted[startIdx]?.[1];
+  const last = sorted[sorted.length - 1]?.[1];
+  if (!(isFinite(first) && isFinite(last)) || first === 0) return null;
+  return ((last - first) / first) * 100;
+}
+
 export default function AssetsBar() {
   const token =
     process.env.NEXT_PUBLIC_FINNHUB_KEY ??
@@ -224,10 +254,9 @@ export default function AssetsBar() {
       {ITEMS.map((it) => {
         const q = qFor(it.key) ?? {};
         const s = sparks[it.key] || [];
-        // Fallback: jeśli nie mamy changePct z /quote, policz z serii (ostatni vs pierwszy)
-        const seriesPct =
-          s && s.length > 1 ? ((s[s.length - 1][1] - s[0][1]) / Math.max(1e-9, s[0][1])) * 100 : undefined;
-        const pct = typeof q.changePct === 'number' ? q.changePct : seriesPct;
+        // Fallback: jeśli nie mamy changePct z /quote, policz z serii (ostatni vs punkt sprzed 24h)
+        const seriesPct = computeChangePct24h(s);
+        const pct = typeof q.changePct === 'number' ? q.changePct : (seriesPct != null ? seriesPct : undefined);
         const up = pct != null ? pct >= 0 : undefined;
         const colorCls = up == null ? 'text-slate-500' : up ? 'text-emerald-600' : 'text-rose-600';
         // Fallback ceny na podstawie serii (ostatni punkt), gdy brak /quote
@@ -235,10 +264,10 @@ export default function AssetsBar() {
         const effPrice = (typeof q.price === 'number' ? q.price : seriesLast);
         const path = buildSparkPath(s);
         return (
-          <div key={it.key} className="rounded-2xl bg-white border border-slate-200 shadow-sm p-3">
+          <div key={it.key} className="rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 p-3 hover:-translate-y-0.5">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3 min-w-0">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 shadow-sm">
                   {it.icon ?? '◎'}
                 </span>
                 <div className="flex flex-col min-w-0 leading-tight">

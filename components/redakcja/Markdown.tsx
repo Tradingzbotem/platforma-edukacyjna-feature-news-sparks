@@ -14,6 +14,30 @@ export default function Markdown({ content, className }: MarkdownProps) {
 			<ReactMarkdown
 				remarkPlugins={[remarkGfm]}
 				components={{
+					table({ children }) {
+						return (
+							<div className="my-4 overflow-x-auto">
+								<table className="min-w-full border-collapse rounded-md overflow-hidden border border-zinc-800">
+									{children}
+								</table>
+							</div>
+						);
+					},
+					thead({ children }) {
+						return <thead className="bg-zinc-900/60">{children}</thead>;
+					},
+					tbody({ children }) {
+						return <tbody className="bg-transparent">{children}</tbody>;
+					},
+					tr({ children }) {
+						return <tr className="border-b border-zinc-800">{children}</tr>;
+					},
+					th({ children }) {
+						return <th className="px-3 py-2 text-left font-semibold text-zinc-200">{children}</th>;
+					},
+					td({ children }) {
+						return <td className="px-3 py-2 align-top text-zinc-200/90">{children}</td>;
+					},
 					a({ href, children }) {
 						const url = href ?? "";
 						const isExternal = /^https?:\/\//i.test(url);
@@ -85,8 +109,17 @@ export default function Markdown({ content, className }: MarkdownProps) {
 					strong({ children }) {
 						return <strong className="font-semibold text-zinc-100">{children}</strong>;
 					},
+					del({ children }) {
+						return <del className="text-zinc-300 line-through">{children}</del>;
+					},
 					em({ children }) {
 						return <em className="text-zinc-300">{children}</em>;
+					},
+					input(props) {
+						if (props.type === 'checkbox') {
+							return <input {...props} className="mr-2 align-middle accent-zinc-400" disabled />;
+						}
+						return <input {...props} />;
 					},
 					code({ children }) {
 						return (

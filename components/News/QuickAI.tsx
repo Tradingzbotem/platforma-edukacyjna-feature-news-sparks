@@ -12,6 +12,16 @@ type BriefItem = BriefItemT;
 
 async function fetchLatestBrief(): Promise<BriefItem | null> {
   try {
+    // Check if it's weekend
+    const isWeekend = () => {
+      const d = new Date();
+      const wd = d.getDay();
+      return wd === 0 || wd === 6; // Sunday or Saturday
+    };
+    const weekend = isWeekend();
+    // In weekends, accept data up to 72h old (Friday's data is still valid on Saturday/Sunday)
+    const maxAge = weekend ? 72 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+
     // 1) Try existing GEN list first
     const res = await fetch('/api/brief/list?type=GEN&limit=1', { method: 'GET', cache: 'no-store' });
     if (res.ok) {
@@ -24,10 +34,18 @@ async function fetchLatestBrief(): Promise<BriefItem | null> {
           first.metrics.macd != null ||
           first.metrics.volume != null ||
           (typeof first.metrics.dist200 === 'string' && first.metrics.dist200.length > 0));
-      if (first && hasMetrics) return first;
+      if (first && hasMetrics) {
+        // Return if fresh (within maxAge); otherwise, fall through to auto-generation
+        const ts = first.ts_iso ? new Date(first.ts_iso).getTime() : 0;
+        const isFresh = ts && Date.now() - ts < maxAge;
+        if (isFresh) return first;
+        // In weekends, still return the latest available even if older (it's expected)
+        if (weekend && first) return first;
+      }
     }
 
     // 2) Ask server to ensure/generate the latest brief via OpenAI (if key present)
+    // In weekends, this may not generate new data, but we try anyway
     const auto = await fetch('/api/brief/auto-latest?enrich=1', { cache: 'no-store' }).catch(() => null as any);
     if (auto && auto.ok) {
       const j2 = await auto.json();
@@ -123,6 +141,14 @@ export default function QuickAI() {
   const [latest, setLatest] = useState<BriefItem | null>(null);
   const [netError, setNetError] = useState(false);
   const [trend, setTrend] = useState<'wzrost' | 'spadek' | 'konsolidacja'>('konsolidacja');
+  const [tech, setTech] = useState<{
+    rsi14?: number;
+    macdHist?: number;
+    ema21DistPct?: number;
+    volPct?: number;
+    emaSlopePct?: number;
+  }>({});
+  const [gauge, setGauge] = useState<number>(0); // -3 .. +3 (negative=spadek, 0=konsolidacja, positive=wzrost)
 
   // Load from LS immediately
   useEffect(() => {
@@ -194,13 +220,70 @@ export default function QuickAI() {
   // Determine US100 daily trend to show short opinion label
   useEffect(() => {
     let alive = true;
+
+    function computeEMA(values: number[], period: number): number[] {
+      if (!values.length || period <= 1) return values.slice();
+      const k = 2 / (period + 1);
+      const out: number[] = [];
+      let prev = values[0];
+      out.push(prev);
+      for (let i = 1; i < values.length; i++) {
+        const cur = values[i] * k + prev * (1 - k);
+        out.push(cur);
+        prev = cur;
+      }
+      return out;
+    }
+    function computeRSI(values: number[], period = 14): number | undefined {
+      if (values.length < period + 1) return undefined;
+      let gains = 0;
+      let losses = 0;
+      for (let i = values.length - period; i < values.length; i++) {
+        const change = values[i] - values[i - 1];
+        if (change >= 0) gains += change; else losses -= change;
+      }
+      if (gains + losses === 0) return 50;
+      const rs = gains / (losses === 0 ? 1e-9 : losses);
+      return 100 - 100 / (1 + rs);
+    }
+    function computeMACDHist(values: number[]): number | undefined {
+      if (values.length < 35) return undefined;
+      const ema12 = computeEMA(values, 12);
+      const ema26 = computeEMA(values, 26);
+      const macdLine = ema12.map((v, i) => v - (ema26[i] ?? v));
+      const signal = computeEMA(macdLine, 9);
+      const hist = macdLine[macdLine.length - 1] - signal[signal.length - 1];
+      return hist;
+    }
+    function pct(a: number, b: number): number {
+      return b !== 0 ? ((a - b) / b) * 100 : 0;
+    }
+    function computeVolatilityPct(values: number[], window = 20): number | undefined {
+      if (values.length < window + 1) return undefined;
+      const rets: number[] = [];
+      for (let i = values.length - window; i < values.length; i++) {
+        const r = pct(values[i], values[i - 1]);
+        rets.push(r);
+      }
+      const mean = rets.reduce((s, v) => s + v, 0) / rets.length;
+      const variance = rets.reduce((s, v) => s + (v - mean) * (v - mean), 0) / rets.length;
+      return Math.sqrt(variance);
+    }
+
     async function fetchSpark() {
       try {
         const r = await fetch(`/api/quotes/sparkline?symbols=US100&range=7d&interval=1h`, { cache: 'no-store' });
+        if (!r.ok) {
+          console.warn('[QuickAI] Failed to fetch sparkline data');
+          return;
+        }
         const j = await r.json();
         const arr: Array<{ symbol: string; series: Array<[number, number]> }> = Array.isArray(j?.data) ? j.data : [];
         const series = arr.find(x => x.symbol === 'US100')?.series ?? [];
-        if (!series.length) return;
+        if (!series.length) {
+          console.warn('[QuickAI] No series data for US100');
+          return;
+        }
         const sorted = series.slice().sort((a, b) => a[0] - b[0]);
         const last = sorted[sorted.length - 1];
         const dayMs = 24 * 3600 * 1000;
@@ -211,19 +294,105 @@ export default function QuickAI() {
           if (sorted[i][0] <= targetTs) { base = sorted[i]; break; }
         }
         const changePct = base[1] > 0 ? ((last[1] - base[1]) / base[1]) * 100 : 0;
-        const THRESH = 0.4; // 0.4% threshold for consolidation
-        const label = changePct > THRESH ? 'wzrost' : changePct < -THRESH ? 'spadek' : 'konsolidacja';
-        if (alive) setTrend(label);
-      } catch {
+
+        // Compute technicals from closes
+        const closes = sorted.map(p => p[1]);
+        const ema21Arr = computeEMA(closes, 21);
+        const ema21 = ema21Arr[ema21Arr.length - 1];
+        const ema21Prev = ema21Arr[Math.max(0, ema21Arr.length - 6)]; // ~5 steps back
+        const emaSlopePct = pct(ema21, ema21Prev);
+        const ema21DistPct = pct(closes[closes.length - 1], ema21);
+        const rsi14 = computeRSI(closes, 14);
+        const macdHist = computeMACDHist(closes);
+        const volPct = computeVolatilityPct(closes, 20);
+
+        // Improved trend calculation using multiple indicators
+        // Combine price change, MACD, EMA slope, and RSI
+        let upSignals = 0;
+        let downSignals = 0;
+
+        // Price change (24h)
+        const THRESH = 0.3; // Lowered threshold from 0.4% to 0.3%
+        if (changePct > THRESH) upSignals += 1;
+        else if (changePct < -THRESH) downSignals += 1;
+
+        // MACD histogram
+        if (macdHist != null) {
+          if (macdHist > 0.1) upSignals += 1.5; // Stronger weight for MACD
+          else if (macdHist < -0.1) downSignals += 1.5;
+        }
+
+        // EMA21 slope (trend direction)
+        if (emaSlopePct != null) {
+          if (emaSlopePct > 0.1) upSignals += 1;
+          else if (emaSlopePct < -0.1) downSignals += 1;
+        }
+
+        // EMA21 distance (price vs moving average)
+        if (ema21DistPct != null) {
+          if (ema21DistPct > 0.5) upSignals += 0.5;
+          else if (ema21DistPct < -0.5) downSignals += 0.5;
+        }
+
+        // RSI (momentum)
+        if (rsi14 != null) {
+          if (rsi14 > 55) upSignals += 0.5;
+          else if (rsi14 < 45) downSignals += 0.5;
+        }
+
+        // Determine trend label
+        let label: 'wzrost' | 'spadek' | 'konsolidacja' = 'konsolidacja';
+        const signalDiff = upSignals - downSignals;
+        if (signalDiff > 1) {
+          label = 'wzrost';
+        } else if (signalDiff < -1) {
+          label = 'spadek';
+        } else {
+          label = 'konsolidacja';
+        }
+
+        if (alive) {
+          setTrend(label);
+          setTech({ rsi14, macdHist, ema21DistPct, volPct, emaSlopePct });
+        }
+      } catch (err) {
+        console.warn('[QuickAI] Error fetching sparkline:', err);
         // keep default 'konsolidacja' on failure
       }
     }
+    
     void fetchSpark();
-    return () => { alive = false; };
+    // Refresh trend every 15 minutes
+    const intervalId = setInterval(() => {
+      if (alive) void fetchSpark();
+    }, 15 * 60 * 1000);
+    
+    return () => { 
+      alive = false; 
+      clearInterval(intervalId);
+    };
   }, []);
 
+  // Check if it's weekend
+  const isWeekend = () => {
+    const d = new Date();
+    const wd = d.getDay();
+    return wd === 0 || wd === 6; // Sunday or Saturday
+  };
+
   const tsLabel = latest?.ts_iso
-    ? new Date(latest.ts_iso).toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+    ? (() => {
+        const date = new Date(latest.ts_iso);
+        const now = new Date();
+        const diffHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+        const isOld = diffHours > 24;
+        const label = date.toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        // Add weekend indicator if applicable
+        if (isWeekend() && isOld) {
+          return `${label} (weekend)`;
+        }
+        return label;
+      })()
     : '';
 
   const bullets = latest?.bullets?.length ? latest.bullets.slice(0, 8) : [];
@@ -259,65 +428,69 @@ export default function QuickAI() {
   }
 
   function computeDecision(): Decision {
-    const rsi = typeof m.rsi === 'number' ? m.rsi : undefined;
-    const adx = typeof m.adx === 'number' ? m.adx : undefined;
-    const macd = typeof m.macd === 'number' ? m.macd : undefined;
-    const vol = m.volume;
-    const d200 = parseDist200(m.dist200);
+    // Prefer client-derived technicals
+    const macdHist = typeof tech.macdHist === 'number' ? tech.macdHist : (typeof m.macd === 'number' ? m.macd : undefined);
+    const dist = typeof tech.ema21DistPct === 'number' ? tech.ema21DistPct : parseDist200(m.dist200);
+    const slope = typeof tech.emaSlopePct === 'number' ? tech.emaSlopePct : undefined;
+    const vol = typeof tech.volPct === 'number' ? tech.volPct : undefined;
 
     let up = 0;
     let down = 0;
-    // trend z US100 (z QuickAI)
-    if (trend === 'wzrost') up += 1;
-    if (trend === 'spadek') down += 1;
+    // trend z US100 (z QuickAI) - stronger weight
+    if (trend === 'wzrost') up += 1.5;
+    if (trend === 'spadek') down += 1.5;
 
-    // RSI — siła
-    if (rsi != null) {
-      if (rsi >= 70) up += 2;
-      else if (rsi >= 60) up += 1;
-      else if (rsi <= 30) down += 2;
-      else if (rsi <= 40) down += 1;
+    // MACD histogram — momentum change (stronger weight for significant values)
+    if (macdHist != null) {
+      if (macdHist > 0.2) up += 2; // Strong bullish momentum
+      else if (macdHist > 0) up += 1;
+      else if (macdHist < -0.2) down += 2; // Strong bearish momentum
+      else if (macdHist < 0) down += 1;
     }
-    // MACD — momentum
-    if (macd != null) {
-      if (macd > 0) up += 1;
-      if (macd < 0) down += 1;
+    // Odległość od EMA21
+    if (dist != null) {
+      if (dist > 1.5) up += 2; // Strong above EMA
+      else if (dist > 0.3) up += 1;
+      else if (dist < -1.5) down += 2; // Strong below EMA
+      else if (dist < -0.3) down += 1;
     }
-    // Odległość od 200MA
-    if (d200 != null) {
-      if (d200 > 0) up += d200 > 2 ? 2 : 1;
-      if (d200 < 0) down += Math.abs(d200) > 2 ? 2 : 1;
-    }
-    // Wolumen — wzmocnienie
-    if (vol === 'Wysokie') {
-      if (up > down) up += 1; else if (down > up) down += 1;
-    }
-
-    // ADX niski => konsolidacja
-    if (adx != null && adx < 15) {
-      return { label: 'KONSOLIDACJA', reason: 'Niska siła trendu (ADX<15) sugeruje konsolidację.', date: todayStr() };
+    // Slope EMA21 — kierunek trendu
+    if (slope != null) {
+      if (slope > 0.1) up += 1.5; // Strong upward slope
+      else if (slope > 0.05) up += 1;
+      else if (slope < -0.1) down += 1.5; // Strong downward slope
+      else if (slope < -0.05) down += 1;
     }
 
-    // Rozstrzygnięcie
+    // Niska zmienność => konsolidacja (but only if all signals are weak)
+    const signalDiff = up - down;
+    if (vol != null && vol < 0.15 && Math.abs(signalDiff) < 1) {
+      return { label: 'KONSOLIDACJA', reason: 'Niska zmienność i brak przewagi momentum.', date: todayStr(), score: 0 };
+    }
+
+    // Rozstrzygnięcie - lowered threshold from 1 to 0.5 for better sensitivity
     let label: Decision['label'] = 'KONSOLIDACJA';
-    if (Math.abs(up - down) <= 1) {
-      label = 'KONSOLIDACJA';
+    if (Math.abs(signalDiff) > 0.5) {
+      label = signalDiff > 0 ? 'WZROST' : 'SPADEK';
     } else {
-      label = up > down ? 'WZROST' : 'SPADEK';
+      label = 'KONSOLIDACJA';
     }
 
     // Powód (krótko, po polsku)
     const reasons: string[] = [];
-    if (label !== 'KONSOLIDACJA' && adx != null && adx >= 15) reasons.push(`siła trendu ADX ${Math.round(adx)}`);
-    if (rsi != null) reasons.push(`RSI ${Math.round(rsi)}`);
-    if (macd != null) reasons.push(`MACD ${macd > 0 ? '>' : '<'} 0`);
-    if (d200 != null) reasons.push(`${d200 > 0 ? '+' : ''}${d200}% od 200MA`);
+    if (trend !== 'konsolidacja') reasons.push(`Trend: ${trend}`);
+    if (macdHist != null && Math.abs(macdHist) > 0.1) reasons.push(`MACD ${macdHist > 0 ? '↑' : '↓'} ${Math.abs(macdHist).toFixed(2)}`);
+    if (dist != null && Math.abs(dist) > 0.3) reasons.push(`${dist > 0 ? '+' : ''}${dist.toFixed(1)}% od EMA21`);
+    if (slope != null && Math.abs(slope) > 0.05) reasons.push(`EMA21 ${slope > 0 ? '↑' : '↓'} ${Math.abs(slope).toFixed(2)}%`);
     const reason =
       label === 'KONSOLIDACJA'
         ? 'Wskaźniki nie wskazują przewagi strony popytu/podaży.'
-        : `Przewaga sygnałów (${reasons.slice(0, 3).join(', ')}).`;
+        : reasons.length > 0 
+          ? `Przewaga sygnałów: ${reasons.slice(0, 3).join(', ')}.`
+          : 'Analiza wskaźników technicznych.';
 
-    return { label, reason, date: todayStr() };
+    const score = signalDiff; // -inf..+inf, realnie ~ -5..+5
+    return { label, reason, date: todayStr(), score };
   }
 
   useEffect(() => {
@@ -326,11 +499,13 @@ export default function QuickAI() {
       const parsed = raw ? (JSON.parse(raw) as Decision) : null;
       if (parsed && parsed.date === todayStr()) {
         setDecision(parsed);
+        if (typeof parsed.score === 'number') setGauge(parsed.score);
         return;
       }
     } catch {}
     const d = computeDecision();
     setDecision(d);
+    if (typeof d.score === 'number') setGauge(d.score);
     try { localStorage.setItem(DECISION_KEY, JSON.stringify(d)); } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [m.rsi, m.adx, m.macd, m.volume, m.dist200, trend]);
@@ -355,6 +530,24 @@ export default function QuickAI() {
           <div className="mt-3 text-sm">
             <div className="text-white/60 mb-1">Opinia AI (skrót)</div>
             <p className="font-medium line-clamp-2 capitalize">{trend}</p>
+            {/* Wizualizacja: spadek ↔ konsolidacja ↔ wzrost */}
+            <div className="mt-2">
+              <div className="relative h-1.5 rounded bg-white/10">
+                <div className="absolute inset-0 rounded bg-gradient-to-r from-rose-400/40 via-white/20 to-emerald-400/40" />
+                <div
+                  className="absolute -top-1.5 h-4 w-4 rounded-full bg-white border border-white/30 shadow"
+                  style={{
+                    left: `calc(${Math.max(0, Math.min(100, ((gauge + 3) / 6) * 100))}% - 8px)`,
+                  }}
+                  aria-label="Wskaźnik kierunku"
+                />
+              </div>
+              <div className="mt-1 flex justify-between text-[10px] text-white/60">
+                <span>Spadek</span>
+                <span>Konsolidacja</span>
+                <span>Wzrost</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -365,29 +558,24 @@ export default function QuickAI() {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <StatTile
-              label="RSI(14)"
-              value={m?.rsi !== undefined ? Number(m.rsi).toFixed(0) : '—'}
-              hint="RSI: 0–100; >70 wykupienie, <30 wyprzedanie. Krótkoterminowa siła ruchu."
+              label="MACD hist"
+              value={tech.macdHist != null ? Number(tech.macdHist).toFixed(2) : (m?.macd !== undefined ? Number(m.macd).toFixed(2) : '—')}
+              hint="MACD histogram: momentum zmiany; >0 przewaga wzrostowa, <0 spadkowa."
             />
             <StatTile
-              label="ADX"
-              value={m?.adx !== undefined ? Number(m.adx).toFixed(0) : '—'}
-              hint="ADX: siła trendu; <15 konsolidacja, 15–25 trend słaby, >25 trend silniejszy."
+              label="Dist EMA21"
+              value={tech.ema21DistPct != null ? `${tech.ema21DistPct.toFixed(1)}%` : (m?.dist200 ?? '—')}
+              hint="Odległość od EMA21; dodatnia powyżej średniej, ujemna poniżej."
             />
             <StatTile
-              label="MACD"
-              value={m?.macd !== undefined ? Number(m.macd).toFixed(2) : '—'}
-              hint="MACD: momentum; >0 przewaga wzrostów, <0 przewaga spadków."
+              label="σ20 (vol)"
+              value={tech.volPct != null ? `${tech.volPct.toFixed(2)}%` : '—'}
+              hint="Zmienność stopy zwrotu (okno 20); wyższa = większe wahania."
             />
             <StatTile
-              label="Wolumen"
-              value={m?.volume ?? '—'}
-              hint="Szacowany poziom aktywności obrotu: Niskie / Średnie / Wysokie."
-            />
-            <StatTile
-              label="Dist 200MA"
-              value={m?.dist200 ?? '—'}
-              hint="Odległość od średniej 200-okresowej; dodatnia powyżej MA, ujemna poniżej."
+              label="Nach. EMA21"
+              value={tech.emaSlopePct != null ? `${tech.emaSlopePct.toFixed(2)}%` : '—'}
+              hint="Nachylenie EMA21 (ok. 5 kroków); dodatnie = kierunek w górę."
             />
           </div>
         </aside>

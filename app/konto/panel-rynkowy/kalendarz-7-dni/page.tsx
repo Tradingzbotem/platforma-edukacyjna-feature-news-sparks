@@ -1,201 +1,105 @@
 // app/konto/panel-rynkowy/kalendarz-7-dni/page.tsx — Moduł: Kalendarz 7 dni (EDU)
 import Link from 'next/link';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { getSession } from '@/lib/session';
 import { CALENDAR_7D, type CalendarEvent } from '@/lib/panel/calendar7d';
 import { resolveTierFromCookiesAndSession, isTierAtLeast } from '@/lib/panel/access';
+import CalendarClient from './CalendarClient';
+import { inferImpact } from '@/lib/panel/calendarImpact';
 
-function inferImpact(ev: CalendarEvent): { chips: string[]; reactionLines: string[] } {
-  const region = ev.region;
-  const title = ev.event.toLowerCase();
+type ApiEvent = {
+  date: string;
+  time?: string;
+  region?: string;
+  title: string;
+  importance?: 'low' | 'medium' | 'high';
+};
 
-  const isCpi = title.includes('cpi') || title.includes('inflac') || title.includes('hicp');
-  const isNfp = title.includes('nfp') || title.includes('non-farm');
-  const isPce = title.includes('pce');
-  const isPmi = title.includes('pmi') || title.includes('ism');
-  const isFomc = title.includes('fomc') || title.includes('minutes') || title.includes('fed');
-  const isOil =
-    title.includes('crude') ||
-    title.includes('eia') ||
-    title.includes('api') ||
-    title.includes('zapasy ropy') ||
-    title.includes('oil');
-  const isGdp = title.includes('gdp') || title.includes('pkb');
-  const isUnemp = title.includes('unemployment') || title.includes('bezroboc');
-  const isRetailSales = title.includes('retail sales');
+function normalizeRegion(r?: string): CalendarEvent['region'] {
+  const v = String(r || '').toUpperCase();
+  if (v === 'US' || v === 'EU' || v === 'UK' || v === 'DE' || v === 'FR') return v;
+  return 'US';
+}
 
-  // Helpers
-  const euChips = ['EURUSD', 'DAX', 'Bund (DE10Y)'];
-  const deChips = ['EURUSD', 'EURPLN', 'DAX', 'Bund (DE10Y)'];
-  const usRates = ['UST (US10Y)'];
-  const usIndex = ['US100'];
-  const usdFx = ['USDJPY', 'EURUSD'];
+function educationalWhyHow(title: string, region: CalendarEvent['region']): Pick<CalendarEvent, 'why' | 'how'> {
+  const t = title.toLowerCase();
+  const isCpi = t.includes('cpi') || t.includes('inflac') || t.includes('hicp');
+  const isNfp = t.includes('nfp') || t.includes('non-farm');
+  const isPce = t.includes('pce');
+  const isPmi = t.includes('pmi') || t.includes('ism');
+  const isFomc = t.includes('fomc') || t.includes('minutes') || t.includes('fed');
+  const isGdp = t.includes('gdp') || t.includes('pkb');
+  const isUnemp = t.includes('unemployment') || t.includes('bezroboc');
+  const isRetailSales = t.includes('retail sales');
+  const isOil = t.includes('crude') || t.includes('eia') || t.includes('api') || t.includes('zapasy ropy') || t.includes('oil');
 
-  // CPI / Inflacja
   if (isCpi) {
     if (region === 'US') {
       return {
-        chips: [...usdFx, 'Złoto', ...usIndex, ...usRates],
-        reactionLines: [
-          'Wyższa inflacja vs konsensus często wzmacnia USD i podnosi rentowności.',
-          'Indeksy bywają wrażliwe na narrację „higher for longer”; siła reakcji zależy od skali zaskoczenia.',
-        ],
+        why: 'Preferowana przez Fed miara presji cenowej wpływa na oczekiwania dot. stóp i narrację polityki.',
+        how: 'Wyższa inflacja vs konsensus często wzmacnia USD i podnosi rentowności; indeksy zależne od „higher for longer”.',
       };
     }
-    if (region === 'DE' || region === 'EU' || region === 'FR') {
-      return {
-        chips: region === 'DE' ? deChips : euChips,
-        reactionLines: [
-          'Zaskoczenie inflacją zmienia oczekiwania dot. stóp; typowo ruch na EUR i bundach.',
-          'Indeksy w Europie reagują zależnie od rentowności i narracji EBC.',
-        ],
-      };
-    }
-  }
-
-  // NFP / rynek pracy (US)
-  if (isNfp && region === 'US') {
     return {
-      chips: ['USDJPY', 'EURUSD', 'US100', ...usRates],
-      reactionLines: [
-        'Duże zaskoczenie potrafi szybko poruszyć USD i rentowności.',
-        'Pierwsza świeca bywa zmienna; kierunek zależy od szczegółów i rewizji.',
-      ],
+      why: 'Inflacja w Europie kształtuje oczekiwania wobec polityki EBC i krzywą bundów.',
+      how: 'Zaskoczenia wobec konsensusu często wpływają na EUR i bundy; skala reakcji zależy od odchylenia i trendu.',
     };
   }
-
-  // PCE (US)
-  if (isPce && region === 'US') {
+  if (isNfp) {
     return {
-      chips: ['USDJPY', 'EURUSD', 'Złoto', ...usRates],
-      reactionLines: [
-        'PCE wyżej od konsensusu bywa „hawkish”: często wzmacnia USD i rentowności.',
-        'Reakcja zależy od kontekstu trendu i komunikacji Fed.',
-      ],
+      why: 'Rynek pracy w USA steruje oczekiwaniami stóp i oceną ryzyka recesji/miękkiego lądowania.',
+      how: 'Duże odchylenie od konsensusu bywa impulsem kierunkowym na USD i rentownościach; znaczenie rewizji i szczegółów.',
     };
   }
-
-  // PMI / ISM
+  if (isPce) {
+    return {
+      why: 'Preferowana przez Fed miara inflacji; ważna dla trajektorii polityki pieniężnej.',
+      how: 'Odczyt wyżej od prognoz bywa „hawkish”: wzmacnia USD i rentowności; kontekst trendu ma znaczenie.',
+    };
+  }
   if (isPmi) {
-    if (region === 'US') {
-      return {
-        chips: [...usIndex, ...usdFx],
-        reactionLines: [
-          'PMI/ISM wpływają na postrzeganie cyklu; silne odchylenia ruszają indeksy i USD.',
-          'Trwałość reakcji zależy od trendu i nastroju „risk-on/risk-off”.',
-        ],
-      };
-    }
     return {
-      chips: ['DAX', 'EURUSD'],
-      reactionLines: [
-        'Silniejsze PMI bywa wsparciem dla indeksów regionu i EUR.',
-        'Znaczenie rośnie, gdy dane wpisują się w szerszy zwrot cykliczny.',
-      ],
+      why: 'Indeks aktywności (PMI/ISM) daje wskazówki co do cyklu i presji cenowej w komponentach.',
+      how: 'Silne zaskoczenia mogą poruszać indeksy i USD/EUR; trwałość zależy od narracji i potwierdzeń w kolejnych danych.',
     };
   }
-
-  // FOMC Minutes / Fed
-  if (isFomc && region === 'US') {
+  if (isFomc) {
     return {
-      chips: [...usdFx, 'Złoto', ...usIndex, ...usRates],
-      reactionLines: [
-        'Ton jastrzębi/gołębi często wpływa na USD, rentowności i indeksy.',
-        'Interpretacja zależy od akcentów w minutes i oczekiwań rynku.',
-      ],
+      why: 'Minutes/komunikacja Fed zmieniają bilans ryzyk i wrażliwość na dane.',
+      how: 'Ton jastrzębi/gołębi często wpływa na USD, rentowności i indeksy; znaczenie rośnie przy zmianie narracji.',
     };
   }
-
-  // Zapasy ropy / EIA / API
+  if (isGdp) {
+    return {
+      why: 'PKB kształtuje ocenę dynamiki wzrostu oraz oczekiwań wobec stóp.',
+      how: 'Duże odchylenia bywają kierunkowe dla FX i indeksów; znaczenie zależy od trendu i tła globalnego.',
+    };
+  }
+  if (isUnemp) {
+    return {
+      why: 'Stopa bezrobocia uzupełnia obraz rynku pracy i ryzyka cyklu.',
+      how: 'Wzrost bywa „dovish”, spadek „hawkish”; rynek często ocenia łącznie z NFP i rewizjami.',
+    };
+  }
+  if (isRetailSales) {
+    return {
+      why: 'Konsumpcja jest istotną częścią PKB; dynamika sprzedaży wpływa na ocenę cyklu.',
+      how: 'Silne odchylenia vs prognozy mogą poruszać indeksy i USD krótkoterminowo; trwałość zależna od trendu.',
+    };
+  }
   if (isOil) {
     return {
-      chips: ['WTI', 'Brent', 'USDCAD', 'Energy'],
-      reactionLines: [
-        'Spadek zapasów vs oczekiwania bywa wsparciem dla ropy; wzrost zapasów może ją osłabiać.',
-        'Liczy się też popyt/produkcja i komentarz w raporcie.',
-      ],
+      why: 'Zapasy ropy wpływają na równowagę popyt–podaż i sentyment w energii.',
+      how: 'Spadek zapasów bywa wsparciem dla ropy; wzrost – negatywny; liczy się też produkcja i popyt.',
     };
   }
-
-  // GDP
-  if (isGdp) {
-    if (region === 'UK') {
-      return {
-        chips: ['GBPUSD'],
-        reactionLines: [
-          'Odchylenie PKB miewa wpływ na GBP i oczekiwania wobec stóp BoE.',
-          'Kontekst globalny potrafi wzmacniać lub tłumić reakcję.',
-        ],
-      };
-    }
-    if (region === 'DE' || region === 'EU' || region === 'FR') {
-      return {
-        chips: ['EURUSD', 'DAX'],
-        reactionLines: [
-          'PKB w Europie często wpływa pośrednio na indeksy i EUR.',
-          'Znaczenie rośnie, gdy zmienia narrację o wzroście.',
-        ],
-      };
-    }
-    if (region === 'US') {
-      return {
-        chips: [...usIndex, ...usRates, 'USDJPY'],
-        reactionLines: [
-          'Silniejsze PKB bywa wsparciem dla rentowności i USD; indeksy reagują różnie.',
-          'Kontekst „growth vs rates” decyduje o kierunku i zmienności.',
-        ],
-      };
-    }
-  }
-
-  // Stopa bezrobocia (US) — często z NFP
-  if (isUnemp && region === 'US') {
-    return {
-      chips: [...usdFx, ...usRates, ...usIndex],
-      reactionLines: [
-        'Wzrost bezrobocia bywa „dovish”, spadek „hawkish”, zależnie od tła.',
-        'Reakcja zwykle łączona z NFP i rewizjami.',
-      ],
-    };
-  }
-
-  // Sprzedaż detaliczna (US) — fallback
-  if (isRetailSales && region === 'US') {
-    return {
-      chips: [...usIndex, ...usdFx],
-      reactionLines: [
-        'Odchylenia sprzedaży mogą poruszać indeksy i USD krótkoterminowo.',
-        'Trwałość zależy od tego, czy zmienia ocenę cyklu.',
-      ],
-    };
-  }
-
-  // Ogólny fallback wg regionu
-  if (region === 'US') {
-    return {
-      chips: [...usIndex, ...usdFx, ...usRates],
-      reactionLines: [
-        'Możliwa reakcja na USD, rentownościach i indeksach USA — zależnie od zaskoczenia vs konsensus.',
-      ],
-    };
-  }
-  if (region === 'DE' || region === 'EU' || region === 'FR') {
-    return {
-      chips: ['EURUSD', 'DAX', 'Bund (DE10Y)'],
-      reactionLines: [
-        'Często widać ruch na EUR oraz bundach; indeksy reagują zależnie od narracji stóp.',
-      ],
-    };
-  }
-  if (region === 'UK') {
-    return {
-      chips: ['GBPUSD', 'FTSE100'],
-      reactionLines: ['Reakcja bywa widoczna na GBP i lokalnych indeksach; zależy od zaskoczenia.'],
-    };
-  }
-
-  return { chips: [], reactionLines: [] };
+  return {
+    why: 'Wydarzenie makro mogące wpływać na sentyment i trajektorię oczekiwań rynkowych.',
+    how: 'Reakcja zależy od skali zaskoczenia vs konsensus oraz kontekstu (trend, polityka).',
+  };
 }
+
+// inferImpact przeniesiony do '@/lib/panel/calendarImpact'
 
 function importanceBadge(importance: CalendarEvent['importance']) {
   const styles =
@@ -219,6 +123,45 @@ export default async function Page() {
   const effectiveTier = resolveTierFromCookiesAndSession(c, session);
   const unlocked = isTierAtLeast(effectiveTier, 'starter');
 
+  // SSR: spróbuj pobrać „live” kalendarz z /api/ai/calendar; w razie błędu — fallback do EDU
+  let events: CalendarEvent[] = CALENDAR_7D;
+  try {
+    const ac = new AbortController();
+    const to = setTimeout(() => ac.abort(), 8000);
+    // Unikamy wewnętrznego "internal fetch" Next (który próbuje czytać .next/routes-manifest.json)
+    // Budujemy bezwzględny URL na podstawie nagłówków żądania.
+    const h = await headers();
+    const host = h.get('x-forwarded-host') || h.get('host') || 'localhost:3000';
+    const proto = h.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
+    const base = `${proto}://${host}`;
+    const r = await fetch(`${base}/api/ai/calendar?days=30&limit=100`, { cache: 'no-store', signal: ac.signal }); // Increased limit to show more events
+    clearTimeout(to);
+    if (r.ok) {
+      const j = await r.json().catch(() => ({} as any));
+      const arr: ApiEvent[] = Array.isArray(j?.items) ? j.items : [];
+      if (arr.length > 0) {
+        events = arr.map<CalendarEvent>((it) => {
+          const region = normalizeRegion(it.region);
+          const { why, how } = educationalWhyHow(String(it.title || ''), region);
+          return {
+            date: String(it.date || '').slice(0, 10),
+            time: String(it.time || '').slice(0, 5) || '00:00',
+            region,
+            event: String(it.title || '').trim(),
+            importance: ((): CalendarEvent['importance'] => {
+              const v = String(it.importance || '').toLowerCase();
+              return v === 'high' ? 'high' : v === 'medium' ? 'medium' : 'low';
+            })(),
+            why,
+            how,
+          };
+        });
+      }
+    }
+  } catch {
+    // zostaw fallback CALENDAR_7D
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -232,7 +175,7 @@ export default async function Page() {
             Panel (EDU)
           </Link>
           <span className="text-white/30">/</span>
-          <span className="text-white/70">Kalendarz 7 dni</span>
+          <span className="text-white/70">Kalendarz</span>
         </div>
 
         {/* back */}
@@ -247,11 +190,10 @@ export default async function Page() {
 
         {/* header */}
         <div className="mt-4">
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Kalendarz 7 dni (EDU)</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Kalendarz makro — 30 dni (EDU)</h1>
           <p className="mt-2 text-white/80 max-w-3xl">
-            Zestawienie kluczowych wydarzeń makro na najbliższy tydzień. Pomaga przygotować scenariusze,
-            zrozumieć, co bywa ważne dla rynku i gdzie mogą pojawić się większe ruchy — bez „sygnałów”
-            i bez rekomendacji inwestycyjnych.
+            Zestawienie kluczowych wydarzeń makro w horyzoncie miesiąca z filtrami ważności i
+            wyróżnieniem kategorii (CPI, NFP, PKB, zapasy ropy).
           </p>
         </div>
 
@@ -295,70 +237,8 @@ export default async function Page() {
               </ul>
             </div>
 
-            {/* list */}
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {CALENDAR_7D.map((ev, idx) => (
-                <article key={`${ev.date}-${ev.time}-${idx}`} className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm text-white/70">
-                      <div className="font-semibold text-white/80">{ev.date} · {ev.time}</div>
-                      <div className="mt-0.5">{ev.region}</div>
-                    </div>
-                    {importanceBadge(ev.importance)}
-                  </div>
-                  <h3 className="mt-3 text-lg font-semibold">{ev.event}</h3>
-                  <div className="mt-2 text-sm text-white/80">
-                    <div className="font-semibold">Dlaczego to ważne</div>
-                    <p className="mt-1">{ev.why}</p>
-                  </div>
-                  <div className="mt-2 text-sm text-white/80">
-                    <div className="font-semibold">Jak rynek często reaguje</div>
-                    <p className="mt-1">{ev.how}</p>
-                  </div>
-                  {/* EDU: Na co zwykle wpływa */}
-                  {(() => {
-                    const info = inferImpact(ev);
-                    return (
-                      <>
-                        <div className="mt-3 text-sm text-white/80">
-                          <div className="text-sm font-semibold">Na co zwykle wpływa</div>
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {info.chips.length > 0 ? (
-                              info.chips.map((c, i) => (
-                                <span
-                                  key={`${c}-${i}`}
-                                  className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-2 py-0.5 text-[11px] text-white/80"
-                                >
-                                  {c}
-                                </span>
-                              ))
-                            ) : (
-                              <span className="text-white/50 text-[12px]">—</span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="mt-3 text-sm text-white/70">
-                          <div className="text-sm font-semibold text-white/80">Przykładowa reakcja (edukacyjnie)</div>
-                          <div className="mt-1 space-y-1 leading-relaxed">
-                            {info.reactionLines.length > 0 ? (
-                              info.reactionLines.map((line, i) => (
-                                <p key={i} className="text-white/70">{line}</p>
-                              ))
-                            ) : (
-                              <p className="text-white/50">Reakcja zależy od zaskoczenia vs konsensus oraz kontekstu rynkowego.</p>
-                            )}
-                          </div>
-                          <div className="mt-2 text-xs text-white/50">
-                            To nie są sygnały. Przykłady pokazują, gdzie zwykle pojawia się reakcja i jak ją interpretować.
-                          </div>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </article>
-              ))}
-            </div>
+            {/* interactive list with filters and categories */}
+            <CalendarClient events={events} />
           </>
         )}
 

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { CALENDAR_7D, type CalendarEvent } from '@/lib/panel/calendar7d';
 
@@ -55,12 +54,12 @@ export default function UpcomingCalendarMini() {
 		let mounted = true;
 		(async () => {
 			try {
-				const res = await fetch('/api/ai/calendar?days=7&limit=5', { cache: 'no-store' });
+				const res = await fetch('/api/ai/calendar?days=14&limit=30', { cache: 'no-store' });
 				const json = await res.json().catch(() => ({}));
 				if (!mounted) return;
 				const arr: LiveItem[] = Array.isArray(json?.items) ? json.items : [];
 				if (arr.length) {
-					setItems(arr.slice(0, 5));
+					setItems(arr);
 				} else {
 					setItems(null);
 				}
@@ -74,7 +73,7 @@ export default function UpcomingCalendarMini() {
 	}, []);
 
 	const todayIso = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-	const fallback = CALENDAR_7D.filter(e => e.date >= todayIso).slice(0, 5).map<LiveItem>(e => ({
+	const fallback = CALENDAR_7D.filter(e => e.date >= todayIso).slice(0, 30).map<LiveItem>(e => ({
 		date: e.date, time: e.time, region: e.region, title: e.event, importance: e.importance
 	}));
 	const rawData = items && items.length ? items : fallback;
@@ -86,9 +85,6 @@ export default function UpcomingCalendarMini() {
 		<section className="rounded-2xl bg-white/5 border border-white/10 p-4">
 			<div className="flex items-center justify-between">
 				<h2 className="text-lg font-semibold">Najbliższe wydarzenia (EDU)</h2>
-				<Link href="/konto/panel-rynkowy/kalendarz-7-dni" className="text-sm underline underline-offset-4 decoration-white/30 hover:decoration-white">
-					Kalendarz →
-				</Link>
 			</div>
 			<ul className="mt-3 space-y-3" role="list">
 				{data.map((ev, idx) => {

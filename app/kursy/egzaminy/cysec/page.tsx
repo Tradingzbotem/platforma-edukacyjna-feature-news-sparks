@@ -3,6 +3,7 @@
 import ExamCTA from '../../../components/ExamCTA';
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { LESSONS } from './data';
 
 const AUTH_KEY = 'auth:pro';
@@ -42,7 +43,7 @@ function Lock({ show }: { show: boolean }) {
       <p className="mt-2 text-slate-200">Dostęp po zalogowaniu.</p>
       <div className="mt-3 flex gap-3">
         <Link
-          href="/konto"
+          href="/logowanie"
           className="px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90"
         >
           Zaloguj / Zarejestruj
@@ -63,10 +64,38 @@ function Lock({ show }: { show: boolean }) {
 }
 
 export default function Page() {
+  const router = useRouter();
   const firstId = LESSON_LIST[0]?.id ?? 'intro';
   const [pro, setPro] = useState(false);
   const [active, setActive] = useState<string>(firstId);
   const [done, setDone] = useState<string[]>([]);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  // Sprawdź autoryzację po stronie klienta
+  useEffect(() => {
+    let isActive = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/session', {
+          cache: 'no-store',
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          if (isActive) router.push('/logowanie');
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!Boolean((data as any)?.isLoggedIn)) {
+          if (isActive) router.push('/logowanie');
+          return;
+        }
+        if (isActive) setIsAuthChecked(true);
+      } catch {
+        if (isActive) router.push('/logowanie');
+      }
+    })();
+    return () => { isActive = false; };
+  }, [router]);
 
   useEffect(() => {
     setPro(localStorage.getItem(AUTH_KEY) === '1');
@@ -78,11 +107,12 @@ export default function Page() {
     }
   }, []);
 
+  // Wszystkie hooki muszą być przed warunkowym returnem
   const l =
     useMemo(() => LESSON_LIST.find((x) => x.id === active) ?? LESSON_LIST[0], [active]) ??
     { id: 'intro', title: 'Wprowadzenie', minutes: 0, free: true, content: null };
 
-  const locked = !pro && !l.free;
+  const locked = false; // Odblokowane - wszystkie treści dostępne po zalogowaniu
 
   const progress = useMemo(() => {
     const total = LESSON_LIST.length || 1;
@@ -97,8 +127,17 @@ export default function Page() {
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
   };
 
+  if (!isAuthChecked) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="text-center">Sprawdzanie dostępu...</div>
+      </main>
+    );
+  }
+
   return (
-    <main className="mx-auto max-w-6xl p-6 md:p-8 text-white">
+    <main className="min-h-screen bg-slate-950 text-white">
+      <div className="mx-auto max-w-6xl p-6 md:p-8 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <Link href="/kursy" className="text-sm underline">
@@ -122,25 +161,18 @@ export default function Page() {
           <ul className="mt-4 space-y-2">
             {LESSON_LIST.map((m) => {
               const act = m.id === active;
-              const lock = !pro && !m.free;
               const isDone = done.includes(m.id);
               return (
                 <li key={m.id}>
                   <button
                     onClick={() => setActive(m.id)}
-                    className={`w-full text-left rounded-xl px-3 py-2 border ${
-                      act ? 'bg-white text-slate-900 border-white' : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    className={`w-full text-left rounded-xl px-3 py-2 border transition-all duration-200 ${
+                      act ? 'bg-white text-slate-900 border-white shadow-md' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:shadow-sm'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="text-sm">{m.title}</span>
-                        {m.free && (
-                          <span className="text-xs rounded bg-emerald-500/20 border border-emerald-400/30 px-1.5 py-0.5">
-                            preview
-                          </span>
-                        )}
-                        {lock && <span>🔒</span>}
                       </div>
                       <span className="text-xs text-slate-300">
                         {m.minutes ?? '—'} min {isDone ? '• ✓' : ''}
@@ -151,26 +183,6 @@ export default function Page() {
               );
             })}
           </ul>
-          {!pro && (
-            <div className="mt-4 space-y-2">
-              <Link
-                href="/konto"
-                className="w-full inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90"
-              >
-                Zarejestruj i odblokuj
-              </Link>
-              <button
-                onClick={() => {
-                  localStorage.setItem(AUTH_KEY, '1');
-                  setPro(true);
-                }}
-                className="w-full px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
-                title="Przycisk testowy w dev"
-              >
-                Odblokuj (DEV)
-              </button>
-            </div>
-          )}
         </Card>
 
         <div className="relative">
@@ -235,6 +247,7 @@ export default function Page() {
       </div>
 
       <ExamCTA slug="cysec" />
+      </div>
     </main>
   );
 }

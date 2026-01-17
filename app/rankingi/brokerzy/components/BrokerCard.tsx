@@ -1,16 +1,27 @@
 'use client';
 import React, { useState } from 'react';
+import Link from 'next/link';
 import type { Broker } from '../../../../data/brokers';
 
-function Badge({ children, tone = "default" as "default" | "success" | "warn" | "info" }) {
+function Badge({ children, tone = "default" as "default" | "success" | "warn" | "info", href }: { children: React.ReactNode; tone?: "default" | "success" | "warn" | "info"; href?: string }) {
   const tones: Record<string, string> = {
     default: "border-white/10 text-white/80",
     success: "border-emerald-400/30 text-emerald-300",
     warn: "border-amber-400/40 text-amber-300",
     info: "border-sky-400/40 text-sky-300",
   };
+  const className = `rounded-md border px-2 py-0.5 text-xs ${tones[tone]} ${href ? 'hover:opacity-80 transition cursor-pointer' : ''}`;
+  
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  
   return (
-    <span className={`rounded-md border px-2 py-0.5 text-xs ${tones[tone]}`}>{children}</span>
+    <span className={className}>{children}</span>
   );
 }
 
@@ -60,6 +71,11 @@ export default function BrokerCard({ broker }: { broker: Broker }) {
         ))}
         {broker.platforms.length > 3 && (
           <span className="rounded-md border border-white/10 bg-white/[0.05] px-2 py-1">+{broker.platforms.length - 3}</span>
+        )}
+        {broker.name !== "Saxo Bank" && broker.name !== "ABF TRADE" && (
+          <Badge tone="success" href="/rankingi/brokerzy#weryfikacja-fxedulab">
+            ✓ Sprawdzone przez fxedulab
+          </Badge>
         )}
         {broker.supportPL && <Badge tone="info">Wsparcie PL</Badge>}
         {broker.vip24h && <Badge tone="info">VIP 24h</Badge>}

@@ -80,6 +80,8 @@ const DICT: Dict = {
     faq_title_short: 'FAQ',
     disclaimer_short:
       'Materiały mają charakter edukacyjny. Brak rekomendacji inwestycyjnych ani sygnałów rynkowych.',
+    compliance_disclaimer:
+      'Treści mają charakter edukacyjno-analityczny i nie stanowią rekomendacji ani doradztwa inwestycyjnego.',
 
     // Footer / legal nav
     navigation: 'Nawigacja',
@@ -173,6 +175,8 @@ const DICT: Dict = {
     faq_title_short: 'FAQ',
     disclaimer_short:
       'Materials are for educational purposes only. No investment recommendations or trading signals.',
+    compliance_disclaimer:
+      'Content is for educational and analytical purposes only and does not constitute investment advice or recommendations.',
 
     // Footer / legal nav
     navigation: 'Navigation',

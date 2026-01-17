@@ -33,22 +33,22 @@ function CourseIndex({
   const pct = Math.round((done / total) * 100);
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-[#0b1220] p-6 md:p-8">
+    <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1220] to-[#0a0f1a] backdrop-blur-sm p-6 md:p-8 shadow-lg">
       <header className="mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-semibold">{courseTitle} — spis lekcji</h1>
+        <h1 className="text-3xl md:text-4xl font-semibold text-white">{courseTitle} — spis lekcji</h1>
         <p className="mt-2 text-slate-300">
           Startowy moduł. Zacznij od lekcji 1 i idź po kolei.
         </p>
 
         {/* Pasek postępu jak w „Podstawy” */}
-        <div className="mt-6 rounded-2xl bg-white/5 p-4">
-          <div className="mb-2 flex items-center justify-between text-sm">
+        <div className="mt-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-sm">
+          <div className="mb-2 flex items-center justify-between text-sm text-white/70">
             <span>Postęp: {done}/{total} lekcji</span>
             <span>{pct}%</span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10 shadow-inner">
             <div
-              className="h-2 rounded-full bg-white/90"
+              className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500 shadow-sm"
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -59,25 +59,25 @@ function CourseIndex({
         {lessons.map((l, i) => (
           <article
             key={l.slug}
-            className="rounded-2xl border border-white/10 bg-[#0c1322] p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset]"
+            className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0c1322] to-[#0a0f1a] p-5 shadow-sm hover:shadow-lg hover:shadow-black/40 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 backdrop-blur-sm"
           >
             <div className="mb-2 flex items-center justify-between text-sm">
               <span className="text-slate-300"><span>Lekcja</span> <span>{i + 1}</span></span>
               {l.completed ? (
-                <span className="text-emerald-400">✓ Ukończono</span>
+                <span className="text-emerald-400 font-medium">✓ Ukończono</span>
               ) : (
                 <span className="text-slate-400">W toku</span>
               )}
             </div>
 
-            <h2 className="text-xl font-semibold">{l.title}</h2>
+            <h2 className="text-xl font-semibold text-white">{l.title}</h2>
             <p className="mt-1 text-slate-300">{l.description}</p>
 
             <div className="mt-4 flex items-center justify-between">
               <span className="text-sm text-slate-400">⏱ {l.minutes} min</span>
               <Link
                 href={`/kursy/${coursePath}/${l.slug}`}
-                className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black hover:opacity-90"
+                className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black hover:opacity-90 hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 Otwórz
               </Link>
@@ -99,9 +99,11 @@ const lessons: Lesson[] = [
 
 export default function ForexPage() {
   return (
-    <main className="mx-auto max-w-5xl p-6 space-y-6">
-      <Link href="/kursy" className="text-sm underline">← Wróć do listy kursów</Link>
-      <CourseIndex courseTitle="Forex" coursePath="forex" lessons={lessons} />
+    <main className="min-h-screen bg-slate-950 text-white">
+      <div className="mx-auto max-w-5xl p-6 space-y-6 animate-fade-in">
+        <Link href="/kursy" className="inline-flex items-center gap-2 text-sm underline hover:text-white transition-colors duration-150">← Wróć do listy kursów</Link>
+        <CourseIndex courseTitle="Forex" coursePath="forex" lessons={lessons} />
+      </div>
     </main>
   );
 }

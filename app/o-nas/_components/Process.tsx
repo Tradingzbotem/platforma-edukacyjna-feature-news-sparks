@@ -27,52 +27,27 @@ export default function Process() {
   ];
 
   return (
-    <section id="jak-pracujemy" className="mt-14 scroll-mt-24">
-      <h2 className="text-2xl md:text-3xl font-bold">Jak pracujemy?</h2>
+    <section id="jak-pracujemy" className="py-12 lg:py-16 scroll-mt-24">
+      <div className="text-center mb-10">
+        <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Jak pracujemy?</h2>
+      </div>
 
-      {/* Desktop: poziomo z linią; Mobile: lista */}
-      <div className="mt-8">
-        <div className="hidden md:block relative">
-          <div className="absolute left-0 right-0 top-[36px] h-px bg-white/10" />
-          <div className="grid grid-cols-4 gap-6">
-            {steps.map((s) => (
-              <div key={s.num} className="relative">
-                <div className="flex items-center gap-3">
-                  <div className="relative z-10 inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/10 border border-white/15 text-sm font-semibold">
-                    {s.num}
-                  </div>
-                  <div>
-                    <div className="font-semibold">{s.title}</div>
-                    <div className="text-sm text-white/75">{s.desc}</div>
-                    <div className="mt-2 inline-flex text-[11px] rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-white/80">
-                      {s.deliverable}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="md:hidden space-y-4">
-          {steps.map((s) => (
-            <div
-              key={s.num}
-              className="rounded-2xl bg-slate-900/60 border border-white/10 shadow-xl shadow-black/30 p-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10 border border-white/15 text-xs font-semibold">
-                  {s.num}
-                </div>
-                <div className="font-semibold">{s.title}</div>
-              </div>
-              <p className="mt-1 text-sm text-white/75">{s.desc}</p>
-              <div className="mt-2 inline-flex text-[11px] rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-white/80">
-                {s.deliverable}
-              </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {steps.map((s) => (
+          <div
+            key={s.num}
+            className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/50 to-slate-950/50 backdrop-blur-sm p-6 hover:border-white/20 transition-colors"
+          >
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-400/10 border border-emerald-400/20 text-emerald-300 font-bold text-lg mb-4">
+              {s.num}
             </div>
-          ))}
-        </div>
+            <h3 className="text-xl font-bold mb-2">{s.title}</h3>
+            <p className="text-white/70 text-sm mb-4 leading-relaxed">{s.desc}</p>
+            <div className="inline-flex text-xs rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/80">
+              {s.deliverable}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

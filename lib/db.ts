@@ -1,10 +1,13 @@
 // lib/db.ts
 import { sql } from '@vercel/postgres';
 
-// Allow Neon/Vercel setups that expose DATABASE_URL* instead of POSTGRES_URL*
+// Allow Neon/Vercel setups that expose DATABASE_URL* or POSTGRES_PRISMA_URL
 // Map them early so @vercel/postgres finds the expected envs.
 if (!process.env.POSTGRES_URL && process.env.DATABASE_URL) {
   process.env.POSTGRES_URL = process.env.DATABASE_URL;
+}
+if (!process.env.POSTGRES_URL && (process.env as any).POSTGRES_PRISMA_URL) {
+  process.env.POSTGRES_URL = (process.env as any).POSTGRES_PRISMA_URL;
 }
 if (!process.env.POSTGRES_URL_NON_POOLING && (process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL_NON_POOLING)) {
   process.env.POSTGRES_URL_NON_POOLING = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL_NON_POOLING as string;
@@ -42,7 +45,9 @@ export type User = {
   plan?: 'free' | 'starter' | 'pro' | 'elite';
   phone: string | null;
   name: string | null;
+  marketing_consent?: boolean | null;
   created_at: Date | string;
+  last_active_at?: Date | string | null;
 };
 
 export async function ensureUsersTable() {
@@ -59,25 +64,27 @@ export async function ensureUsersTable() {
   // Backfill new columns
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ;`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_consent BOOLEAN DEFAULT FALSE;`;
 }
 
 export async function findUserByEmail(email: string): Promise<User | null> {
   if (!hasPostgres()) return null;
-  const { rows } = await sql<User>`SELECT id, email, password_hash, plan, phone, name, created_at FROM users WHERE email = ${email} LIMIT 1`;
+  const { rows } = await sql<User>`SELECT id, email, password_hash, plan, phone, name, marketing_consent, created_at, last_active_at FROM users WHERE email = ${email} LIMIT 1`;
   return rows[0] ?? null;
 }
 
 export async function findUserById(id: string): Promise<User | null> {
   if (!hasPostgres()) return null;
-  const { rows } = await sql<User>`SELECT id, email, password_hash, plan, phone, name, created_at FROM users WHERE id = ${id} LIMIT 1`;
+  const { rows } = await sql<User>`SELECT id, email, password_hash, plan, phone, name, marketing_consent, created_at, last_active_at FROM users WHERE id = ${id} LIMIT 1`;
   return rows[0] ?? null;
 }
 
-export async function insertUser(u: { id: string; email: string; password_hash: string; name?: string | null; phone: string; plan?: 'free' | 'starter' | 'pro' | 'elite'; }) {
+export async function insertUser(u: { id: string; email: string; password_hash: string; name?: string | null; phone: string; plan?: 'free' | 'starter' | 'pro' | 'elite'; marketing_consent?: boolean | null; }) {
   if (!hasPostgres()) return;
   await sql`
-    INSERT INTO users (id, email, password_hash, name, phone, plan)
-    VALUES (${u.id}, ${u.email}, ${u.password_hash}, ${u.name ?? null}, ${u.phone}, ${u.plan ?? 'free'})
+    INSERT INTO users (id, email, password_hash, name, phone, plan, marketing_consent)
+    VALUES (${u.id}, ${u.email}, ${u.password_hash}, ${u.name ?? null}, ${u.phone}, ${u.plan ?? 'free'}, ${u.marketing_consent ?? false})
   `;
 }
 
@@ -90,22 +97,46 @@ export async function verifyPassword(plain: string, hash: string) {
   return bcrypt.compare(plain, hash);
 }
 
-export async function listUsersBasic(): Promise<Pick<User, 'id' | 'email' | 'plan' | 'created_at'>[]> {
+export async function listUsersBasic(): Promise<Array<{ id: string; email: string; plan: 'free' | 'starter' | 'pro' | 'elite'; created_at: string; last_active_at: string | null; is_online: boolean }>> {
   if (!hasPostgres()) return [];
-  const { rows } = await sql<{ id: string; email: string; plan: string | null; created_at: Date }>`
-    SELECT id, email, plan, created_at FROM users ORDER BY created_at DESC LIMIT 500
+  const { rows } = await sql<{ id: string; email: string; plan: string | null; created_at: Date; last_active_at: Date | null; is_online: boolean }>`
+    SELECT
+      id,
+      email,
+      plan,
+      created_at,
+      last_active_at,
+      CASE
+        WHEN last_active_at IS NOT NULL AND (NOW() - last_active_at) < INTERVAL '5 minutes'
+        THEN TRUE
+        ELSE FALSE
+      END AS is_online
+    FROM users
+    ORDER BY created_at DESC
+    LIMIT 500
   `;
   return rows.map((r) => ({
     id: r.id,
     email: r.email,
     plan: (r.plan === 'elite' || r.plan === 'pro' || r.plan === 'starter') ? (r.plan as any) : 'free',
     created_at: r.created_at.toISOString(),
+    last_active_at: r.last_active_at ? r.last_active_at.toISOString() : null,
+    is_online: Boolean(r.is_online),
   }));
 }
 
 export async function updateUserPlan(userId: string, plan: 'free' | 'starter' | 'pro' | 'elite'): Promise<void> {
   if (!hasPostgres()) return;
   await sql`UPDATE users SET plan = ${plan} WHERE id = ${userId}`;
+}
+
+export async function touchUserLastActive(userId: string): Promise<void> {
+  if (!hasPostgres()) return;
+  try {
+    await sql`UPDATE users SET last_active_at = NOW() WHERE id = ${userId}`;
+  } catch {
+    // best-effort; ignore failures
+  }
 }
 
 export async function deleteUserCascade(userId: string): Promise<void> {
@@ -210,6 +241,12 @@ export async function updateContactMessage(id: number, updates: { handled?: bool
   }
 }
 
+export async function deleteContactMessage(id: number) {
+  if (!hasPostgres()) return;
+  await ensureContactTable();
+  await sql`DELETE FROM contact_messages WHERE id = ${id}`;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Progress tracking (courses/lessons and quizzes)
 
@@ -219,7 +256,9 @@ function hasPostgres(): boolean {
     process.env.POSTGRES_URL_NON_POOLING ||
     process.env.DATABASE_URL ||
     process.env.DATABASE_URL_UNPOOLED ||
-    process.env.DATABASE_URL_NON_POOLING
+    process.env.DATABASE_URL_NON_POOLING ||
+    // Vercel Postgres/Neon integration often provides Prisma-specific URL
+    (process.env as any).POSTGRES_PRISMA_URL
   );
 }
 
@@ -252,6 +291,8 @@ export async function ensureProgressTables() {
       at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `;
+  // Add answers column if it doesn't exist
+  await sql`ALTER TABLE quiz_results ADD COLUMN IF NOT EXISTS answers JSONB`;
 }
 
 export async function upsertLessonProgress(params: {
@@ -277,20 +318,27 @@ export async function insertQuizResult(params: {
   score: number;
   total: number;
   at?: Date | string;
+  answers?: Array<{
+    questionId: string;
+    userAnswer: number | null;
+    correctAnswer: number;
+    isCorrect: boolean;
+  }>;
 }) {
-  const { userId, slug, score, total, at } = params;
+  const { userId, slug, score, total, at, answers } = params;
   if (!hasPostgres()) return;
   await ensureProgressTables();
+  const answersJson = answers ? JSON.stringify(answers) : null;
   if (at) {
     const atStr = typeof at === 'string' ? at : at.toISOString();
     await sql`
-      INSERT INTO quiz_results (user_id, slug, score, total, at)
-      VALUES (${userId}, ${slug}, ${score}, ${total}, ${atStr});
+      INSERT INTO quiz_results (user_id, slug, score, total, at, answers)
+      VALUES (${userId}, ${slug}, ${score}, ${total}, ${atStr}, ${answersJson}::jsonb);
     `;
   } else {
     await sql`
-      INSERT INTO quiz_results (user_id, slug, score, total)
-      VALUES (${userId}, ${slug}, ${score}, ${total});
+      INSERT INTO quiz_results (user_id, slug, score, total, answers)
+      VALUES (${userId}, ${slug}, ${score}, ${total}, ${answersJson}::jsonb);
     `;
   }
 }
@@ -359,24 +407,36 @@ export type ChecklistHistoryEntry = {
 
 export async function ensureChecklistHistoryTable() {
   if (!hasPostgres()) return;
-  await sql`
-    CREATE TABLE IF NOT EXISTS checklist_history (
-      id BIGSERIAL PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      asset TEXT,
-      timeframe TEXT,
-      horizon TEXT,
-      thesis TEXT,
-      reasons JSONB,
-      invalidation_kind TEXT,
-      invalidation_level TEXT,
-      red_flags TEXT,
-      plan_b TEXT,
-      risk TEXT,
-      checks JSONB
-    );
-  `;
+  // Defensive: on some providers concurrent CREATE TABLE IF NOT EXISTS can still race on pg_type.
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS checklist_history (
+        id BIGSERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        asset TEXT,
+        timeframe TEXT,
+        horizon TEXT,
+        thesis TEXT,
+        reasons JSONB,
+        invalidation_kind TEXT,
+        invalidation_level TEXT,
+        red_flags TEXT,
+        plan_b TEXT,
+        risk TEXT,
+        checks JSONB
+      );
+    `;
+  } catch (e: any) {
+    const code = e?.code || e?.originalError?.code;
+    const msg = String(e?.message || '').toLowerCase();
+    // Ignore "relation already exists" and rare pg_type unique violations during concurrent creation
+    const isAlreadyExists = code === '42P07' || msg.includes('already exists');
+    const isTypeUniqRace = code === '23505' && msg.includes('pg_type_typname_nsp_index');
+    if (!isAlreadyExists && !isTypeUniqRace) {
+      throw e;
+    }
+  }
   await sql`CREATE INDEX IF NOT EXISTS idx_checklist_history_user ON checklist_history(user_id, created_at DESC);`;
 }
 

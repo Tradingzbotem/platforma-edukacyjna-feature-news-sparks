@@ -4,7 +4,7 @@
     "title": "Ropa: wpływ zapasów USA na krótkoterminową krzywą",
     "slug": "ropa-wplyw-zapasow-usa-na-krotkoterminowa-krzywa",
     "excerpt": "Jak cotygodniowe dane o zapasach ropy z USA kształtują krótkoterminową część krzywej i premie ryzyka.",
-    "content": "**Lead:** Cotygodniowe raporty EIA bywają dla rynku ropy równie ważne, co nagłówki geopolityczne. Decydują nie tylko o poziomie zapasów, ale także o kształcie krótkoterminowej krzywej i premii ryzyka, którą uczestnicy rynku skłonni są płacić za natychmiastową dostępność surowca.\n\n## Co faktycznie mierzymy\n- Zapasy komercyjne ropy i produktów (benzyna, destylaty) z rozbiciem na regiony.\n- Zapasy w hubie Cushing — kluczowe dla wyceny WTI i spreadów terminowych.\n- Import/eksport i wykorzystanie mocy rafineryjnych, które mówią o popycie fizycznym.\n\n## Krzywa i logistyka\nKiedy zapasy w Cushing są niskie, rynek premiuje szybkie dostawy. Krzywa potrafi przechodzić w backwardation, a spready najbliższych serii rosną. Gdy magazyny się wypełniają, rośnie skłonność do contango i „opłaca się” przechować baryłkę w czasie. To nie jest wyłącznie historia o popycie i podaży — ogromne znaczenie ma logistyka (rurociągi, porty, miks gatunków) i ograniczenia rafinerii.\n\n## Czynniki sezonowe i miks\nSezon jazdy w USA zwiększa zapotrzebowanie na benzynę, zimą rośnie popyt na destylaty. Równolegle liczy się jakość koszyka: cięższe gatunki i mieszanki potrzebne do optymalnej pracy części instalacji są nie do zastąpienia jednym parametrem „ropa”.\n\n## Na co patrzeć w raporcie EIA\n1. Zmiana zapasów w Cushing vs. konsensus.\n2. Wykorzystanie rafinerii oraz bieżące crack spready.\n3. Bilans import/eksport i sygnały z arbitrażu (Atlantyk, Zatoka Meksykańska).\n4. Ruchy na spreadach najbliższych terminów i relacje WTI/Brent.\n\n## Scenariusze 2–4 tygodnie\n- **Niskie zapasy + wysokie wykorzystanie rafinerii:** stromienie krótkiego końca, podatność na skoki w backwardation.\n- **Odbudowa zapasów przy słabym popycie:** spłaszczanie krzywej, spadek krótkich spreadów.\n- **Szok logistyczny:** krótkoterminowe zrywy spreadów niezależnie od trendu cenowego baryłki.\n\n## Najczęstsze błędy\n- Interpretowanie nagłówka bez zajrzenia w strukturę (produkty vs. surowa ropa).\n- Ignorowanie rewizji danych i efektów świątecznych.\n- Wnioskowanie o „globalnej równowadze” na podstawie jednego tygodniowego wydruku.\n\n> W ropie najpierw liczy się fizyka i logistyka, dopiero potem narracja.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
+    "content": "<!-- cover: {\"url\":\"/api/redakcja/media/file/c90c10d6-bfb4-4b80-a463-ac3cb693e646\",\"alt\":\"\"} -->\n\n**Lead:** Cotygodniowe raporty EIA bywają dla rynku ropy równie ważne, co nagłówki geopolityczne. Decydują nie tylko o poziomie zapasów, ale także o kształcie krótkoterminowej krzywej i premii ryzyka, którą uczestnicy rynku skłonni są płacić za natychmiastową dostępność surowca.\n\n## Co faktycznie mierzymy\n- Zapasy komercyjne ropy i produktów (benzyna, destylaty) z rozbiciem na regiony.\n- Zapasy w hubie Cushing — kluczowe dla wyceny WTI i spreadów terminowych.\n- Import/eksport i wykorzystanie mocy rafineryjnych, które mówią o popycie fizycznym.\n\n## Krzywa i logistyka\nKiedy zapasy w Cushing są niskie, rynek premiuje szybkie dostawy. Krzywa potrafi przechodzić w backwardation, a spready najbliższych serii rosną. Gdy magazyny się wypełniają, rośnie skłonność do contango i „opłaca się” przechować baryłkę w czasie. To nie jest wyłącznie historia o popycie i podaży — ogromne znaczenie ma logistyka (rurociągi, porty, miks gatunków) i ograniczenia rafinerii.\n\n## Czynniki sezonowe i miks\nSezon jazdy w USA zwiększa zapotrzebowanie na benzynę, zimą rośnie popyt na destylaty. Równolegle liczy się jakość koszyka: cięższe gatunki i mieszanki potrzebne do optymalnej pracy części instalacji są nie do zastąpienia jednym parametrem „ropa”.\n\n## Na co patrzeć w raporcie EIA\n1. Zmiana zapasów w Cushing vs. konsensus.\n2. Wykorzystanie rafinerii oraz bieżące crack spready.\n3. Bilans import/eksport i sygnały z arbitrażu (Atlantyk, Zatoka Meksykańska).\n4. Ruchy na spreadach najbliższych terminów i relacje WTI/Brent.\n\n## Scenariusze 2–4 tygodnie\n- **Niskie zapasy + wysokie wykorzystanie rafinerii:** stromienie krótkiego końca, podatność na skoki w backwardation.\n- **Odbudowa zapasów przy słabym popycie:** spłaszczanie krzywej, spadek krótkich spreadów.\n- **Szok logistyczny:** krótkoterminowe zrywy spreadów niezależnie od trendu cenowego baryłki.\n\n## Najczęstsze błędy\n- Interpretowanie nagłówka bez zajrzenia w strukturę (produkty vs. surowa ropa).\n- Ignorowanie rewizji danych i efektów świątecznych.\n- Wnioskowanie o „globalnej równowadze” na podstawie jednego tygodniowego wydruku.\n\n> W ropie najpierw liczy się fizyka i logistyka, dopiero potem narracja.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
     "status": "PUBLISHED",
     "publishedAt": "2026-01-06T09:00:00.000Z",
     "coverImageUrl": null,
@@ -18,14 +18,14 @@
     "seoTitle": null,
     "seoDescription": null,
     "createdAt": "2026-01-06T09:00:00.000Z",
-    "updatedAt": "2026-01-06T09:00:00.000Z"
+    "updatedAt": "2026-01-08T23:05:54.201Z"
   },
   {
     "id": "a_fxedu_surowce_zloto_cpi",
     "title": "Złoto przy CPI: jak czytać ruch przed i po odczycie",
     "slug": "zloto-przy-cpi-jak-czytac-ruch",
     "excerpt": "Prosty framework na dni z CPI: oczekiwania vs. niespodzianka i kanał przez realne stopy.",
-    "content": "**Lead:** Dni z CPI budzą emocje na złocie, ale sam odczyt to dopiero początek historii. Liczy się reakcja realnych stóp, siła dolara i to, co już było w cenie.\n\n## Jak przygotować się do publikacji\n- Sprawdź konsensus i rozkład prognoz (nie tylko medianę). Szeroki rozkład = większe ryzyko zaskoczenia.\n- Oceń pozycjonowanie: po napływach do ETF i danych CFTC często widać, czy rynek „stoi na jednej nodze”.\n- Zwróć uwagę na **bazę odniesienia** i rewizje poprzednich miesięcy — to one potrafią zmienić wymowę nagłówka.\n\n## Mechanika: złoto i realne stopy\nZłoto koreluje w średnim terminie z realnymi stopami procentowymi w USA. Gdy realne stopy spadają, koszt trzymania aktywa nieoprocentowanego maleje i popyt na złoto rośnie. W dniu CPI kluczem jest więc to, jak zmienia się oczekiwana ścieżka stóp i inflacji implikowana przez rynek obligacji.\n\n## „Headline” kontra narracja\nRynek często reaguje gwałtownie na pierwszy wiersz komunikatu. W praktyce dojrzała analiza odsiewa szum: patrzy na **rdzeń** (core), sezonowość, rewizje oraz sygnały z rynku długu i USD. Jeżeli dolar słabnie, a realne stopy spadają, ruch na złocie ma większą szansę utrzymać się po pierwszej godzinie handlu.\n\n## Taktyka\n1. Porównaj niespodziankę z wyceną opcji (implied move) — duży ruch „w cenie” oznacza mniejszy edge.\n2. Zwróć uwagę na synchronizację złota z srebrzem i górnikami (GDX) — brak potwierdzenia bywa ostrzeżeniem.\n3. Po godzinie od publikacji sprawdź, czy realne stopy podążyły w kierunku ruchu złota.\n\n## Najczęstsze błędy\n- Handel na sam nagłówek bez wglądu w strukturę CPI.\n- Pomijanie wpływu kursu USD.\n- Ignorowanie kalendarza kolejnych publikacji (PCE, konferencje banków centralnych).\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
+    "content": "<!-- cover: {\"url\":\"/api/redakcja/media/file/3948b5e0-e062-45a5-bab2-852fa722b173\",\"alt\":\"\"} -->\n\n**Lead:** Dni z CPI budzą emocje na złocie, ale sam odczyt to dopiero początek historii. Liczy się reakcja realnych stóp, siła dolara i to, co już było w cenie.\n\n## Jak przygotować się do publikacji\n- Sprawdź konsensus i rozkład prognoz (nie tylko medianę). Szeroki rozkład = większe ryzyko zaskoczenia.\n- Oceń pozycjonowanie: po napływach do ETF i danych CFTC często widać, czy rynek „stoi na jednej nodze”.\n- Zwróć uwagę na **bazę odniesienia** i rewizje poprzednich miesięcy — to one potrafią zmienić wymowę nagłówka.\n\n## Mechanika: złoto i realne stopy\nZłoto koreluje w średnim terminie z realnymi stopami procentowymi w USA. Gdy realne stopy spadają, koszt trzymania aktywa nieoprocentowanego maleje i popyt na złoto rośnie. W dniu CPI kluczem jest więc to, jak zmienia się oczekiwana ścieżka stóp i inflacji implikowana przez rynek obligacji.\n\n## „Headline” kontra narracja\nRynek często reaguje gwałtownie na pierwszy wiersz komunikatu. W praktyce dojrzała analiza odsiewa szum: patrzy na **rdzeń** (core), sezonowość, rewizje oraz sygnały z rynku długu i USD. Jeżeli dolar słabnie, a realne stopy spadają, ruch na złocie ma większą szansę utrzymać się po pierwszej godzinie handlu.\n\n## Taktyka\n1. Porównaj niespodziankę z wyceną opcji (implied move) — duży ruch „w cenie” oznacza mniejszy edge.\n2. Zwróć uwagę na synchronizację złota z srebrzem i górnikami (GDX) — brak potwierdzenia bywa ostrzeżeniem.\n3. Po godzinie od publikacji sprawdź, czy realne stopy podążyły w kierunku ruchu złota.\n\n## Najczęstsze błędy\n- Handel na sam nagłówek bez wglądu w strukturę CPI.\n- Pomijanie wpływu kursu USD.\n- Ignorowanie kalendarza kolejnych publikacji (PCE, konferencje banków centralnych).\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
     "status": "PUBLISHED",
     "publishedAt": "2026-01-05T10:00:00.000Z",
     "coverImageUrl": null,
@@ -39,14 +39,14 @@
     "seoTitle": null,
     "seoDescription": null,
     "createdAt": "2026-01-05T10:00:00.000Z",
-    "updatedAt": "2026-01-05T10:00:00.000Z"
+    "updatedAt": "2026-01-09T20:47:17.988Z"
   },
   {
     "id": "a_fxedu_forex_eurusd_payrolls",
     "title": "EUR/USD po payrolls: co jest w cenie?",
     "slug": "eur-usd-po-payrolls-co-jest-w-cenie",
     "excerpt": "Jak filtrować szum po NFP i odróżniać ruch „headline” od trwałej zmiany narracji.",
-    "content": "**Lead:** Po payrolls pierwsze ruchy na EUR/USD bywają gwałtowne, ale trwałość zmiany zależy od tego, czy raport realnie koryguje ścieżkę stóp w USA i Europie.\n\n## Jak czytać NFP „po dorosłemu”\n- Sprawdź **płace godzinowe** i partycypację — silne zatrudnienie przy chłodnych płacach to inny sygnał niż szeroki wzrost wynagrodzeń.\n- Zajrzyj w **rewizje** poprzednich miesięcy: potrafią zmienić znak wniosku.\n- Porównaj z równoległymi danymi ISM/PMI dla usług i przemysłu.\n\n## Kanał do EUR/USD\n1. NFP → oczekiwania co do krótkich stóp (OIS, SOFR) → realne stopy → USD.\n2. Równolegle: co dzieje się z wyceną stóp w strefie euro (Euribor)? Różnica oczekiwań decyduje o spreadzie.\n\n## Scenariusze\n- Raport **pro-inflacyjny** (mocne płace, brak luzowania rynku pracy): wyższe realne stopy w USA, presja na EUR/USD w dół.\n- Raport **miękki** (słabe płace, gorsza partycypacja): ulga na stopach, odbicie EUR/USD.\n\n## Checklista\n- [ ] Skala niespodzianki vs. implikowana zmienność\n- [ ] Rewizje i jakość miejsc pracy (pełny etat/part-time)\n- [ ] Reakcja realnych stóp i indeksu dolara po 60 minutach\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
+    "content": "<!-- cover: {\"url\":\"/api/redakcja/media/file/e5150c1b-9619-42c1-b54c-13f99b0f57b3\",\"alt\":\"\"} -->\n\n**Lead:** Po payrolls pierwsze ruchy na EUR/USD bywają gwałtowne, ale trwałość zmiany zależy od tego, czy raport realnie koryguje ścieżkę stóp w USA i Europie.\n\n## Jak czytać NFP „po dorosłemu”\n- Sprawdź **płace godzinowe** i partycypację — silne zatrudnienie przy chłodnych płacach to inny sygnał niż szeroki wzrost wynagrodzeń.\n- Zajrzyj w **rewizje** poprzednich miesięcy: potrafią zmienić znak wniosku.\n- Porównaj z równoległymi danymi ISM/PMI dla usług i przemysłu.\n\n## Kanał do EUR/USD\n1. NFP → oczekiwania co do krótkich stóp (OIS, SOFR) → realne stopy → USD.\n2. Równolegle: co dzieje się z wyceną stóp w strefie euro (Euribor)? Różnica oczekiwań decyduje o spreadzie.\n\n## Scenariusze\n- Raport **pro-inflacyjny** (mocne płace, brak luzowania rynku pracy): wyższe realne stopy w USA, presja na EUR/USD w dół.\n- Raport **miękki** (słabe płace, gorsza partycypacja): ulga na stopach, odbicie EUR/USD.\n\n## Checklista\n- [ ] Skala niespodzianki vs. implikowana zmienność\n- [ ] Rewizje i jakość miejsc pracy (pełny etat/part-time)\n- [ ] Reakcja realnych stóp i indeksu dolara po 60 minutach\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
     "status": "PUBLISHED",
     "publishedAt": "2026-01-04T08:30:00.000Z",
     "coverImageUrl": null,
@@ -60,14 +60,14 @@
     "seoTitle": null,
     "seoDescription": null,
     "createdAt": "2026-01-04T08:30:00.000Z",
-    "updatedAt": "2026-01-04T08:30:00.000Z"
+    "updatedAt": "2026-01-09T21:03:54.642Z"
   },
   {
     "id": "a_fxedu_forex_usdpln_rentownosci",
     "title": "USD/PLN a rentowności USA: jak czytać zmienność",
     "slug": "usd-pln-a-rentownosci-usa-jak-czytac-zmiennosc",
     "excerpt": "Zależność USD/PLN od realnych stóp USA i czynników lokalnych — prosta mapa.",
-    "content": "**Lead:** USD/PLN żyje dwoma światami: globalnym (realne stopy i dolar) oraz lokalnym (premia za ryzyko i przepływy portfelowe). Zrozumienie obu porządków porządkuje interpretację zmienności.\n\n## Kanały globalne\n- Realne stopy USA wyznaczają atrakcyjność dolara w stosunku do koszyka EM.\n- Zmiany apetytu na ryzyko (akcje, kredyt) modulują napływy do walut rynków wschodzących.\n\n## Składnik lokalny\n- Oczekiwania wobec polityki fiskalnej i inflacji CPI/HICP w Polsce.\n- Bilans płatniczy, saldo handlowe, napływy do obligacji i akcji.\n\n## Ramy scenariuszowe\n- Spadek realnych stóp w USA przy stabilnym tle lokalnym → presja spadkowa na USD/PLN.\n- Wzrost awersji do ryzyka lub wzrost premii za ryzyko lokalne → podbicie USD/PLN.\n\n## Na co patrzeć na co dzień\n1. Realne stopy 5y/10y w USA.\n2. Zachowanie indeksu WIG i spreadów obligacyjnych.\n3. Dane o napływach do funduszy długu/akcji CEE.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
+    "content": "<!-- cover: {\"url\":\"/api/redakcja/media/file/9c674fd8-e5d9-4fc4-bfe3-1edea4d00895\",\"alt\":\"\"} -->\n\n**Lead:** USD/PLN żyje dwoma światami: globalnym (realne stopy i dolar) oraz lokalnym (premia za ryzyko i przepływy portfelowe). Zrozumienie obu porządków porządkuje interpretację zmienności.\n\n## Kanały globalne\n- Realne stopy USA wyznaczają atrakcyjność dolara w stosunku do koszyka EM.\n- Zmiany apetytu na ryzyko (akcje, kredyt) modulują napływy do walut rynków wschodzących.\n\n## Składnik lokalny\n- Oczekiwania wobec polityki fiskalnej i inflacji CPI/HICP w Polsce.\n- Bilans płatniczy, saldo handlowe, napływy do obligacji i akcji.\n\n## Ramy scenariuszowe\n- Spadek realnych stóp w USA przy stabilnym tle lokalnym → presja spadkowa na USD/PLN.\n- Wzrost awersji do ryzyka lub wzrost premii za ryzyko lokalne → podbicie USD/PLN.\n\n## Na co patrzeć na co dzień\n1. Realne stopy 5y/10y w USA.\n2. Zachowanie indeksu WIG i spreadów obligacyjnych.\n3. Dane o napływach do funduszy długu/akcji CEE.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
     "status": "PUBLISHED",
     "publishedAt": "2026-01-03T13:00:00.000Z",
     "coverImageUrl": null,
@@ -81,14 +81,14 @@
     "seoTitle": null,
     "seoDescription": null,
     "createdAt": "2026-01-03T13:00:00.000Z",
-    "updatedAt": "2026-01-03T13:00:00.000Z"
+    "updatedAt": "2026-01-09T21:07:23.544Z"
   },
   {
     "id": "a_fxedu_gielda_breadth_rotacja",
     "title": "S&P 500: breadth i rotacja sektorowa — jak to czytać",
     "slug": "sp500-breadth-i-rotacja-sektorowa",
     "excerpt": "Dlaczego szerokość rynku i przepływy między sektorami bywają ważniejsze niż sam indeks.",
-    "content": "**Lead:** Indeks potrafi rosnąć, mimo że większość spółek stoi w miejscu. To dlatego „breadth” i rotacja sektorowa są tak cenne w diagnozie jakości trendu.\n\n## Breadth: jak mierzyć\n- Linie Advance/Decline i odsetek spółek powyżej 50/200-dniowej średniej.\n- Porównanie wersji **equal-weight** i **cap-weight** — jeśli equal-weight nie potwierdza, trend bywa kruchy.\n\n## Rotacja sektorowa\nHossa dojrzewa, gdy kolejne sektory dołączają do ruchu. Jeżeli wszystko „ciągnie” wąska grupa megakapów, rynek jest podatny na korekty po wynikach lub zmianie stóp.\n\n## Sygnały ostrzegawcze\n- Dywergencje breadth przy nowych maksimach indeksu.\n- Silny sektor defensywny w czasie „hossy wszystko rośnie”.\n\n## Jak używać w praktyce\nZestawiaj breadth z danymi makro (PMI, płynność) i spreadami kredytowymi. Potwierdzenie z wielu źródeł zwiększa wiarygodność wniosków.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
+    "content": "<!-- cover: {\"url\":\"/api/redakcja/media/file/65dfac09-79ee-4d48-b619-9e741610f1dc\",\"alt\":\"\"} -->\n\n**Lead:** Indeks potrafi rosnąć, mimo że większość spółek stoi w miejscu. To dlatego „breadth” i rotacja sektorowa są tak cenne w diagnozie jakości trendu.\n\n## Breadth: jak mierzyć\n- Linie Advance/Decline i odsetek spółek powyżej 50/200-dniowej średniej.\n- Porównanie wersji **equal-weight** i **cap-weight** — jeśli equal-weight nie potwierdza, trend bywa kruchy.\n\n## Rotacja sektorowa\nHossa dojrzewa, gdy kolejne sektory dołączają do ruchu. Jeżeli wszystko „ciągnie” wąska grupa megakapów, rynek jest podatny na korekty po wynikach lub zmianie stóp.\n\n## Sygnały ostrzegawcze\n- Dywergencje breadth przy nowych maksimach indeksu.\n- Silny sektor defensywny w czasie „hossy wszystko rośnie”.\n\n## Jak używać w praktyce\nZestawiaj breadth z danymi makro (PMI, płynność) i spreadami kredytowymi. Potwierdzenie z wielu źródeł zwiększa wiarygodność wniosków.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
     "status": "PUBLISHED",
     "publishedAt": "2026-01-06T07:30:00.000Z",
     "coverImageUrl": null,
@@ -102,14 +102,14 @@
     "seoTitle": null,
     "seoDescription": null,
     "createdAt": "2026-01-06T07:30:00.000Z",
-    "updatedAt": "2026-01-06T07:30:00.000Z"
+    "updatedAt": "2026-01-08T23:10:05.577Z"
   },
   {
     "id": "a_fxedu_gielda_europa_dax_cac",
     "title": "Europa: DAX kontra CAC — czynniki relatywnej siły",
     "slug": "europa-dax-kontra-cac-czynniki-relatywnej-sily",
     "excerpt": "Skład indeksu, sektorowa mieszanka i kurs EUR — trzy źródła różnic w wynikach.",
-    "content": "**Lead:** Różnice między DAX i CAC rzadko wynikają z jednej liczby. To miks sektorów, kursu EUR oraz globalnego popytu na dobra przemysłowe i luksusowe.\n\n## Co w środku indeksów\n- DAX: większy udział przemysłu i eksporterów dóbr kapitałowych.\n- CAC: wyższy udział dóbr luksusowych i spółek o silnych markach.\n\n## Kluczowe wektory\n- Kurs EUR wobec USD — inny wpływ na marże producentów i domów mody.\n- Cykl globalny: przemysł korzysta na ożywieniu handlu, luksus na dochodach klasy wyższej.\n\n## Jak porównywać\nAnalizuj **relatywną siłę** (ratio DAX/CAC) w kontekście danych PMI, kursu EUR i spreadów kredytowych. Dopiero komplet daje wiarygodny obraz.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
+    "content": "<!-- cover: {\"url\":\"/api/redakcja/media/file/7226e26c-3189-433d-8121-c5b67781d750\",\"alt\":\"\"} -->\n\n**Lead:** Różnice między DAX i CAC rzadko wynikają z jednej liczby. To miks sektorów, kursu EUR oraz globalnego popytu na dobra przemysłowe i luksusowe.\n\n## Co w środku indeksów\n- DAX: większy udział przemysłu i eksporterów dóbr kapitałowych.\n- CAC: wyższy udział dóbr luksusowych i spółek o silnych markach.\n\n## Kluczowe wektory\n- Kurs EUR wobec USD — inny wpływ na marże producentów i domów mody.\n- Cykl globalny: przemysł korzysta na ożywieniu handlu, luksus na dochodach klasy wyższej.\n\n## Jak porównywać\nAnalizuj **relatywną siłę** (ratio DAX/CAC) w kontekście danych PMI, kursu EUR i spreadów kredytowych. Dopiero komplet daje wiarygodny obraz.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
     "status": "PUBLISHED",
     "publishedAt": "2026-01-05T12:45:00.000Z",
     "coverImageUrl": null,
@@ -123,14 +123,14 @@
     "seoTitle": null,
     "seoDescription": null,
     "createdAt": "2026-01-05T12:45:00.000Z",
-    "updatedAt": "2026-01-05T12:45:00.000Z"
+    "updatedAt": "2026-01-09T20:42:53.736Z"
   },
   {
     "id": "a_fxedu_spolki_bigtech_wyniki",
     "title": "Big Tech: sezon wyników i guidance na Q1",
     "slug": "big-tech-sezon-wynikow-i-guidance-na-q1",
     "excerpt": "Na co patrzeć w komunikacji Big Tech: CAPEX, AI, marże i dynamika przychodów.",
-    "content": "**Lead:** Sezon wyników Big Tech to nie tylko EPS. To przede wszystkim guidance, struktura przychodów i sygnały o wydatkach inwestycyjnych na AI.\n\n## Co czytać w raportach\n- CAPEX i inwestycje w infrastrukturę chmurową/AI (GPU, centra danych).\n- Dynamika segmentów: reklama, chmura, urządzenia.\n- Marże operacyjne i komentarze CFO o dyscyplinie kosztowej.\n\n## AI jako wektor cyklu inwestycji\nWydatki na AI tworzą nową falę CAPEX w całym łańcuchu — od półprzewodników po centra danych i energię. Narracja o monetyzacji (modele, produkty) jest równie ważna jak sama skala wydatków.\n\n## Ryzyka i wrażliwości\n- Zależność od popytu reklamowego i cyklu gospodarczego.\n- Regulacje i ryzyka antymonopolowe.\n\n> Jeden akapit w sekcji „Outlook” potrafi zmienić wycenę całego sektora.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
+    "content": "<!-- cover: {\"url\":\"/api/redakcja/media/file/59c7d383-d2b5-4aa6-ac05-5bcf3858b2bc\",\"alt\":\"\"} -->\n\n**Lead:** Sezon wyników Big Tech to nie tylko EPS. To przede wszystkim guidance, struktura przychodów i sygnały o wydatkach inwestycyjnych na AI.\n\n## Co czytać w raportach\n- CAPEX i inwestycje w infrastrukturę chmurową/AI (GPU, centra danych).\n- Dynamika segmentów: reklama, chmura, urządzenia.\n- Marże operacyjne i komentarze CFO o dyscyplinie kosztowej.\n\n## AI jako wektor cyklu inwestycji\nWydatki na AI tworzą nową falę CAPEX w całym łańcuchu — od półprzewodników po centra danych i energię. Narracja o monetyzacji (modele, produkty) jest równie ważna jak sama skala wydatków.\n\n## Ryzyka i wrażliwości\n- Zależność od popytu reklamowego i cyklu gospodarczego.\n- Regulacje i ryzyka antymonopolowe.\n\n> Jeden akapit w sekcji „Outlook” potrafi zmienić wycenę całego sektora.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
     "status": "PUBLISHED",
     "publishedAt": "2026-01-04T15:15:00.000Z",
     "coverImageUrl": null,
@@ -144,7 +144,7 @@
     "seoTitle": null,
     "seoDescription": null,
     "createdAt": "2026-01-04T15:15:00.000Z",
-    "updatedAt": "2026-01-04T15:15:00.000Z"
+    "updatedAt": "2026-01-09T21:00:17.867Z"
   },
   {
     "id": "a_fxedu_spolki_surowcowe_marze",
@@ -172,7 +172,7 @@
     "title": "Bank centralny: sygnały z konferencji — jak filtrować przekaz",
     "slug": "bank-centralny-sygnaly-z-konferencji",
     "excerpt": "Ramy do analizy konferencji banku centralnego: ton, projekcje, warunkowość decyzji.",
-    "content": "**Lead:** Konferencje banków centralnych to lekcja czytania warunkowości decyzji. Ton, projekcje i odpowiedzi w Q&A mówią często więcej niż sama decyzja o stopach.\n\n## Z czego składa się przekaz\n- Oświadczenie + konferencja prasowa.\n- Zaktualizowane projekcje makro (kiedy publikowane).\n- Sesja Q&A, w której padają kluczowe zastrzeżenia typu „data-dependent”.\n\n## Jak filtrować\n- Słuchaj warunków: jakie dane „przekonałyby” bank do kolejnego ruchu?\n- Porównaj z wyceną rynkową (OIS). Różnica determinuję skalę reakcji.\n- Zwróć uwagę na zgodność między oświadczeniem a Q&A — niespójność często jest źródłem zmienności.\n\n## Scenariusze\n- Jastrzębi ton + twardsze projekcje inflacji → wyższe realne stopy, silniejszy USD.\n- Gołębi ton + akcent na chłodną aktywność → ulga na krzywej i wsparcie dla ryzykownych aktywów.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
+    "content": "<!-- cover: {\"url\":\"/api/redakcja/media/file/2d0f645a-db2d-4f59-b57a-0beaba83dad3\",\"alt\":\"\"} -->\n\n**Lead:** Konferencje banków centralnych to lekcja czytania warunkowości decyzji. Ton, projekcje i odpowiedzi w Q&A mówią często więcej niż sama decyzja o stopach.\n\n## Z czego składa się przekaz\n- Oświadczenie + konferencja prasowa.\n- Zaktualizowane projekcje makro (kiedy publikowane).\n- Sesja Q&A, w której padają kluczowe zastrzeżenia typu „data-dependent”.\n\n## Jak filtrować\n- Słuchaj warunków: jakie dane „przekonałyby” bank do kolejnego ruchu?\n- Porównaj z wyceną rynkową (OIS). Różnica determinuję skalę reakcji.\n- Zwróć uwagę na zgodność między oświadczeniem a Q&A — niespójność często jest źródłem zmienności.\n\n## Scenariusze\n- Jastrzębi ton + twardsze projekcje inflacji → wyższe realne stopy, silniejszy USD.\n- Gołębi ton + akcent na chłodną aktywność → ulga na krzywej i wsparcie dla ryzykownych aktywów.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
     "status": "PUBLISHED",
     "publishedAt": "2026-01-06T11:10:00.000Z",
     "coverImageUrl": null,
@@ -186,14 +186,14 @@
     "seoTitle": null,
     "seoDescription": null,
     "createdAt": "2026-01-06T11:10:00.000Z",
-    "updatedAt": "2026-01-06T11:10:00.000Z"
+    "updatedAt": "2026-01-08T23:04:05.805Z"
   },
   {
     "id": "a_fxedu_wiadomosci_pmi_rozjazd",
     "title": "PMI: rozjazd przemysł–usługi i implikacje dla ryzyka",
     "slug": "pmi-rozjazd-przemysl-uslugi-i-implikacje",
     "excerpt": "Co oznacza rozjazd PMI przemysłu i usług dla sentymentu i cyklu zamówień.",
-    "content": "**Lead:** Gdy PMI przemysłu i usług rozchodzą się w przeciwne strony, rynek staje przed wyborem: wierzyć w usługową odporność, czy w przemysłowe ostrzeżenie?\n\n## Na co patrzeć\n- Poziom i trend względem 50 pkt.\n- Subindeksy: **nowe zamówienia**, zatrudnienie, zaległości produkcyjne.\n- Różnice między krajami/regionami, które mówią o eksporcie i popycie wewnętrznym.\n\n## Dlaczego to ma znaczenie\nRozjazd zwykle owocuje rotacją sektorową: usługi vs. przemysł, growth vs. value. Wyceny dyskontują to z wyprzedzeniem, więc timing liczy się podwójnie.\n\n## Scenariusze\n- Trwały rozjazd na korzyść usług → defensywniejszy rynek akcji, presja na cykliczne branże.\n- Zaciągnięcie przemysłu po poprawie zamówień → odbicie cyklicznych i surowców.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
+    "content": "<!-- cover: {\"url\":\"/api/redakcja/media/file/25caa998-3c90-40d0-a4ea-e68d067b30ae\",\"alt\":\"\"} -->\n\n**Lead:** Gdy PMI przemysłu i usług rozchodzą się w przeciwne strony, rynek staje przed wyborem: wierzyć w usługową odporność, czy w przemysłowe ostrzeżenie?\n\n## Na co patrzeć\n- Poziom i trend względem 50 pkt.\n- Subindeksy: **nowe zamówienia**, zatrudnienie, zaległości produkcyjne.\n- Różnice między krajami/regionami, które mówią o eksporcie i popycie wewnętrznym.\n\n## Dlaczego to ma znaczenie\nRozjazd zwykle owocuje rotacją sektorową: usługi vs. przemysł, growth vs. value. Wyceny dyskontują to z wyprzedzeniem, więc timing liczy się podwójnie.\n\n## Scenariusze\n- Trwały rozjazd na korzyść usług → defensywniejszy rynek akcji, presja na cykliczne branże.\n- Zaciągnięcie przemysłu po poprawie zamówień → odbicie cyklicznych i surowców.\n\n_Materiał edukacyjny (FX-EDU). To nie jest porada inwestycyjna._",
     "status": "PUBLISHED",
     "publishedAt": "2026-01-05T09:20:00.000Z",
     "coverImageUrl": null,
@@ -207,6 +207,6 @@
     "seoTitle": null,
     "seoDescription": null,
     "createdAt": "2026-01-05T09:20:00.000Z",
-    "updatedAt": "2026-01-05T09:20:00.000Z"
+    "updatedAt": "2026-01-09T20:51:43.978Z"
   }
 ]

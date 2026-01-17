@@ -15,32 +15,34 @@ function LessonLayout({
   nextSlug?: string;
 }) {
   return (
-    <main className="mx-auto max-w-4xl p-6 md:p-8 space-y-6">
-      <Link href={`/kursy/${coursePath}`} className="text-sm underline">← Wróć do spisu</Link>
+    <main className="min-h-screen bg-slate-950 text-white">
+      <div className="mx-auto max-w-4xl p-6 md:p-8 space-y-6 animate-fade-in">
+        <Link href={`/kursy/${coursePath}`} className="inline-flex items-center gap-2 text-sm underline hover:text-white transition-colors duration-150">← Wróć do spisu</Link>
 
-      <header className="space-y-1">
-        <p className="text-slate-400 text-sm">
-          <span>{courseTitle}</span>
-          <span> — </span>
-          <span>Lekcja</span> <span>{lessonNumber}</span>
-          <span> • ⏱ </span>
-          <span>{minutes}</span> <span>min</span>
-        </p>
-        <h1 className="text-3xl font-semibold">{title}</h1>
-      </header>
+        <header className="space-y-1">
+          <p className="text-slate-400 text-sm">
+            <span>{courseTitle}</span>
+            <span> — </span>
+            <span>Lekcja</span> <span>{lessonNumber}</span>
+            <span> • ⏱ </span>
+            <span>{minutes}</span> <span>min</span>
+          </p>
+          <h1 className="text-3xl font-semibold text-white">{title}</h1>
+        </header>
 
-      <article className="rounded-2xl border border-white/10 bg-[#0b1220] p-6 space-y-8">
-        {children}
-      </article>
+        <article className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0b1220] to-[#0a0f1a] backdrop-blur-sm p-6 space-y-8 shadow-lg">
+          {children}
+        </article>
 
-      <nav className="flex items-center justify-between">
-        {prevSlug ? (
-          <Link className="underline" href={`/kursy/${coursePath}/${prevSlug}`}>← Poprzednia lekcja</Link>
-        ) : <span />}
-        {nextSlug ? (
-          <Link className="underline" href={`/kursy/${coursePath}/${nextSlug}`}>Następna lekcja →</Link>
-        ) : <span />}
-      </nav>
+        <nav className="flex items-center justify-between pt-4 border-t border-white/10">
+          {prevSlug ? (
+            <Link className="underline hover:text-white transition-colors duration-150" href={`/kursy/${coursePath}/${prevSlug}`}>← Poprzednia lekcja</Link>
+          ) : <span />}
+          {nextSlug ? (
+            <Link className="underline hover:text-white transition-colors duration-150" href={`/kursy/${coursePath}/${nextSlug}`}>Następna lekcja →</Link>
+          ) : <span />}
+        </nav>
+      </div>
     </main>
   );
 }
@@ -76,8 +78,8 @@ export default function Page() {
         </p>
 
         <div className="mt-4 grid md:grid-cols-2 gap-4">
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-            <h3 className="font-semibold">Struktura notowania</h3>
+          <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-200">
+            <h3 className="font-semibold text-white">Struktura notowania</h3>
             <ul className="mt-2 list-disc pl-6 space-y-1">
               <li><strong>Base</strong> (pierwsza waluta): EUR w <code>EURUSD</code>.</li>
               <li><strong>Quote</strong> (druga waluta): USD w <code>EURUSD</code>.</li>
@@ -85,8 +87,8 @@ export default function Page() {
             </ul>
           </div>
 
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-            <h3 className="font-semibold">Bid / Ask / Spread</h3>
+          <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-200">
+            <h3 className="font-semibold text-white">Bid / Ask / Spread</h3>
             <ul className="mt-2 list-disc pl-6 space-y-1">
               <li><strong>Bid</strong> — cena, po której sprzedasz bazową (broker kupi od Ciebie).</li>
               <li><strong>Ask</strong> — cena, po której kupisz bazową (broker sprzeda Ci bazową).</li>
@@ -95,7 +97,7 @@ export default function Page() {
           </div>
         </div>
 
-        <div className="rounded-xl bg-indigo-500/5 border border-indigo-400/20 p-4 mt-3">
+        <div className="rounded-xl bg-indigo-500/5 backdrop-blur-sm border border-indigo-400/20 p-4 mt-3 shadow-sm">
           <h3 className="font-semibold text-indigo-200">Uczestnicy rynku</h3>
           <p className="text-slate-300 mt-1">
             Banki inwestycyjne i centrale płynności, fundusze (hedge, emerytalne), korporacje zabezpieczające ryzyko
@@ -114,8 +116,8 @@ export default function Page() {
           waluty bazowej). Dla 1.00 lota na EURUSD 1 pips ≈ <strong>10 USD</strong>.
         </p>
 
-        <div className="rounded-xl bg-white/5 border border-white/10 p-4 mt-3 space-y-2">
-          <h3 className="font-semibold">Mini-obliczenia</h3>
+        <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 mt-3 space-y-2 shadow-sm">
+          <h3 className="font-semibold text-white">Mini-obliczenia</h3>
           <ul className="list-disc pl-6 space-y-1 text-slate-300">
             <li><strong>Wartość 1 pipsa (EURUSD, 1.00 lot):</strong> ≈ 10 USD.</li>
             <li><strong>Wartość 1 pipsa (0.10 lot):</strong> ≈ 1 USD. <em>(dziesięć razy mniej)</em></li>
@@ -131,21 +133,21 @@ export default function Page() {
       <section>
         <h2 className="text-xl font-semibold">Jakie są koszty? (spread, prowizja, swap)</h2>
         <div className="grid md:grid-cols-3 gap-4">
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-            <h3 className="font-semibold">Spread</h3>
+          <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-200">
+            <h3 className="font-semibold text-white">Spread</h3>
             <p className="mt-1 text-slate-300">Różnica ask − bid, zmienna w czasie (szerszy poza płynnością i na danych).</p>
           </div>
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-            <h3 className="font-semibold">Prowizja</h3>
+          <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-200">
+            <h3 className="font-semibold text-white">Prowizja</h3>
             <p className="mt-1 text-slate-300">Na kontach typu ECN doliczana od wolumenu (np. X USD za 1 lot).</p>
           </div>
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-            <h3 className="font-semibold">Swap (overnight)</h3>
+          <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-200">
+            <h3 className="font-semibold text-white">Swap (overnight)</h3>
             <p className="mt-1 text-slate-300">Odsetki/finansowanie za przetrzymanie pozycji przez noc (dodatnie lub ujemne).</p>
           </div>
         </div>
 
-        <div className="rounded-xl bg-amber-500/5 border border-amber-400/20 p-4 mt-3">
+        <div className="rounded-xl bg-amber-500/5 backdrop-blur-sm border border-amber-400/20 p-4 mt-3 shadow-sm">
           <h3 className="font-semibold text-amber-200">Przykład kosztu wejścia</h3>
           <p className="text-slate-300 mt-1">
             EURUSD bid/ask: 1.0839 / 1.0841 ⇒ spread 2 pipsy. Wejście long po 1.0841 oznacza, że „na starcie” masz
@@ -172,20 +174,20 @@ export default function Page() {
       <section>
         <h2 className="text-xl font-semibold">Rodzaje zleceń — krótki przegląd</h2>
         <div className="grid md:grid-cols-2 gap-4">
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-            <h3 className="font-semibold">Rynkowe (Market)</h3>
+          <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-200">
+            <h3 className="font-semibold text-white">Rynkowe (Market)</h3>
             <p className="text-slate-300 mt-1">Natychmiastowa realizacja po dostępnej cenie (ask/bid). Możliwy poślizg.</p>
           </div>
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-            <h3 className="font-semibold">Z limitem (Limit)</h3>
+          <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-200">
+            <h3 className="font-semibold text-white">Z limitem (Limit)</h3>
             <p className="text-slate-300 mt-1">Wejście po lepszej cenie niż obecna. Realizacja tylko, jeśli rynek dotknie limitu.</p>
           </div>
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-            <h3 className="font-semibold">Stop / Stop-Limit</h3>
+          <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-200">
+            <h3 className="font-semibold text-white">Stop / Stop-Limit</h3>
             <p className="text-slate-300 mt-1">Wejście, gdy rynek wybije poziom (momentum). Stop-Limit ogranicza cenę aktywacji.</p>
           </div>
-          <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-            <h3 className="font-semibold">SL / TP</h3>
+          <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 shadow-sm hover:shadow-md transition-all duration-200">
+            <h3 className="font-semibold text-white">SL / TP</h3>
             <p className="text-slate-300 mt-1">Zamykanie pozycji przy zadanej stracie (SL) lub zysku (TP). Podstawa zarządzania ryzykiem.</p>
           </div>
         </div>
@@ -205,8 +207,8 @@ export default function Page() {
             Na sesji londyńskiej chcesz wejść <em>po wybiciu</em>. Jakie zlecenie rozważysz (market/stop/limit) i dlaczego?
           </li>
         </ol>
-        <div className="rounded-xl bg-white/5 border border-white/10 p-4 mt-3">
-          <h3 className="font-semibold">Przykładowe odpowiedzi</h3>
+        <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 mt-3 shadow-sm">
+          <h3 className="font-semibold text-white">Przykładowe odpowiedzi</h3>
           <ul className="list-disc pl-6 space-y-1 text-slate-300">
             <li>1R (1%) = 50 USD; 1R (0.5%) = 25 USD.</li>
             <li>1.2 pipsa × (10 USD/pip × 0.2) ≈ <strong>2.4 USD</strong>.</li>

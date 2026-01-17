@@ -31,16 +31,29 @@ export default function NewsTicker({ hours, live }: Props) {
       .slice(0, 8);
   }, [items]);
 
+  if (top.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="relative mt-4 overflow-hidden rounded-xl border border-white/10 bg-[#0b1220]">
-      <div className="absolute left-0 top-0 h-full w-28 bg-gradient-to-r from-[#0b1220] to-transparent pointer-events-none" />
-      <div className="absolute right-0 top-0 h-full w-28 bg-gradient-to-l from-[#0b1220] to-transparent pointer-events-none" />
-      <div className="flex items-center gap-2 px-4 py-2">
-        <span className="rounded bg-emerald-500/20 text-emerald-300 px-2 py-0.5 text-xs font-semibold">NOW</span>
-        <div className="animate-marquee whitespace-nowrap [animation-duration:30s]">
+    <div className="relative mt-6 overflow-hidden rounded-xl border border-emerald-400/20 bg-gradient-to-r from-emerald-500/10 to-transparent backdrop-blur-sm">
+      <div className="absolute left-0 top-0 h-full w-32 bg-gradient-to-r from-slate-950 to-transparent pointer-events-none z-10" />
+      <div className="absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none z-10" />
+      <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 px-3 py-1 text-xs font-bold">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            NAJNOWSZE
+          </span>
+        </div>
+        <div className="animate-marquee whitespace-nowrap [animation-duration:40s] flex-1">
           {top.map((it, i) => (
-            <span key={it.id || i} className="mx-6 text-sm text-white/80">
-              {it.title} <span className="text-white/40">({new Date(it.publishedAt).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })})</span>
+            <span key={it.id || i} className="mx-8 inline-flex items-center gap-2 text-sm text-white/90">
+              <span className="font-medium">{it.title}</span>
+              <span className="text-white/40 text-xs">
+                {new Date(it.publishedAt).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <span className="text-white/20">•</span>
             </span>
           ))}
         </div>

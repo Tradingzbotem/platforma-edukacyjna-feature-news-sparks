@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { LESSONS /*, type Lesson */ } from './data';
 import ExamCTA from '../../../../components/ExamCTA';
 
@@ -46,7 +47,7 @@ function LockOverlay({ show }: { show: boolean }) {
       </p>
       <div className="mt-3 flex gap-3">
         <Link
-          href="/konto"
+          href="/logowanie"
           className="px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90"
         >
           Zarejestruj się / Zaloguj
@@ -67,10 +68,38 @@ function LockOverlay({ show }: { show: boolean }) {
 }
 
 export default function Page() {
+  const router = useRouter();
   const firstId = LESSON_LIST[0]?.id ?? 'intro';
   const [isPro, setIsPro] = useState(false);
   const [active, setActive] = useState<string>(firstId);
   const [done, setDone] = useState<string[]>([]);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  // Sprawdź autoryzację po stronie klienta
+  useEffect(() => {
+    let isActive = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/session', {
+          cache: 'no-store',
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          if (isActive) router.push('/logowanie');
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!Boolean((data as any)?.isLoggedIn)) {
+          if (isActive) router.push('/logowanie');
+          return;
+        }
+        if (isActive) setIsAuthChecked(true);
+      } catch {
+        if (isActive) router.push('/logowanie');
+      }
+    })();
+    return () => { isActive = false; };
+  }, [router]);
 
   useEffect(() => {
     setIsPro(localStorage.getItem(AUTH_KEY) === '1');
@@ -82,11 +111,12 @@ export default function Page() {
     }
   }, []);
 
+  // Wszystkie hooki muszą być przed warunkowym returnem
   const activeLesson =
     useMemo(() => LESSON_LIST.find((l) => l.id === active) ?? LESSON_LIST[0], [active]) ??
     { id: 'intro', title: 'Wprowadzenie', minutes: 0, free: true, content: null };
 
-  const locked = !isPro && !activeLesson.free;
+  const locked = false; // Odblokowane - wszystkie treści dostępne po zalogowaniu
 
   const progress = useMemo(() => {
     const total = LESSON_LIST.length || 1;
@@ -102,7 +132,8 @@ export default function Page() {
   };
 
   return (
-    <main className="mx-auto max-w-6xl p-6 md:p-8 text-white">
+    <main className="min-h-screen bg-slate-950 text-white">
+      <div className="mx-auto max-w-6xl p-6 md:p-8 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <Link href="/kursy" className="text-sm underline">
@@ -125,42 +156,26 @@ export default function Page() {
         <Card>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Program kursu</h2>
-            {!isPro && (
-              <span className="text-xs rounded bg-amber-500/20 border border-amber-400/30 px-2 py-1 text-amber-200">
-                Tryb podglądu
-              </span>
-            )}
           </div>
 
           <ul className="mt-4 space-y-2">
             {LESSON_LIST.map((l) => {
               const isActive = l.id === active;
-              const isLocked = !isPro && !l.free;
               const isDone = done.includes(l.id);
               return (
                 <li key={l.id}>
                   <button
                     onClick={() => setActive(l.id)}
-                    className={`w-full text-left rounded-xl px-3 py-2 border transition
+                    className={`w-full text-left rounded-xl px-3 py-2 border transition-all duration-200
                       ${
                         isActive
-                          ? 'bg-white text-slate-900 border-white'
-                          : 'bg-white/5 border-white/10 hover:bg-white/10'
+                          ? 'bg-white text-slate-900 border-white shadow-md'
+                          : 'bg-white/5 border-white/10 hover:bg-white/10 hover:shadow-sm'
                       }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <span className="text-sm">{l.title}</span>
-                        {isLocked && (
-                          <span title="Zablokowane" className="text-xs">
-                            🔒
-                          </span>
-                        )}
-                        {l.free && (
-                          <span className="text-xs rounded bg-emerald-500/20 border border-emerald-400/30 px-1.5 py-0.5 text-emerald-200">
-                            preview
-                          </span>
-                        )}
                       </div>
                       <div className="text-xs text-slate-300">
                         {l.minutes ?? '—'} min {isDone ? '• ✓' : ''}
@@ -172,26 +187,6 @@ export default function Page() {
             })}
           </ul>
 
-          {!isPro && (
-            <div className="mt-4 space-y-2">
-              <Link
-                href="/konto"
-                className="w-full inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90"
-              >
-                Zarejestruj się i odblokuj pełną ścieżkę
-              </Link>
-              <button
-                onClick={() => {
-                  localStorage.setItem(AUTH_KEY, '1');
-                  setIsPro(true);
-                }}
-                className="w-full px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
-                title="Przycisk testowy w dev"
-              >
-                Odblokuj (DEV)
-              </button>
-            </div>
-          )}
         </Card>
 
         {/* Treść modułu */}
@@ -254,7 +249,6 @@ export default function Page() {
                   </a>
                 </li>
               </ul>
-              <p className="text-slate-400 text-sm mt-2">*część materiałów tylko dla kont PRO.</p>
             </Card>
             <Card>
               <h3 className="text-lg font-semibold">Egzamin próbny</h3>
@@ -286,6 +280,7 @@ export default function Page() {
         </div>
       </nav>
       <ExamCTA slug="knf" />
+      </div>
     </main>
   );
 }

@@ -4,6 +4,7 @@ export const revalidate = 0;
 
 import { notFound } from 'next/navigation';
 import ExamRunner, { type ExamQuestion } from '@/components/ExamRunner';
+import AccessGuard from '@/app/components/AccessGuard';
 import * as KNF from '@/data/exams/knf';
 
 function getMeta() {
@@ -24,15 +25,20 @@ export default function Page() {
     answers: q.options,
     correctIndex: q.correctIndex,
     explanation: q.explanation,
+    hint: q.hint,
   }));
 
   return (
-    <ExamRunner
-      slug="knf"
-      title={meta.title}
-      questions={normalized}
-      backHref="/kursy/egzaminy/knf"
-      /* isPro domyślnie false → wersja demo; ustaw isPro={true} jeśli chcesz pełny test */
-    />
+    <AccessGuard required="auth">
+      <ExamRunner
+        slug="knf"
+        title={meta.title}
+        questions={normalized}
+        backHref="/kursy/egzaminy/knf"
+        isPro={true}
+        durationMinutes={20}
+        description="Egzamin sprawdzający wiedzę z zakresu regulacji KNF, ryzyka, kosztów i dobrych praktyk zgodnie z wymogami MiFID II. Obejmuje testy adekwatności, ochronę klienta oraz zarządzanie ryzykiem."
+      />
+    </AccessGuard>
   );
 }

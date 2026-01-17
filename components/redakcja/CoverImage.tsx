@@ -25,12 +25,16 @@ export default function CoverImage(props: Props) {
     return s;
   }, [src, failed]);
 
+  // DALL-E URLs can expire, so don't optimize them through Next.js Image proxy
+  const isDALLEUrl = resolvedSrc.includes('oaidalleapiprodscus.blob.core.windows.net');
+
   const common = {
     alt,
     className,
     sizes,
     priority,
     onError: () => setFailed(true),
+    unoptimized: isDALLEUrl, // Don't optimize external DALL-E URLs that might expire
   } as const;
 
   if (fill) {

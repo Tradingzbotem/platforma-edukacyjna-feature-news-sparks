@@ -11,12 +11,13 @@ import WatchlistCustom from "@/components/dashboard/WatchlistCustom";
 import QuickAI from "@/components/News/QuickAI";
 import SparksCard from "@/components/News/SparksCard";
 import LearningProgressCard from "@/components/dashboard/LearningProgressCard";
-import { Calculator, LineChart, HelpCircle, BookOpen, Crown, Sparkles, ShieldCheck, ArrowRight, CalendarDays, Map as MapIcon, ListChecks, Brain, Flame } from "lucide-react";
+import { Calculator, LineChart, HelpCircle, BookOpen, Crown, Sparkles, ShieldCheck, ArrowRight, CalendarDays, Map as MapIcon, ListChecks, Brain, Flame, FlaskConical } from "lucide-react";
 import UpcomingCalendarMini from "@/components/dashboard/UpcomingCalendarMini";
 import BackButton from "@/components/BackButton";
+import { useRouter } from "next/navigation";
 
-// Pasek z aktywami — spójny z danymi Finnhub jak na stronie głównej
-const TickerFinnhubNoSSR = dynamic(() => import('@/components/TickerFinnhub'), { ssr: false });
+// Pasek z newsem dnia (zastępuje ticker z aktywami)
+import InfoOfDayBanner from '@/components/News/InfoOfDayBanner';
 
 type WatchItem = { symbol: string; label: string; price?: number; changePct?: number };
 
@@ -190,25 +191,37 @@ export default function ClientPage() {
     })();
     return () => { mounted = false; };
   }, []);
-  const topReady = tierLoaded && adminLoaded;
-  const [watchTab, setWatchTab] = useState<'default' | 'custom'>('default');
+
+  // Odczyt feature flags
+  const [hasDecisionLab, setHasDecisionLab] = useState<boolean>(false);
+  const [featuresLoaded, setFeaturesLoaded] = useState<boolean>(false);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const r = await fetch('/api/features/me', { cache: 'no-store' });
+        const data = await r.json().catch(() => ({}));
+        if (!mounted) return;
+        setHasDecisionLab(Boolean(data?.flags?.decision_lab));
+      } catch {
+        if (!mounted) return;
+        setHasDecisionLab(false);
+      } finally {
+        if (mounted) setFeaturesLoaded(true);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  const topReady = tierLoaded && adminLoaded && featuresLoaded;
+  const [watchTab, setWatchTab] = useState<'default' | 'charts' | 'custom'>('default');
+  const [chartsAsset, setChartsAsset] = useState<'US100' | 'GOLD' | 'OIL' | 'EURUSD' | 'SP500' | 'DAX40' | 'BTCUSD' | 'ETHUSD' | 'USDJPY' | 'GBPUSD'>('US100');
+  const router = useRouter();
 
   return (
     <main className="min-h-screen bg-slate-900 text-white">
-      {/* Pasek z tickerem rynkowym (spójny z Finnhub) */}
-      <TickerFinnhubNoSSR
-        className="border-b border-white/10"
-        speedSec={42}
-        symbols={[
-          "OANDA:NAS100_USD",
-          "OANDA:XAU_USD",
-          "OANDA:WTICO_USD",
-          "OANDA:BCO_USD",
-          "OANDA:EUR_USD",
-          "OANDA:USD_JPY",
-          "OANDA:US500_USD",
-        ]}
-      />
+      {/* News dnia – zastępuje pasek z aktywami */}
+      <InfoOfDayBanner />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <nav className="mb-4">
@@ -297,6 +310,15 @@ export default function ClientPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {hasDecisionLab && (
+                  <Link
+                    href="/client/decision-lab"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-purple-500/20 text-purple-200 font-semibold text-sm px-3 py-2 ring-1 ring-inset ring-purple-400/30 hover:bg-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/40"
+                  >
+                    <FlaskConical className="h-4 w-4" aria-hidden />
+                    Decision Lab
+                  </Link>
+                )}
                 {isAdmin && (
                   <Link
                     href="/admin"
@@ -348,13 +370,125 @@ export default function ClientPage() {
               </button>
               <button
                 type="button"
+                onClick={() => setWatchTab('charts')}
+                className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${watchTab === 'charts' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+              >
+                Wykresy
+              </button>
+              <button
+                type="button"
                 onClick={() => setWatchTab('custom')}
                 className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${watchTab === 'custom' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
               >
                 Moja
               </button>
             </div>
-            {watchTab === 'default' ? (topReady ? <WatchlistRealtime /> : <WatchlistSkeleton />) : <WatchlistCustom />}
+            {watchTab === 'default' ? (
+              topReady ? <WatchlistRealtime /> : <WatchlistSkeleton />
+            ) : watchTab === 'custom' ? (
+              <WatchlistCustom />
+            ) : (
+              <section className="rounded-2xl bg-white/5 border border-white/10 p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex flex-wrap gap-1">
+                    <div className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setChartsAsset('US100')}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'US100' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                        aria-pressed={chartsAsset === 'US100'}
+                      >
+                        US100
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setChartsAsset('GOLD')}
+                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'GOLD' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                        aria-pressed={chartsAsset === 'GOLD'}
+                      >
+                        Złoto
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setChartsAsset('OIL')}
+                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'OIL' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                        aria-pressed={chartsAsset === 'OIL'}
+                      >
+                        Ropa
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setChartsAsset('EURUSD')}
+                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'EURUSD' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                        aria-pressed={chartsAsset === 'EURUSD'}
+                      >
+                        EUR/USD
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setChartsAsset('SP500')}
+                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'SP500' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                        aria-pressed={chartsAsset === 'SP500'}
+                      >
+                        SP500
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setChartsAsset('DAX40')}
+                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'DAX40' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                        aria-pressed={chartsAsset === 'DAX40'}
+                      >
+                        DAX40
+                      </button>
+                    </div>
+                    <div className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setChartsAsset('BTCUSD')}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'BTCUSD' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                        aria-pressed={chartsAsset === 'BTCUSD'}
+                      >
+                        BTC/USD
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setChartsAsset('ETHUSD')}
+                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'ETHUSD' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                        aria-pressed={chartsAsset === 'ETHUSD'}
+                      >
+                        ETH/USD
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setChartsAsset('USDJPY')}
+                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'USDJPY' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                        aria-pressed={chartsAsset === 'USDJPY'}
+                      >
+                        USD/JPY
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setChartsAsset('GBPUSD')}
+                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'GBPUSD' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+                        aria-pressed={chartsAsset === 'GBPUSD'}
+                      >
+                        GBP/USD
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/konto/panel-rynkowy/wykresy?symbol=${chartsAsset}`)}
+                    className="inline-flex items-center justify-center rounded-xl bg-white text-slate-900 font-semibold text-sm px-3 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
+                  >
+                    Otwórz wykres
+                  </button>
+                </div>
+                <p className="mt-3 text-[12px] text-white/60">
+                  Wybierz instrument i otwórz duży wykres w dedykowanym widoku. Wykres nie jest osadzony w tej karcie.
+                </p>
+              </section>
+            )}
           </div>
         </section>
 
@@ -363,7 +497,7 @@ export default function ClientPage() {
           {/* Kontynuuj naukę */}
           <LearningProgressCard />
 
-          {/* Dzisiejszy brief / AI (2 kolumny) */}
+          {/* Dzisiejszy brief / Emocje rynku (2 kolumny) */}
           <div className="md:col-span-2 grid gap-6 md:grid-cols-2">
             <QuickAI />
             <SparksCard />
@@ -389,7 +523,7 @@ export default function ClientPage() {
             <h2 className="text-lg font-semibold">Narzędzia</h2>
             <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
               <Link
-                href="/narzedzia/kalkulator"
+                href="/symulator"
                 className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
               >
                 <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">

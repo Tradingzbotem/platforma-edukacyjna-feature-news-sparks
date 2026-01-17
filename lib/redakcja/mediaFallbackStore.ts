@@ -115,4 +115,20 @@ export async function updateFallbackMediaAsset(
 	return next;
 }
 
+export async function deleteFallbackMediaAsset(id: string) {
+	const items = await readAll();
+	const idx = items.findIndex((m) => m.id === id);
+	if (idx < 0) return null;
+	const [removed] = items.splice(idx, 1);
+	await writeAll(items);
+	if (removed?.pathname) {
+		try {
+			await fs.promises.unlink(removed.pathname);
+		} catch {
+			// ignore missing file
+		}
+	}
+	return removed;
+}
+
 

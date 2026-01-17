@@ -11,6 +11,8 @@ type Body = {
   asset?: string;
   timeframe?: 'H1' | 'H4' | 'D1';
   levels?: Array<string | number>;
+  levelsNormalized?: Array<string>;
+  currentPrice?: number;
   contextText?: string;
 };
 
@@ -40,6 +42,8 @@ export async function POST(req: Request) {
     const asset = String(body.asset || '').slice(0, 40);
     const timeframe = (body.timeframe as any) || '';
     const levels = Array.isArray(body.levels) ? body.levels.map((x) => String(x)).slice(0, 10) : [];
+    const levelsNormalized = Array.isArray(body.levelsNormalized) ? body.levelsNormalized.map((x) => String(x)).slice(0, 10) : [];
+    const currentPrice = typeof (body as any)?.currentPrice === 'number' ? (body as any).currentPrice as number : undefined;
     const contextText = String(body.contextText || '').slice(0, 1200);
 
     const SYSTEM = `
@@ -53,9 +57,11 @@ Na końcu NIE dodawaj sygnału — to ma być komentarz edukacyjny.
 
     const userMsg = `
 Instrument: ${asset || 'N/D'}${timeframe ? ` · ${timeframe}` : ''}
-Poziomy (orientacyjnie): ${levels.join(', ') || '—'}
+Aktualna cena: ${currentPrice != null && isFinite(currentPrice) ? currentPrice : '—'}
+Poziomy (bazowe): ${levels.join(', ') || '—'}
+Poziomy (dopasowane do bieżącej ceny): ${levelsNormalized.join(', ') || '—'}
 Kontekst (skrótem): ${contextText || '—'}
-Zadanie: Podaj krótki komentarz edukacyjny (600–900 znaków) uwzględniając powyższe. Odpowiedz po polsku.
+Zadanie: Podaj krótki komentarz edukacyjny (600–900 znaków), bazując w pierwszej kolejności na "Poziomach (dopasowanych)" i aktualnej cenie. Jeśli różnią się od bazowych, traktuj bazowe tylko jako historyczne odniesienie. Odpowiedz po polsku.
 `.trim();
 
     const payload = {

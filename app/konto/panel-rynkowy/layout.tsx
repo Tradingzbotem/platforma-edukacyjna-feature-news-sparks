@@ -24,7 +24,7 @@ export default async function PanelRynkowyLayout({ children }: { children: React
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:px-6 sm:py-5">
         <div className="flex flex-col gap-1">
           <div className="text-sm text-neutral-400">
-            <Link href="/konto" className="hover:text-neutral-200">Moje konto</Link>
+            <Link href="/client" className="hover:text-neutral-200">Moje konto</Link>
             <span className="px-2">→</span>
             <span className="text-neutral-200">Panel rynkowy (EDU)</span>
           </div>

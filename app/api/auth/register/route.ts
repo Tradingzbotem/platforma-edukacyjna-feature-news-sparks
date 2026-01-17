@@ -10,6 +10,7 @@ const schema = z.object({
   phone: z.string().regex(/^\+[1-9]\d{7,14}$/, 'Podaj numer w formacie E.164, np. +48500111222'),
   name: z.string().min(2).max(60).optional(),
   plan: z.enum(['free', 'pro']).optional(),
+  marketing_consent: z.boolean().optional(),
 });
 
 async function parsePayload(req: NextRequest) {
@@ -20,12 +21,15 @@ async function parsePayload(req: NextRequest) {
   }
   // FormData (np. <form method="POST">)
   const form = await req.formData();
+  const marketingConsentRaw = form.get('marketing_consent');
+  const marketingConsent = marketingConsentRaw === '1' || marketingConsentRaw === 'true' || marketingConsentRaw === 'on';
   const data = {
     email: String(form.get('email') ?? ''),
     password: String(form.get('password') ?? ''),
     phone: String(form.get('phone') ?? ''),
     name: String(form.get('name') ?? '') || undefined,
     plan: (String(form.get('plan') ?? 'free').toLowerCase() as 'free' | 'pro') || 'free',
+    marketing_consent: marketingConsent || undefined,
   };
   return schema.parse(data);
 }
@@ -53,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     const id = crypto.randomUUID();
     const password_hash = await hashPassword(data.password);
-    await insertUser({ id, email: data.email, password_hash, name: data.name ?? null, phone: data.phone, plan: data.plan ?? 'free' });
+    await insertUser({ id, email: data.email, password_hash, name: data.name ?? null, phone: data.phone, plan: data.plan ?? 'free', marketing_consent: data.marketing_consent ?? false });
 
     // start sesji
     const session = await getSession();

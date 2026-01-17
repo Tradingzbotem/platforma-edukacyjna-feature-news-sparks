@@ -87,13 +87,30 @@ function makeSeedItems(): NewsItemEnriched[] {
   return out.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 }
 
-export function seedLocalDemoData(): void {
+export function seedLocalDemoData(opts?: { force?: boolean; minFreshHours?: number }): void {
   ensureDataDir();
+  const force = Boolean(opts?.force);
+  const minFreshHours = Number.isFinite(opts?.minFreshHours) ? Number(opts?.minFreshHours) : undefined;
   try {
     const current = JSON.parse(readFileSync(NEWS_FILE, 'utf8')) as { items: NewsItemEnriched[] };
-    if (!Array.isArray(current.items) || current.items.length === 0) {
+    const itemsArr = Array.isArray(current.items) ? current.items : [];
+    if (force || itemsArr.length === 0) {
       const items = makeSeedItems();
       writeFileSync(NEWS_FILE, JSON.stringify({ items }, null, 2), 'utf8');
+      return;
+    }
+    if (minFreshHours && itemsArr.length) {
+      const latestMs = Math.max(
+        ...itemsArr.map(i => {
+          const t = new Date(i.publishedAt || i.createdAt || 0).getTime();
+          return Number.isFinite(t) ? t : 0;
+        })
+      );
+      const ageHours = latestMs ? (Date.now() - latestMs) / 3600000 : Infinity;
+      if (!latestMs || ageHours > minFreshHours) {
+        const items = makeSeedItems();
+        writeFileSync(NEWS_FILE, JSON.stringify({ items }, null, 2), 'utf8');
+      }
     }
   } catch {
     const items = makeSeedItems();
@@ -234,7 +251,7 @@ export async function purgeSeedItems(): Promise<number> {
     await ensureTables();
     const result = await sql`DELETE FROM news_items WHERE source = 'EDU-SEED'`;
     // @vercel/postgres delete does not return rowCount type strongly; coerce to number if available
-    // @ts-ignore
+    // @ts-expect-error @vercel/postgres result typing doesn't include rowCount consistently
     return Number(result?.rowCount ?? 0);
   }
   ensureDataDir();
@@ -427,7 +444,7 @@ export async function listNews(query: NewsListQuery = {}): Promise<NewsListRespo
     // Jeżeli DB jest pusta (środowisko dev), spróbujmy wczytać dane demo z pliku
     if (items.length === 0) {
       ensureDataDir();
-      seedLocalDemoData();
+      seedLocalDemoData({ minFreshHours: hours });
       try {
         const current = JSON.parse(readFileSync(NEWS_FILE, 'utf8')) as { items: NewsItemEnriched[] };
         items = (current.items || []).filter(i => new Date(i.publishedAt).getTime() >= since && !!i.enrichedAt);
@@ -435,9 +452,18 @@ export async function listNews(query: NewsListQuery = {}): Promise<NewsListRespo
     }
   } else {
     ensureDataDir();
-    if (isDemoEnabled()) seedLocalDemoData();
+    if (isDemoEnabled()) seedLocalDemoData({ minFreshHours: hours });
     const current = JSON.parse(readFileSync(NEWS_FILE, 'utf8')) as { items: NewsItemEnriched[] };
     items = (current.items || []).filter(i => new Date(i.publishedAt).getTime() >= since && !!i.enrichedAt);
+  }
+
+  // Dev fallback: jeśli w oknie brak danych, odśwież seed demo (zawsze świeże daty)
+  if (items.length === 0 && process.env.NODE_ENV !== 'production') {
+    seedLocalDemoData({ force: true });
+    try {
+      const current = JSON.parse(readFileSync(NEWS_FILE, 'utf8')) as { items: NewsItemEnriched[] };
+      items = (current.items || []).filter(i => new Date(i.publishedAt).getTime() >= since && !!i.enrichedAt);
+    } catch {}
   }
 
   // Filters
@@ -499,7 +525,7 @@ export async function getLatestBrief(window: BriefWindow): Promise<Brief | null>
   } catch {}
   // Zbuduj szybki briefing z lokalnych danych (heurystycznie)
   const hours = window === '24h' ? 24 : window === '48h' ? 48 : 72;
-  const { items } = await listNews({ hours });
+  const { items } = await listNews({ hours, includeDemo: process.env.NODE_ENV !== 'production' });
   const what = items.slice(0, 5).map(i => i.title);
   const byCat = new Map<string, number>();
   items.forEach(i => byCat.set(i.category || 'Inne', (byCat.get(i.category || 'Inne') || 0) + 1));

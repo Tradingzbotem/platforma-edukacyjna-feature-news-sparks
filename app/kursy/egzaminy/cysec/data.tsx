@@ -16,7 +16,6 @@ const M1 = (
       <li>Funkcje: Compliance, Risk, Internal Audit; niezależność i raportowanie do zarządu.</li>
       <li>Policies: konflikty, best execution, outsourcing, marketing, reklamacje, AML.</li>
     </ul>
-    <p className="text-slate-300">To moduł <em>preview</em> – pełny dostęp po zalogowaniu.</p>
   </div>
 );
 
