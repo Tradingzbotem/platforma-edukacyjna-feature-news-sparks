@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getSession } from '@/lib/session';
-import { resolveTierFromCookiesAndSession, isTierAtLeast } from '@/lib/panel/access';
+import { resolveTierFromCookiesAndSession, hasFullPanelAccess } from '@/lib/panel/access';
 import { PLAYBOOKS } from '@/lib/panel/playbooks';
 import PlaybooksListClient from './PlaybooksListClient';
 
@@ -11,7 +11,7 @@ export default async function Page() {
   const c = await cookies();
 
   const effectiveTier = resolveTierFromCookiesAndSession(c, session);
-  const unlocked = isTierAtLeast(effectiveTier, 'pro'); // PRO/ELITE
+  const unlocked = hasFullPanelAccess(effectiveTier);
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -88,13 +88,13 @@ export default async function Page() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-lg font-semibold">Zablokowane</div>
-                <div className="text-sm text-white/70 mt-1">Ten moduł jest dostępny w PRO/ELITE.</div>
+                <div className="text-sm text-white/70 mt-1">Ten moduł jest w pełnym dostępie (Founders NFT).</div>
               </div>
               <Link
-                href="/kontakt?topic=zakup-pakietu"
+                href="/cennik"
                 className="inline-flex items-center justify-center rounded-lg bg-white text-slate-900 font-semibold px-4 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
               >
-                Ulepsz plan
+                Uzyskaj dostęp
               </Link>
             </div>
           </div>

@@ -7,7 +7,7 @@ export default async function Page() {
   const cookieStore = await cookies();
   const lang = cookieStore.get('lang')?.value === 'en' ? 'en' : 'pl';
   const Updated = () => (
-    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-01-02</p>
+    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-04-02</p>
   );
 
   const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => (
@@ -67,7 +67,7 @@ export default async function Page() {
             ["ai", "7. Asystent AI (EDU)"],
             ["rynkowe", "8. Dane rynkowe i opóźnienia"],
             ["zewnetrzne", "9. Treści zewnętrzne i linki"],
-            ["subskrypcje", "10. Subskrypcje i płatności"],
+            ["nft-platnosci", "10. NFT i płatności"],
             ["zmiany", "11. Zmiany warunków"],
           ].map(([id, label]) => (
             <li key={id}>
@@ -114,6 +114,14 @@ export default async function Page() {
           <li>
             <b>Treści</b> – materiały edukacyjne, wpisy na forum, quizy, pliki i
             inne informacje.
+          </li>
+          <li>
+            <b>Founders NFT</b> – token NFT oferowany przez operatora jako nośnik niewyłącznej licencji na dostęp do
+            wybranych funkcji Serwisu, zgodnie z{" "}
+            <Link href="/prawne/nft" className="underline">
+              Regulaminem sprzedaży NFT
+            </Link>
+            .
           </li>
         </ul>
       </section>
@@ -217,15 +225,21 @@ export default async function Page() {
         </p>
       </section>
 
-      {/* 10. Subskrypcje */}
+      {/* 10. NFT i płatności */}
       <section className="space-y-3">
-        <H2 id="subskrypcje">10. Subskrypcje i płatności</H2>
+        <H2 id="nft-platnosci">10. NFT i płatności</H2>
         <p className="text-white/80">
-          Zasady płatności, odnowień i rezygnacji opisuje dokument{" "}
-          <Link href="/prawne/subskrypcja" className="underline">Regulamin subskrypcji</Link>
-          . Informacje o odstąpieniu i zwrotach znajdziesz w{" "}
-          <Link href="/prawne/zwroty-odstapienie" className="underline">Zwroty i odstąpienie</Link>
-          .
+          Pełny dostęp do FXEDULAB uzyskuje się przez jednorazowy zakup{" "}
+          <strong>Founders NFT</strong>. Zasady ceny, płatności krypto, licencji na dostęp, rynku wtórnego i
+          odpowiedzialności określa{" "}
+          <Link href="/prawne/nft" className="underline">Regulamin sprzedaży Founders NFT i licencji dostępu</Link>.
+          NFT nie stanowi instrumentu finansowego w rozumieniu niniejszych Warunków i nie daje udziału w spółce.
+        </p>
+        <p className="text-white/80">
+          Nie prowadzimy sprzedaży abonamentu miesięcznego ani cyklicznych subskrypcji za dostęp do Serwisu. Odstąpienie
+          i zwroty:{" "}
+          <Link href="/prawne/zwroty-odstapienie" className="underline">Zwroty i odstąpienie</Link>. Cennik:{" "}
+          <Link href="/cennik" className="underline">Cennik</Link>.
         </p>
       </section>
 

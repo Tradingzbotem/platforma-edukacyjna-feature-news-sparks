@@ -39,4 +39,78 @@ model MediaAsset {
   @@index([isArchived, createdAt])
 }
 
+model MacroCalendarEvent {
+  id          String   @id @default(cuid())
+  date        String   // YYYY-MM-DD
+  time        String?  // HH:mm
+  currency    String?  // Wal. (currency code)
+  event       String   // Wydarzenie (event name)
+  weight      String?  // Waga (importance/weight)
+  current     String?  // Obecny (current value)
+  forecast    String?  // Prognoza (forecast value)
+  previous    String?  // Poprzedni (previous value)
+  region      String?  // Inferred from currency or event
+  importance  String?  // low | medium | high (inferred from weight or event type)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([date, importance])
+  @@index([createdAt])
+}
+
+// Wewnętrzny Founders Pass (bez on-chain). ownerUserId = users.id z tabeli zarządzanej przez @/lib/db.
+enum FoundersTokenStatus {
+  active
+  pending
+  transferred
+  inactive
+  revoked
+}
+
+/// Wewnętrzny rekord członkostwa Founders (bez on-chain). Jeden `code` = jeden „slot” NFT w użyciu biznesowym.
+model FoundersToken {
+  id             String              @id @default(cuid())
+  code           String              @unique
+  title          String
+  description    String              @default("")
+  imageUrl       String?             @map("image_url")
+  benefitsJson   Json?               @map("benefits_json")
+  status         FoundersTokenStatus @default(active)
+  transferable   Boolean             @default(true)
+  ownerUserId    String?             @map("owner_user_id")
+
+  /// Kto nadał dostęp (users.id z @/lib/db), ustawiane przy przypisaniu z panelu admina.
+  grantedByAdminId String? @map("granted_by_admin_id")
+  grantedAt        DateTime? @map("granted_at")
+  adminNotes       String? @map("admin_notes")
+  /// Etykieta NFT w sensie biznesowym (np. „Founders”), bez portfela.
+  nftLabel              String   @default("Founders") @map("nft_label")
+  /// Gdy true — blokuje transfer użytkownika (obok transferable).
+  transferLocked        Boolean  @default(false) @map("transfer_locked")
+  /// Wyjątek: dostęp aplikacyjny bez „NFT” (trial / promocja / decyzja admina). Dla statusu pending pozwala na dostęp.
+  allowAccessWithoutNft Boolean  @default(false) @map("allow_access_without_nft")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  transfers FoundersTokenTransfer[]
+
+  @@index([ownerUserId])
+  @@map("FoundersToken")
+}
+
+model FoundersTokenTransfer {
+  id         String        @id @default(cuid())
+  tokenId    String        @map("token_id")
+  token      FoundersToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  fromUserId String?       @map("from_user_id")
+  toUserId   String?       @map("to_user_id")
+  note       String?
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  @@index([tokenId])
+  @@map("FoundersTokenTransfer")
+}
+
 

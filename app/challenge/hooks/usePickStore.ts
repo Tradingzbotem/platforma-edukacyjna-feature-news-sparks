@@ -32,9 +32,20 @@ function writeAll(map: Record<string, UserPick>) {
 
 /** Hook do obsługi pojedynczego wpisu wg klucza */
 export function usePickStore(key: string) {
-  const [pick, setPickState] = useState<UserPick | null>(null);
+  // Initialize state from localStorage immediately (client-side only)
+  const [pick, setPickState] = useState<UserPick | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const all = readAll();
+      return all[key] ?? null;
+    } catch {
+      return null;
+    }
+  });
 
+  // Sync with localStorage when key changes
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const all = readAll();
     setPickState(all[key] ?? null);
   }, [key]);

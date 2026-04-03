@@ -3,6 +3,14 @@
 import { useEffect, useState } from 'react';
 import BackButton from '@/components/BackButton';
 
+function isStale(ts: string | null | undefined): boolean {
+  if (!ts) return true;
+  const updated = new Date(ts).getTime();
+  const now = Date.now();
+  const hours24 = 24 * 60 * 60 * 1000;
+  return now - updated > hours24;
+}
+
 function Section({
   title,
   items,
@@ -56,7 +64,12 @@ function Section({
               placeholder="—"
             />
           </div>
-          <div className="col-span-3 text-sm text-white/70 self-center">{fmt(overrideUpdatedAt[a])}</div>
+          <div className="col-span-3 text-sm text-white/70 self-center">
+            <div>{fmt(overrideUpdatedAt[a])}</div>
+            {isStale(overrideUpdatedAt[a]) && (
+              <div className="text-red-400 text-xs font-semibold mt-1">⚠ Odśwież cenę</div>
+            )}
+          </div>
           <div className="col-span-3">
             <button
               className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
@@ -115,6 +128,9 @@ export default function AdminOverridePricesPage() {
   const [xagPrice, setXagPrice] = useState<string>('');
   const [xagSaveStatus, setXagSaveStatus] = useState<'ok' | 'err' | null>(null);
   const [xagUpdatedAt, setXagUpdatedAt] = useState<string | null>(null);
+  const [xauPrice, setXauPrice] = useState<string>('');
+  const [xauSaveStatus, setXauSaveStatus] = useState<'ok' | 'err' | null>(null);
+  const [xauUpdatedAt, setXauUpdatedAt] = useState<string | null>(null);
   const [btcPrice, setBtcPrice] = useState<string>('');
   const [btcSaveStatus, setBtcSaveStatus] = useState<'ok' | 'err' | null>(null);
   const [btcUpdatedAt, setBtcUpdatedAt] = useState<string | null>(null);
@@ -164,6 +180,16 @@ export default function AdminOverridePricesPage() {
           if (mounted) {
             if (price != null) setXagPrice(String(price));
             setXagUpdatedAt(j?.updatedAt ?? null);
+          }
+        } catch {}
+        // load XAUUSD
+        try {
+          const r = await fetch('/api/panel/price-override/XAUUSD', { cache: 'no-store' });
+          const j = await r.json().catch(() => ({}));
+          const price = typeof j?.price === 'number' ? j.price : null;
+          if (mounted) {
+            if (price != null) setXauPrice(String(price));
+            setXauUpdatedAt(j?.updatedAt ?? null);
           }
         } catch {}
         // load BTCUSD
@@ -390,6 +416,70 @@ export default function AdminOverridePricesPage() {
           <p className="mt-1 text-xs text-white/50">
             Ostatnia aktualizacja: {xagUpdatedAt ? new Date(xagUpdatedAt).toLocaleString() : '—'}
           </p>
+          {isStale(xagUpdatedAt) && (
+            <p className="mt-1 text-xs text-red-400 font-semibold">⚠ Odśwież cenę</p>
+          )}
+        </div>
+
+        <h2 className="text-xl font-bold mt-10 mb-4">Złoto (XAUUSD / Gold)</h2>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="flex items-end gap-3">
+            <div>
+              <label className="block text-xs text-white/60 mb-1">Cena XAUUSD (Gold)</label>
+              <input
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                className="rounded-md bg-slate-900/70 border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-white/30"
+                value={xauPrice}
+                onChange={(e) => setXauPrice(e.target.value)}
+                placeholder="np. 2051.70"
+              />
+            </div>
+            <button
+              className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+              onClick={async () => {
+                try {
+                  const price = Number(xauPrice);
+                  if (!isFinite(price) || price <= 0) {
+                    alert('Podaj poprawną cenę (> 0)');
+                    return;
+                  }
+                  const r = await fetch('/api/panel/price-override/XAUUSD', {
+                    method: 'PUT',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ price }),
+                  });
+                  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                  try {
+                    const g = await fetch('/api/panel/price-override/XAUUSD', { cache: 'no-store' });
+                    const j = await g.json().catch(() => ({}));
+                    if (typeof j?.price === 'number') setXauPrice(String(j.price));
+                    setXauUpdatedAt(j?.updatedAt ?? null);
+                  } catch {}
+                  setXauSaveStatus('ok');
+                  window.setTimeout(() => setXauSaveStatus(null), 3000);
+                } catch {
+                  setXauSaveStatus('err');
+                  window.setTimeout(() => setXauSaveStatus(null), 3000);
+                }
+              }}
+            >
+              Zapisz
+            </button>
+            {xauSaveStatus === 'ok' && <span className="text-emerald-300 text-sm">Zapisano</span>}
+            {xauSaveStatus === 'err' && <span className="text-rose-300 text-sm">Błąd zapisu</span>}
+          </div>
+          <p className="mt-2 text-xs text-white/60">
+            Ta cena ma pierwszeństwo przy generowaniu map technicznych dla XAUUSD (Gold). Aktualizacja widoczna po odświeżeniu
+            zakładki „Mapy techniczne".
+          </p>
+          <p className="mt-1 text-xs text-white/50">
+            Ostatnia aktualizacja: {xauUpdatedAt ? new Date(xauUpdatedAt).toLocaleString() : '—'}
+          </p>
+          {isStale(xauUpdatedAt) && (
+            <p className="mt-1 text-xs text-red-400 font-semibold">⚠ Odśwież cenę</p>
+          )}
         </div>
 
         <h2 className="text-xl font-bold mt-10 mb-4">Kryptowaluty (wykresy)</h2>
@@ -449,6 +539,9 @@ export default function AdminOverridePricesPage() {
             <p className="mt-1 text-xs text-white/50">
               Ostatnia aktualizacja: {btcUpdatedAt ? new Date(btcUpdatedAt).toLocaleString() : '—'}
             </p>
+            {isStale(btcUpdatedAt) && (
+              <p className="mt-1 text-xs text-red-400 font-semibold">⚠ Odśwież cenę</p>
+            )}
           </div>
 
           {/* ETHUSD */}
@@ -506,6 +599,9 @@ export default function AdminOverridePricesPage() {
             <p className="mt-1 text-xs text-white/50">
               Ostatnia aktualizacja: {ethUpdatedAt ? new Date(ethUpdatedAt).toLocaleString() : '—'}
             </p>
+            {isStale(ethUpdatedAt) && (
+              <p className="mt-1 text-xs text-red-400 font-semibold">⚠ Odśwież cenę</p>
+            )}
           </div>
         </div>
 

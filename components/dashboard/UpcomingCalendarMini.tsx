@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { CALENDAR_7D, type CalendarEvent } from '@/lib/panel/calendar7d';
 
 function isWeekendISO(iso: string): boolean {
@@ -49,6 +50,7 @@ type LiveItem = { date: string; time?: string; region?: string; title: string; i
 export default function UpcomingCalendarMini() {
 	const [items, setItems] = useState<LiveItem[] | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [isExpanded, setIsExpanded] = useState(false);
 
 	useEffect(() => {
 		let mounted = true;
@@ -77,17 +79,42 @@ export default function UpcomingCalendarMini() {
 		date: e.date, time: e.time, region: e.region, title: e.event, importance: e.importance
 	}));
 	const rawData = items && items.length ? items : fallback;
-	// Usuń daty weekendowe; jeśli po filtrze pusto, pokaż oryginał z jawną datą (bez „Dziś”/„Jutro”)
+	// Usuń daty weekendowe; jeśli po filtrze pusto, pokaż oryginał z jawną datą (bez „Dziś"/„Jutro")
 	const filtered = rawData.filter(ev => ev.date && !isWeekendISO(ev.date));
 	const data = filtered.length ? filtered : rawData;
+	
+	// W stanie zwiniętym pokazujemy tylko pierwsze 4 wydarzenia (aby dopasować wysokość do Watchlist)
+	const visibleItems = isExpanded ? data : data.slice(0, 4);
+	const hasMore = data.length > 4;
 
 	return (
-		<section className="rounded-2xl bg-white/5 border border-white/10 p-4">
+		<section className="rounded-2xl bg-white/5 border border-white/10 p-4 flex flex-col">
 			<div className="flex items-center justify-between">
 				<h2 className="text-lg font-semibold">Najbliższe wydarzenia (EDU)</h2>
+				{hasMore && (
+					<button
+						type="button"
+						onClick={() => setIsExpanded(!isExpanded)}
+						className="inline-flex items-center gap-1 text-xs text-white/70 hover:text-white transition-colors"
+						aria-expanded={isExpanded}
+						aria-label={isExpanded ? 'Zwiń wydarzenia' : 'Rozwiń wydarzenia'}
+					>
+						{isExpanded ? (
+							<>
+								Zwiń
+								<ChevronUp className="h-3.5 w-3.5" />
+							</>
+						) : (
+							<>
+								Rozwiń ({data.length - 4})
+								<ChevronDown className="h-3.5 w-3.5" />
+							</>
+						)}
+					</button>
+				)}
 			</div>
 			<ul className="mt-3 space-y-3" role="list">
-				{data.map((ev, idx) => {
+				{visibleItems.map((ev, idx) => {
 					const imp = importanceStyles(ev.importance as any);
 					return (
 						<li key={`${ev.date}-${ev.time}-${idx}`} className="flex items-start justify-between gap-3">

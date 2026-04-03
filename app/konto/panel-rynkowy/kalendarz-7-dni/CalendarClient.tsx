@@ -9,7 +9,7 @@ type Props = {
 };
 
 type ImpactKey = 'low' | 'medium' | 'high';
-type GroupMode = 'type' | 'impact';
+type GroupMode = 'date' | 'type' | 'impact';
 type AssetTab = 'oil' | 'fx' | 'gold' | 'indices' | 'rates' | 'general';
 
 function ImportanceBadge({ importance }: { importance: ImpactKey }) {
@@ -72,14 +72,49 @@ function getAssetTags(ev: CalendarEvent): Set<AssetTab> {
   return tags;
 }
 
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dateOnly = new Date(date);
+  dateOnly.setHours(0, 0, 0, 0);
+
+  if (dateOnly.getTime() === today.getTime()) {
+    return 'Dzisiaj';
+  }
+  if (dateOnly.getTime() === tomorrow.getTime()) {
+    return 'Jutro';
+  }
+
+  const days = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
+  const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+  
+  const dayName = days[date.getDay()];
+  const day = date.getDate();
+  const month = months[date.getMonth()];
+  
+  return `${dayName}, ${day} ${month}`;
+}
+
+function getAllAffectedAssets(events: CalendarEvent[]): string[] {
+  const allChips = new Set<string>();
+  for (const ev of events) {
+    const info = inferImpact(ev);
+    info.chips.forEach((chip) => allChips.add(chip));
+  }
+  return Array.from(allChips).sort();
+}
+
 export default function CalendarClient({ events }: Props) {
   const [impacts, setImpacts] = useState<Record<ImpactKey, boolean>>({
     high: true,
     medium: true,
     low: false,
   });
-  const [groupMode, setGroupMode] = useState<GroupMode>('type');
-  const [assetTab, setAssetTab] = useState<AssetTab>('oil');
+  const [groupMode, setGroupMode] = useState<GroupMode>('date');
+  const [assetTab, setAssetTab] = useState<AssetTab>('general');
 
   const filtered = useMemo(() => {
     const byImpact = events.filter((e) => impacts[e.importance]);
@@ -90,12 +125,38 @@ export default function CalendarClient({ events }: Props) {
       if (assetTab === 'gold') return tags.has('gold');
       if (assetTab === 'indices') return tags.has('indices');
       if (assetTab === 'rates') return tags.has('rates');
-      // general: brak konkretnych tagów
-      return tags.size === 0;
+      // general: pokaż wszystkie wydarzenia (nie tylko te bez tagów)
+      return true;
     });
   }, [events, impacts, assetTab]);
 
   const grouped = useMemo(() => {
+    if (groupMode === 'date') {
+      // Grupuj po datach
+      const map = new Map<string, { label: string; order: number; items: CalendarEvent[] }>();
+      for (const ev of filtered) {
+        const dateKey = ev.date;
+        if (!map.has(dateKey)) {
+          const dateLabel = formatDate(ev.date);
+          // Sortuj po dacie - wcześniejsze daty mają niższy order
+          const dateObj = new Date(ev.date + 'T00:00:00');
+          map.set(dateKey, { label: dateLabel, order: dateObj.getTime(), items: [] });
+        }
+        map.get(dateKey)!.items.push(ev);
+      }
+      // Sortuj wydarzenia w każdym dniu po czasie
+      const result = Array.from(map.values()).sort((a, b) => a.order - b.order);
+      result.forEach((group) => {
+        group.items.sort((a, b) => {
+          const timeA = a.time || '00:00';
+          const timeB = b.time || '00:00';
+          return timeA.localeCompare(timeB);
+        });
+      });
+      return result;
+    }
+    
+    // Grupuj po typie lub wpływie
     const map = new Map<string, { label: string; order: number; items: CalendarEvent[] }>();
     for (const ev of filtered) {
       const cat = groupMode === 'impact' ? categorizeImpact(ev) : categorizeEventType(ev.event);
@@ -208,8 +269,15 @@ export default function CalendarClient({ events }: Props) {
           <div className="mt-2 inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5">
             <button
               type="button"
+              onClick={() => setGroupMode('date')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md ${groupMode === 'date' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+            >
+              Data
+            </button>
+            <button
+              type="button"
               onClick={() => setGroupMode('type')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md ${groupMode === 'type' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
+              className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${groupMode === 'type' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
             >
               Typ wydarzenia
             </button>
@@ -222,7 +290,7 @@ export default function CalendarClient({ events }: Props) {
             </button>
           </div>
           <div className="mt-2 text-xs text-white/60">
-            Wybierz, czy chcesz grupować po rodzaju publikacji (np. CPI, NFP) czy po rynku, na który typowo wpływa (FX, indeksy, surowce, obligacje).
+            Wybierz, czy chcesz grupować po datach, rodzaju publikacji (np. CPI, NFP) czy po rynku, na który typowo wpływa (FX, indeksy, surowce, obligacje).
           </div>
         </div>
       </div>
@@ -250,11 +318,30 @@ export default function CalendarClient({ events }: Props) {
             <p>Ogólne: przegląd istotnych publikacji makro bez przypisania do konkretnego aktywa.</p>
           )}
         </div>
-        {grouped.map((group) => (
-          <section key={group.label}>
-            <h2 className="text-base font-semibold text-white/90">{group.label}</h2>
-            <div className="mt-3 grid gap-4 md:grid-cols-2">
-              {group.items.map((ev, idx) => (
+        {grouped.map((group) => {
+          const affectedAssets = groupMode === 'date' ? getAllAffectedAssets(group.items) : [];
+          return (
+            <section key={group.label}>
+              <div className="flex items-center justify-between gap-4 mb-3">
+                <h2 className="text-base font-semibold text-white/90">{group.label}</h2>
+                {groupMode === 'date' && affectedAssets.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-white/60">Aktywa:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {affectedAssets.map((asset, i) => (
+                        <span
+                          key={`${group.label}-${asset}-${i}`}
+                          className="inline-flex items-center rounded-full border border-blue-400/30 bg-blue-500/10 px-2 py-0.5 text-[11px] text-blue-200"
+                        >
+                          {asset}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 grid gap-4 md:grid-cols-2">
+                {group.items.map((ev, idx) => (
                 <article key={`${ev.date}-${ev.time}-${idx}`} className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm text-white/70">
@@ -312,9 +399,10 @@ export default function CalendarClient({ events }: Props) {
                   })()}
                 </article>
               ))}
-            </div>
-          </section>
-        ))}
+              </div>
+            </section>
+          );
+        })}
         {!grouped.length && (
           <div className="rounded-xl border border-white/10 bg-white/5 p-5 text-sm text-white/70">
             Brak bieżących wydarzeń dla wybranych filtrów. Sugerowane: {assetTab === 'oil' && 'cotygodniowe EIA lub decyzje OPEC/OPEC+'}

@@ -1,0 +1,636 @@
+// app/client/decision-center/page.tsx — workspace: aktywo + horyzont + Decision Block (API `/api/decision-block`)
+"use client";
+
+import type { ReactNode } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronDown,
+  FlaskConical,
+  LayoutGrid,
+  Lock,
+  Store,
+  Zap,
+} from "lucide-react";
+import { DECISION_ASSET_OPTIONS, type DecisionAssetId } from "../decisionBlockMock";
+import type { ClientPanelApiPayload } from "../useClientPanelTier";
+import { useClientPanelTier } from "../useClientPanelTier";
+import { getMembershipSnapshot, type PanelUserTier } from "../clientPanelMock";
+import type { DecisionBlockV1 } from "@/lib/decision-engine/types";
+import { useDecisionBlock } from "./useDecisionBlock";
+import {
+  buildBearishConfirmationLine,
+  buildBullishConfirmationLine,
+  buildNoTradeLine,
+  buildObserveNowBullets,
+  buildPrimaryTakeaway,
+  humanizeMarketLanguage,
+  macroMoodLabel,
+} from "./decisionBlockCopy";
+import {
+  DECISION_HORIZON_OPTIONS,
+  horizonCardLabel,
+  horizonToApiParams,
+  type DecisionHorizonId,
+} from "./decisionHorizon";
+import { tvSymbolForAsset } from "@/lib/tvSymbolMap";
+
+const TradingViewChart = dynamic(() => import("@/components/TradingViewChart"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="h-[500px] w-full animate-pulse rounded-2xl border border-white/10 bg-white/[0.04]"
+      aria-hidden
+    />
+  ),
+});
+
+function SectionEyebrow({ n, children }: { n: string; children: ReactNode }) {
+  return (
+    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/38">
+      <span className="tabular-nums text-white/55">{n}</span>
+      <span className="h-px w-6 bg-white/15" aria-hidden />
+      {children}
+    </p>
+  );
+}
+
+function SectionLabel({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <p
+      className={`text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 ${className}`.trim()}
+    >
+      {children}
+    </p>
+  );
+}
+
+/** Opcjonalnie: zestaw liczb z silnika — domyślnie schowany. */
+function OptionalNumericContext({ block }: { block: DecisionBlockV1 }) {
+  const { levels } = block;
+  if (!levels.normalizedLevels.length && levels.currentPrice == null) return null;
+
+  return (
+    <details className="group rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-3">
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-[12px] font-medium text-white/45 outline-none marker:content-none [&::-webkit-details-marker]:hidden">
+        <ChevronDown className="h-4 w-4 shrink-0 transition group-open:rotate-180 text-white/35" aria-hidden />
+        Dodatkowo: zestaw liczb z ćwiczenia (nie traktuj jak aktualnych cen z rynku)
+      </summary>
+      <div className="mt-3 space-y-2 border-t border-white/[0.06] pt-3 text-[11px] leading-relaxed text-white/50">
+        <p>
+          Liczby poniżej pochodzą z przeliczenia przykładowych poziomów względem odczytu ceny w silniku — mogą się nie
+          zgadzać z tym, co widzisz u brokera. Służą tylko do nauki struktury, nie do wejścia w pozycję.
+        </p>
+        {levels.currentPrice != null ? (
+          <p>
+            <span className="text-white/35">Odczyt w ćwiczeniu:</span>{" "}
+            <span className="tabular-nums text-white/70">{levels.currentPrice}</span>
+          </p>
+        ) : null}
+        {levels.normalizedLevels.length > 0 ? (
+          <p className="tabular-nums">Przykładowy zestaw: {levels.normalizedLevels.join(" · ")}</p>
+        ) : null}
+      </div>
+    </details>
+  );
+}
+
+function EduSectionTitle({ id, children }: { id?: string; children: ReactNode }) {
+  return (
+    <h4
+      id={id}
+      className="flex items-start gap-2 text-[15px] font-bold leading-snug tracking-tight text-white sm:text-base"
+    >
+      <span className="mt-0.5 text-cyan-300/90" aria-hidden>
+        🔹
+      </span>
+      <span>{children}</span>
+    </h4>
+  );
+}
+
+function PrimaryTakeawayHero({ text }: { text: string }) {
+  return (
+    <section
+      className="relative overflow-hidden rounded-2xl border border-cyan-400/25 bg-gradient-to-br from-cyan-500/[0.14] via-slate-950/40 to-violet-600/[0.08] px-5 py-5 sm:px-6 sm:py-6 shadow-[0_0_48px_-12px_rgba(34,211,238,0.22)]"
+      aria-labelledby="primary-takeaway-heading"
+    >
+      <div
+        className="pointer-events-none absolute -right-16 -top-20 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl"
+        aria-hidden
+      />
+      <div className="relative">
+        <h3
+          id="primary-takeaway-heading"
+          className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-200/85"
+        >
+          Najważniejszy wniosek teraz
+        </h3>
+        <p className="mt-3 text-[17px] font-semibold leading-[1.45] tracking-tight text-white sm:text-lg sm:leading-[1.5]">
+          {text}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function DecisionBlockFromApi({
+  fetchState,
+  horizonLabel,
+  assetId,
+}: {
+  fetchState: ReturnType<typeof useDecisionBlock>;
+  horizonLabel: string;
+  assetId: DecisionAssetId;
+}) {
+  if (fetchState.status === "idle" || fetchState.status === "loading") {
+    return (
+      <div
+        className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-10 sm:px-6"
+        aria-busy="true"
+        aria-label="Ładowanie Decision Block"
+      >
+        <div className="mx-auto max-w-md space-y-3">
+          <div className="h-4 animate-pulse rounded bg-white/10" />
+          <div className="h-24 animate-pulse rounded-lg bg-white/[0.06]" />
+          <div className="h-32 animate-pulse rounded-lg bg-white/[0.05]" />
+        </div>
+        <p className="mt-4 text-center text-[12px] text-white/40">Ładowanie materiału…</p>
+      </div>
+    );
+  }
+
+  if (fetchState.status === "error") {
+    return (
+      <div
+        className="overflow-hidden rounded-2xl border border-rose-400/25 bg-rose-500/[0.06] px-5 py-6 sm:px-6"
+        role="alert"
+      >
+        <p className="text-sm font-semibold text-rose-100/95">Nie udało się pobrać Decision Block</p>
+        <p className="mt-2 text-[13px] leading-relaxed text-white/65">{fetchState.message}</p>
+        <p className="mt-3 text-[11px] text-white/40">Spróbuj ponownie za chwilę albo zmień aktywo / horyzont.</p>
+      </div>
+    );
+  }
+
+  if (fetchState.status === "empty") {
+    return (
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-6 sm:px-6">
+        <p className="text-sm font-semibold text-white/80">Brak danych</p>
+        <p className="mt-2 text-[13px] text-white/50">{fetchState.message}</p>
+      </div>
+    );
+  }
+
+  if (fetchState.status !== "success") return null;
+
+  const { block } = fetchState;
+  const primary = buildPrimaryTakeaway(block);
+  const bullConf = buildBullishConfirmationLine(block);
+  const bearConf = buildBearishConfirmationLine(block);
+  const noTrade = buildNoTradeLine(block);
+  const observeBullets = buildObserveNowBullets(block, 3);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset]">
+      <div className="border-b border-white/10 bg-gradient-to-r from-white/[0.07] to-transparent px-5 py-3.5 sm:px-6 sm:py-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <h3 className="text-lg font-bold tracking-tight text-white sm:text-xl">Decision Block</h3>
+            <span className="text-sm font-semibold text-white/90">{block.asset}</span>
+            <span className="text-sm text-white/35">·</span>
+            <span className="text-sm text-white/55">{horizonLabel}</span>
+            <span className="text-sm text-white/35">·</span>
+            <span className="text-sm text-white/45">interwał {block.timeframe}</span>
+          </div>
+          <p className="text-[11px] text-white/35 tabular-nums sm:shrink-0">
+            Aktualizacja:{" "}
+            {new Date(block.generatedAt).toLocaleString("pl-PL", { dateStyle: "short", timeStyle: "short" })}
+          </p>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="rounded-lg border border-white/12 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium leading-snug text-white/80">
+            {macroMoodLabel(block.macro.eventRisk)}
+          </span>
+          <span className="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium text-white/50">
+            Ćwiczenie EDU
+          </span>
+        </div>
+        <p className="mt-3 max-w-2xl text-[12px] leading-relaxed text-amber-200/75">
+          Materiał z modułów FXEDULAB — <strong className="font-semibold text-amber-100/90">to nie jest sygnał</strong> do
+          kupna ani sprzedaży, tylko uproszczony opis sytuacji z kursu.
+        </p>
+      </div>
+
+      <div className="space-y-7 px-5 py-6 sm:px-6 sm:py-7">
+        <TradingViewChart symbol={tvSymbolForAsset(assetId)} />
+        <PrimaryTakeawayHero text={primary} />
+
+        <section className="space-y-2.5" aria-labelledby="edu-bull-confirm">
+          <EduSectionTitle id="edu-bull-confirm">Co potwierdza wzrost</EduSectionTitle>
+          <p className="text-[14px] leading-relaxed text-white/75 sm:text-[15px]">{bullConf}</p>
+        </section>
+
+        <section className="space-y-2.5" aria-labelledby="edu-bear-confirm">
+          <EduSectionTitle id="edu-bear-confirm">Co potwierdza słabość / spadek</EduSectionTitle>
+          <p className="text-[14px] leading-relaxed text-white/75 sm:text-[15px]">{bearConf}</p>
+        </section>
+
+        <section className="space-y-2.5" aria-labelledby="edu-no-trade">
+          <EduSectionTitle id="edu-no-trade">Kiedy nie robić nic</EduSectionTitle>
+          <p className="text-[14px] leading-relaxed text-white/78 sm:text-[15px]">{noTrade}</p>
+        </section>
+
+        <section className="space-y-3" aria-labelledby="edu-observe">
+          <EduSectionTitle id="edu-observe">Co obserwować teraz</EduSectionTitle>
+          {observeBullets.length ? (
+            <ul className="flex flex-col gap-2">
+              {observeBullets.map((line, i) => (
+                <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-white/75">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400/50" aria-hidden />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[13px] text-white/45">Brak listy obserwacji w tej odpowiedzi.</p>
+          )}
+        </section>
+
+        <OptionalNumericContext block={block} />
+
+        {block.confidenceNotes.length ? (
+          <section className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-4 sm:px-5 sm:py-4" aria-labelledby="edu-confidence">
+            <SectionLabel className="text-white/40">Uwagi do pewności odczytu (ćwiczenie)</SectionLabel>
+            <ul className="mt-2.5 space-y-1.5 text-[12px] leading-relaxed text-white/55">
+              {block.confidenceNotes.map((n: string, i: number) => (
+                <li key={i}>{humanizeMarketLanguage(n)}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        <p className="text-[10px] leading-relaxed text-white/35">
+          EDU — treść opiera się na scenariuszach, makro i kontekście z modułów; nie jest sygnałem, prognozą ani poradą inwestycyjną.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function DecisionCenterLocked({ tierQuery }: { tierQuery: string }) {
+  return (
+    <div
+      className="relative flex min-h-[min(420px,55vh)] flex-col justify-center overflow-hidden rounded-2xl border border-amber-400/20 bg-gradient-to-br from-amber-500/[0.08] via-slate-950/80 to-slate-950 px-6 py-10 sm:px-10"
+      aria-labelledby="decision-lock-heading"
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage: `repeating-linear-gradient(-12deg, transparent, transparent 12px, rgba(255,255,255,0.06) 12px, rgba(255,255,255,0.06) 13px)`,
+        }}
+        aria-hidden
+      />
+      <div className="relative mx-auto max-w-lg text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.06]">
+          <Lock className="h-7 w-7 text-amber-200/90" aria-hidden />
+        </div>
+        <h3 id="decision-lock-heading" className="mt-5 text-xl font-bold tracking-tight text-white sm:text-2xl">
+          Centrum decyzji — premium
+        </h3>
+        <p className="mt-3 text-sm leading-relaxed text-white/55">
+          Decision Block i wybór aktywów są dostępne po przypisaniu NFT. Wróć do panelu startowego lub odblokuj dostęp w
+          marketplace.
+        </p>
+        <div className="mt-6 flex flex-col items-stretch justify-center gap-2.5 sm:flex-row sm:items-center">
+          <Link
+            href={`/client${tierQuery}`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/18 bg-white/[0.06] px-5 py-3 text-sm font-semibold text-white/90 hover:bg-white/[0.1] focus:outline-none focus:ring-2 focus:ring-white/25"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Panel startowy
+          </Link>
+          <Link
+            href="/marketplace"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-white/40"
+          >
+            <Store className="h-4 w-4" aria-hidden />
+            Kup dostęp
+          </Link>
+          <Link
+            href="/cennik"
+            className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white/90 hover:bg-white/[0.08] focus:outline-none focus:ring-2 focus:ring-white/25"
+          >
+            Cennik
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AssetSelector({
+  allowed,
+  value,
+  onChange,
+}: {
+  allowed: DecisionAssetId[];
+  value: DecisionAssetId;
+  onChange: (id: DecisionAssetId) => void;
+}) {
+  const allowedSet = new Set(allowed);
+
+  return (
+    <section className="space-y-3" aria-label="Wybór aktywa">
+      <SectionLabel>Aktywo</SectionLabel>
+      <p className="max-w-2xl text-sm text-white/48">
+        Instrumenty poniżej są obsługiwane przez silnik v1 (scenariusze ABC + kalendarz + wycena). Bez BTC ani EUR/JPY —
+        nie ma jeszcze kompletnego zestawu scenariuszy w module.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {DECISION_ASSET_OPTIONS.map((opt) => {
+          const ok = allowedSet.has(opt.id);
+          const active = value === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              disabled={!ok}
+              title={opt.hint ? `${opt.label} — ${opt.hint}` : opt.label}
+              onClick={() => ok && onChange(opt.id)}
+              className={[
+                "inline-flex flex-col items-start gap-0 rounded-xl border px-3.5 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-offset-0 sm:min-w-[7.5rem]",
+                active && ok
+                  ? "border-white/25 bg-white text-slate-950 focus:ring-white/40"
+                  : ok
+                    ? "border-white/10 bg-white/5 text-white/85 hover:bg-white/10 focus:ring-white/25"
+                    : "cursor-not-allowed border-white/5 bg-white/[0.02] text-white/30",
+              ].join(" ")}
+            >
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
+                {!ok && <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />}
+                {opt.label}
+              </span>
+              {opt.hint ? (
+                <span
+                  className={[
+                    "text-[10px] font-medium leading-tight",
+                    active && ok ? "text-slate-600" : ok ? "text-white/40" : "text-white/22",
+                  ].join(" ")}
+                >
+                  {opt.hint}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function HorizonSelector({
+  value,
+  onChange,
+}: {
+  value: DecisionHorizonId;
+  onChange: (id: DecisionHorizonId) => void;
+}) {
+  return (
+    <section className="space-y-3" aria-label="Horyzont decyzji">
+      <SectionLabel>Horyzont decyzji</SectionLabel>
+      <p className="max-w-2xl text-sm text-white/48">
+        Ustala, na jak głęboko silnik patrzy w kalendarz i jaki interwał scenariusza ABC preferuje (H1 / H4 / D1), gdy jest
+        dostępny dla instrumentu.
+      </p>
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {DECISION_HORIZON_OPTIONS.map((opt) => {
+          const active = value === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onChange(opt.id)}
+              className={[
+                "rounded-xl border px-3.5 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-offset-0",
+                active
+                  ? "border-cyan-400/35 bg-cyan-500/15 text-white shadow-[0_0_24px_-8px_rgba(34,211,238,0.35)] focus:ring-cyan-400/30"
+                  : "border-white/10 bg-white/[0.04] text-white/82 hover:border-white/16 hover:bg-white/[0.07] focus:ring-white/20",
+              ].join(" ")}
+            >
+              <span className="block text-sm font-semibold leading-snug">{opt.label}</span>
+              <span className="mt-1 block text-[11px] leading-relaxed text-white/45">{opt.subtitle}</span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function NextStepsSection({ tierQuery }: { tierQuery: string }) {
+  const items = [
+    {
+      href: `/client/decision-lab${tierQuery}`,
+      icon: FlaskConical,
+      title: "Decision Lab",
+      subtitle: "Rozłóż tezę i ryzyka",
+      accent: "from-violet-500/25 to-transparent",
+      iconClass: "text-violet-300/90",
+    },
+    {
+      href: "/challenge",
+      icon: Zap,
+      title: "Challenge",
+      subtitle: "Ćwicz decyzję pod presją",
+      accent: "from-amber-500/25 to-transparent",
+      iconClass: "text-amber-300/90",
+    },
+    {
+      href: "/konto/panel-rynkowy",
+      icon: LayoutGrid,
+      title: "Moduły EDU",
+      subtitle: "Kalendarz, checklisty, mapy",
+      accent: "from-cyan-500/25 to-transparent",
+      iconClass: "text-cyan-300/90",
+    },
+  ] as const;
+
+  return (
+    <section className="space-y-4" aria-labelledby="next-steps-heading">
+      <div>
+        <SectionEyebrow n="02">Kontynuacja</SectionEyebrow>
+        <h2 id="next-steps-heading" className="mt-2 text-lg font-bold tracking-tight text-white sm:text-xl">
+          Dalsze kroki
+        </h2>
+        <p className="mt-1 max-w-2xl text-sm text-white/45">
+          Decision Lab, Challenge i panel — kolejne kroki po przeczytaniu uproszczonego werdyktu.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {items.map(({ href, icon: Icon, title, subtitle, accent, iconClass }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group relative flex min-h-[130px] flex-col justify-between overflow-hidden rounded-2xl border border-white/12 bg-white/[0.04] p-5 transition hover:border-white/22 hover:bg-white/[0.07] focus:outline-none focus:ring-2 focus:ring-white/25"
+          >
+            <div
+              className={`pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-gradient-to-br ${accent} blur-2xl`}
+              aria-hidden
+            />
+            <div className="relative">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-950/50">
+                <Icon className={`h-5 w-5 ${iconClass}`} aria-hidden />
+              </div>
+              <h3 className="mt-3 text-[15px] font-bold tracking-tight text-white">{title}</h3>
+              <p className="mt-0.5 text-xs text-white/48">{subtitle}</p>
+            </div>
+            <span className="relative mt-4 inline-flex items-center gap-1 text-xs font-semibold text-white/50 group-hover:text-white/80">
+              Otwórz
+              <ArrowRight className="h-3.5 w-3.5 opacity-70 transition group-hover:translate-x-0.5" aria-hidden />
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DecisionCenterInner() {
+  const searchParams = useSearchParams();
+  const tierParam = searchParams.get("tier");
+  const panel = useClientPanelTier(tierParam);
+
+  if (panel.status === "loading") {
+    return <DecisionCenterFallback />;
+  }
+
+  if (panel.status === "error") {
+    return (
+      <main className="min-h-[calc(100vh-4rem)] bg-slate-950 text-white">
+        <div className="mx-auto max-w-lg px-4 py-16 text-center">
+          <p className="text-sm text-rose-200/90">{panel.message}</p>
+          <Link
+            href="/logowanie?next=/client/decision-center"
+            className="mt-6 inline-flex rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-white hover:bg-white/[0.1]"
+          >
+            Logowanie
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  return <DecisionCenterLoaded panel={panel} />;
+}
+
+function DecisionCenterLoaded({ panel }: { panel: ClientPanelApiPayload }) {
+  const tier: PanelUserTier = panel.tier;
+  const tierQuery = panel.tierQuerySuffix;
+
+  const membership = getMembershipSnapshot(tier);
+  const hasDecisionCenter = membership.hasAccess && membership.hasNft;
+
+  const [assetId, setAssetId] = useState<DecisionAssetId>("US100");
+  const [horizonId, setHorizonId] = useState<DecisionHorizonId>("one_two_days");
+
+  useEffect(() => {
+    if (!hasDecisionCenter) return;
+    const first = membership.allowedAssets[0] ?? "US100";
+    setAssetId((prev) => (membership.allowedAssets.includes(prev) ? prev : first));
+  }, [hasDecisionCenter, membership.allowedAssets]);
+
+  const horizonParams = useMemo(() => horizonToApiParams(horizonId), [horizonId]);
+  const horizonLabel = horizonCardLabel(horizonId);
+  const blockFetch = useDecisionBlock(assetId, hasDecisionCenter, horizonParams);
+
+  return (
+    <main className="min-h-[calc(100vh-4rem)] bg-slate-950 text-white">
+      <div className="mx-auto w-full max-w-[min(1440px,calc(100vw-1.5rem))] px-3 pb-24 pt-5 sm:px-5 sm:pt-7 lg:px-8 lg:pt-9 xl:max-w-[1520px]">
+        <div className="mb-8 flex flex-col gap-4 border-b border-white/[0.07] pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href={`/client${tierQuery}`}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/12 bg-white/[0.04] px-3.5 py-2 text-xs font-semibold text-white/80 hover:bg-white/[0.08] focus:outline-none focus:ring-2 focus:ring-white/20"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+              Hub
+            </Link>
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/35">FXEDULAB</p>
+              <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-white sm:text-3xl">Centrum decyzji</h1>
+            </div>
+          </div>
+          {panel.qaTierQueryAllowed ? (
+            <p className="text-[11px] text-white/32">
+              QA URL:{" "}
+              <code className="rounded bg-white/10 px-1 py-0.5 text-[10px] text-white/50">?tier=free</code>,{" "}
+              <code className="rounded bg-white/10 px-1 py-0.5 text-[10px] text-white/50">founders</code>,{" "}
+              <code className="rounded bg-white/10 px-1 py-0.5 text-[10px] text-white/50">elite</code>
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-10 lg:space-y-12">
+          <section
+            className="relative overflow-hidden rounded-3xl border border-white/[0.09] bg-gradient-to-b from-slate-900/80 to-slate-950 p-5 sm:p-7 lg:p-8"
+            aria-labelledby="workspace-heading"
+          >
+            <div
+              className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-cyan-500/[0.06] blur-3xl"
+              aria-hidden
+            />
+            <div className="relative">
+              <SectionEyebrow n="01">Workspace</SectionEyebrow>
+              <h2 id="workspace-heading" className="mt-3 text-xl font-bold tracking-tight text-white sm:text-2xl">
+                Aktywo, horyzont i Decision Block
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm text-white/42">
+                Najpierw wybierz instrument i horyzont — potem czytaj werdykt od najważniejszego wniosku. Treść nadal pochodzi z
+                modułów EDU, bez sygnału transakcyjnego.
+              </p>
+
+              <div className="mt-8 space-y-8">
+                {hasDecisionCenter ? (
+                  <>
+                    <div className="grid gap-8 lg:grid-cols-1 xl:grid-cols-[1fr_1fr] xl:items-start xl:gap-10">
+                      <AssetSelector allowed={membership.allowedAssets} value={assetId} onChange={setAssetId} />
+                      <HorizonSelector value={horizonId} onChange={setHorizonId} />
+                    </div>
+                    <DecisionBlockFromApi fetchState={blockFetch} horizonLabel={horizonLabel} assetId={assetId} />
+                  </>
+                ) : (
+                  <DecisionCenterLocked tierQuery={tierQuery} />
+                )}
+              </div>
+            </div>
+          </section>
+
+          {hasDecisionCenter && <NextStepsSection tierQuery={tierQuery} />}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function DecisionCenterFallback() {
+  return (
+    <main className="min-h-[calc(100vh-4rem)] bg-slate-950 text-white">
+      <div className="mx-auto w-full max-w-[min(1440px,calc(100vw-1.5rem))] px-3 py-10 sm:px-5 lg:px-8">
+        <div className="h-48 animate-pulse rounded-3xl bg-white/[0.05]" aria-hidden />
+      </div>
+    </main>
+  );
+}
+
+export default function DecisionCenterPage() {
+  return (
+    <Suspense fallback={<DecisionCenterFallback />}>
+      <DecisionCenterInner />
+    </Suspense>
+  );
+}

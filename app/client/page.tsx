@@ -1,913 +1,621 @@
-// app/client/page.tsx
-'use client';
+// app/client/page.tsx — hub startowy: dostęp → kierunki → edukacja → marketplace (bez Decision Block na tej stronie)
+"use client";
 
+import type { ReactNode } from "react";
+import { Suspense } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import dynamic from "next/dynamic";
-import MobileStickyBar from "@/components/dashboard/MobileStickyBar";
-import AssistantAI from "@/app/components/AssistantAI";
-import { useEffect, useMemo, useState } from "react";
-import WatchlistRealtime from "@/components/dashboard/WatchlistRealtime";
-import WatchlistCustom from "@/components/dashboard/WatchlistCustom";
-import QuickAI from "@/components/News/QuickAI";
-import SparksCard from "@/components/News/SparksCard";
-import LearningProgressCard from "@/components/dashboard/LearningProgressCard";
-import { Calculator, LineChart, HelpCircle, BookOpen, Crown, Sparkles, ShieldCheck, ArrowRight, CalendarDays, Map as MapIcon, ListChecks, Brain, Flame, FlaskConical } from "lucide-react";
-import UpcomingCalendarMini from "@/components/dashboard/UpcomingCalendarMini";
-import BackButton from "@/components/BackButton";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useClientPanelTier } from "./useClientPanelTier";
+import {
+  ArrowRight,
+  BookOpen,
+  Check,
+  Crosshair,
+  Crown,
+  FlaskConical,
+  LayoutGrid,
+  LineChart,
+  Lock,
+  ShieldCheck,
+  Sparkles,
+  Store,
+  Zap,
+} from "lucide-react";
+import { getLearningSnapshot, getMembershipSnapshot, type PanelUserTier } from "./clientPanelMock";
 
-// Pasek z newsem dnia (zastępuje ticker z aktywami)
-import InfoOfDayBanner from '@/components/News/InfoOfDayBanner';
-
-type WatchItem = { symbol: string; label: string; price?: number; changePct?: number };
-
-// Lista po lewej – spójne symbole z Finnhub (te same źródła co pasek u góry)
-const LEFT_LIST: { label: string; symbol: string }[] = [
-  { label: "US100",  symbol: "OANDA:NAS100_USD" },
-  { label: "EURUSD", symbol: "OANDA:EUR_USD" },
-  { label: "GOLD",   symbol: "OANDA:XAU_USD" },
-  { label: "OIL",    symbol: "OANDA:WTICO_USD" },
-  { label: "SP500",  symbol: "OANDA:US500_USD" },
-  { label: "DAX40",  symbol: "OANDA:DE30_EUR" },
-  { label: "BTCUSD", symbol: "BINANCE:BTCUSDT" },
-  { label: "ETHUSD", symbol: "BINANCE:ETHUSDT" },
-  { label: "USDJPY", symbol: "OANDA:USD_JPY" },
-  { label: "GBPUSD", symbol: "OANDA:GBP_USD" },
-];
-
-export default function ClientPage() {
-  // Lewa lista – dane spójne z paskiem (hydratacja z LocalStorage + opcjonalnie Finnhub)
-  const token =
-    process.env.NEXT_PUBLIC_FINNHUB_KEY ??
-    process.env.NEXT_PUBLIC_FINNHUB_TOKEN ??
-    "";
-  const [watch, setWatch] = useState<WatchItem[]>(
-    () => LEFT_LIST.map(it => ({ symbol: it.symbol, label: it.label }))
-  );
-
-  // Natychmiastowy fallback – deterministyczne ceny startowe dla nowych użytkowników
-  useEffect(() => {
-    try {
-      const topbarSymbols = [
-        "OANDA:NAS100_USD",
-        "OANDA:XAU_USD",
-        "OANDA:WTICO_USD",
-        "OANDA:BCO_USD",
-        "OANDA:EUR_USD",
-        "OANDA:USD_JPY",
-        "OANDA:US500_USD",
-      ];
-      const storageKey = `ticker:finnhub:v1:${topbarSymbols.join(",")}`;
-      const raw = typeof window !== "undefined" ? window.localStorage.getItem(storageKey) : null;
-      // Jeśli nie ma jeszcze żadnych danych w localStorage — ustaw natychmiastowy fallback
-      if (!raw) {
-        const BASE: Record<string, number> = {
-          "OANDA:NAS100_USD": 25445,
-          "OANDA:EUR_USD": 1.187,
-          "OANDA:XAU_USD": 2350,
-          "OANDA:WTICO_USD": 77.2,
-          "OANDA:US500_USD": 5632,
-          "OANDA:DE30_EUR": 17000,
-          "OANDA:USD_JPY": 151.72,
-          "OANDA:GBP_USD": 1.265,
-          "BINANCE:BTCUSDT": 48000,
-          "BINANCE:ETHUSDT": 2300,
-        };
-        setWatch(prev => prev.map(it => {
-          const base = Number.isFinite(BASE[it.symbol]) ? BASE[it.symbol] : 100;
-          return { ...it, price: base, changePct: 0 };
-        }));
-      }
-    } catch {}
-  }, []);
-  // Hydratacja z localStorage zapisywanego przez TickerFinnhub
-  useEffect(() => {
-    try {
-      const topbarSymbols = [
-        "OANDA:NAS100_USD",
-        "OANDA:XAU_USD",
-        "OANDA:WTICO_USD",
-        "OANDA:BCO_USD",
-        "OANDA:EUR_USD",
-        "OANDA:USD_JPY",
-        "OANDA:US500_USD",
-      ];
-      const storageKey = `ticker:finnhub:v1:${topbarSymbols.join(",")}`;
-      const raw = typeof window !== "undefined" ? window.localStorage.getItem(storageKey) : null;
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Record<string, { price?: number; changePct?: number }>;
-      if (!parsed || typeof parsed !== "object") return;
-      setWatch(prev =>
-        prev.map(it => {
-          const q = parsed[it.symbol];
-          return q ? { ...it, price: q.price, changePct: q.changePct } : it;
-        })
-      );
-    } catch {}
-  }, []);
-  // Aktualizacja przez Finnhub (jeśli dostępny token)
-  useEffect(() => {
-    let cancelled = false;
-    if (!token) return;
-    (async () => {
-      try {
-        const results = await Promise.allSettled(
-          LEFT_LIST.map(async (it) => {
-            const url = `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(it.symbol)}&token=${token}`;
-            const r = await fetch(url, { cache: "no-store" });
-            if (!r.ok) throw new Error(String(r.status));
-            const j = await r.json();
-            const price = typeof j.c === "number" ? j.c : undefined;
-            const prevClose = typeof j.pc === "number" ? j.pc : undefined;
-            const changePct =
-              price != null && prevClose != null && prevClose !== 0
-                ? ((price - prevClose) / prevClose) * 100
-                : undefined;
-            return { s: it.symbol, price, changePct };
-          })
-        );
-        if (cancelled) return;
-        setWatch(prev => {
-          const map = new Map<string, { price?: number; changePct?: number }>();
-          for (const res of results) {
-            if (res.status === "fulfilled") {
-              map.set(res.value.s, { price: res.value.price, changePct: res.value.changePct });
-            }
-          }
-          return prev.map(it => {
-            const q = map.get(it.symbol);
-            return q ? { ...it, ...q } : it;
-          });
-        });
-      } catch {}
-    })();
-    return () => { cancelled = true; };
-  }, [token]);
-
-  // Odczyt bieżącego planu/tier z API
-  const [tier, setTier] = useState<'free' | 'starter' | 'pro' | 'elite' | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [tierLoaded, setTierLoaded] = useState<boolean>(false);
-  const [adminLoaded, setAdminLoaded] = useState<boolean>(false);
-  const [showPlans, setShowPlans] = useState<boolean>(false);
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const r = await fetch('/api/panel/me', { cache: 'no-store' });
-        const data = await r.json().catch(() => ({}));
-        if (!mounted) return;
-        const t = String(data?.tier || 'free');
-        if (t === 'free' || t === 'starter' || t === 'pro' || t === 'elite') {
-          setTier(t);
-        } else {
-          setTier('free');
-        }
-      } catch {
-        if (!mounted) return;
-        setTier('free');
-      } finally {
-        if (mounted) setTierLoaded(true);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
-
-  // Odczyt roli admin (jeden e-mail z ENV)
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const r = await fetch('/api/admin/me', { cache: 'no-store' });
-        const data = await r.json().catch(() => ({}));
-        if (!mounted) return;
-        setIsAdmin(Boolean(data?.isAdmin));
-      } catch {
-        if (!mounted) return;
-        setIsAdmin(false);
-      } finally {
-        if (mounted) setAdminLoaded(true);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
-
-  // Odczyt feature flags
-  const [hasDecisionLab, setHasDecisionLab] = useState<boolean>(false);
-  const [featuresLoaded, setFeaturesLoaded] = useState<boolean>(false);
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const r = await fetch('/api/features/me', { cache: 'no-store' });
-        const data = await r.json().catch(() => ({}));
-        if (!mounted) return;
-        setHasDecisionLab(Boolean(data?.flags?.decision_lab));
-      } catch {
-        if (!mounted) return;
-        setHasDecisionLab(false);
-      } finally {
-        if (mounted) setFeaturesLoaded(true);
-      }
-    })();
-    return () => { mounted = false; };
-  }, []);
-
-  const topReady = tierLoaded && adminLoaded && featuresLoaded;
-  const [watchTab, setWatchTab] = useState<'default' | 'charts' | 'custom'>('default');
-  const [chartsAsset, setChartsAsset] = useState<'US100' | 'GOLD' | 'OIL' | 'EURUSD' | 'SP500' | 'DAX40' | 'BTCUSD' | 'ETHUSD' | 'USDJPY' | 'GBPUSD'>('US100');
-  const router = useRouter();
-
+function SectionEyebrow({ n, children }: { n: string; children: ReactNode }) {
   return (
-    <main className="min-h-screen bg-slate-900 text-white">
-      {/* News dnia – zastępuje pasek z aktywami */}
-      <InfoOfDayBanner />
-
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <nav className="mb-4">
-          <BackButton />
-        </nav>
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard — Twój panel tradera</h1>
-          <p className="text-sm text-white/60">Szybki przegląd rynku, nauki i narzędzi.</p>
-          <StreakBadge />
-        </div>
-
-        {/* Szybkie akcje */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/kursy"
-              className="inline-flex items-center gap-2 rounded-xl bg-white text-slate-900 font-semibold text-sm px-3 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
-            >
-              <BookOpen className="h-4 w-4" aria-hidden />
-              Kontynuuj naukę
-            </Link>
-            <Link
-              href="/konto/panel-rynkowy/checklisty"
-              className="inline-flex items-center gap-2 rounded-xl bg-white/10 text-white font-semibold text-sm px-3 py-2 hover:bg-white/20 ring-1 ring-inset ring-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
-            >
-              <ListChecks className="h-4 w-4" aria-hidden />
-              Otwórz checklistę
-            </Link>
-            <Link
-              href="/konto/panel-rynkowy/playbooki-eventowe"
-              className="inline-flex items-center gap-2 rounded-xl bg-white/10 text-white font-semibold text-sm px-3 py-2 hover:bg-white/20 ring-1 ring-inset ring-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
-            >
-              <Sparkles className="h-4 w-4" aria-hidden />
-              Playbook dnia
-            </Link>
-          </div>
-        </div>
-
-        {/* Pasek statusu planu */}
-        <div className="mb-6">
-          <div className="relative rounded-2xl p-[1px] bg-gradient-to-r from-amber-400/40 via-emerald-400/20 to-cyan-400/20">
-            <div className="rounded-2xl bg-slate-900/60 border border-white/10 px-5 py-4 flex items-center justify-between backdrop-blur supports-[backdrop-filter]:backdrop-blur">
-              <div className="flex items-center gap-4">
-                <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-inset ring-white/15">
-                  {tier === 'elite' ? (
-                    <Crown className="h-5 w-5 text-amber-300" aria-hidden />
-                  ) : tier === 'pro' ? (
-                    <ShieldCheck className="h-5 w-5 text-emerald-300" aria-hidden />
-                  ) : (
-                    <Sparkles className="h-5 w-5 text-white/70" aria-hidden />
-                  )}
-                </div>
-                <div className="text-sm">
-                  {tier === null ? (
-                    <span className="text-white/70" aria-live="polite">Sprawdzam Twój plan…</span>
-                  ) : (
-                    <>
-                      <span className="text-white/70">Twój plan</span>
-                      <span
-                        className={
-                          `ml-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ` +
-                          (tier === 'elite'
-                            ? 'bg-gradient-to-r from-amber-300 to-yellow-300 text-slate-900 shadow-[0_0_0_1px_rgba(255,255,255,0.25)_inset]'
-                            : tier === 'pro'
-                              ? 'bg-emerald-400/15 text-emerald-200 ring-1 ring-inset ring-emerald-300/30'
-                              : tier === 'starter'
-                                ? 'bg-white/10 text-white/80 ring-1 ring-inset ring-white/20'
-                                : 'bg-white/5 text-white/60 ring-1 ring-inset ring-white/10')
-                        }
-                        aria-label="Aktualny plan"
-                      >
-                        {tier === 'elite' ? (
-                          <>
-                            <Crown className="h-3.5 w-3.5" />
-                            ELITE
-                          </>
-                        ) : tier === 'pro' ? 'PRO' : tier === 'starter' ? 'STARTER' : 'FREE'}
-                      </span>
-                      {tier === 'elite' && (
-                        <span className="ml-2 hidden sm:inline text-white/60">
-                          Wszystkie moduły EDU odblokowane.
-                        </span>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {hasDecisionLab && (
-                  <Link
-                    href="/client/decision-lab"
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-purple-500/20 text-purple-200 font-semibold text-sm px-3 py-2 ring-1 ring-inset ring-purple-400/30 hover:bg-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-400/40"
-                  >
-                    <FlaskConical className="h-4 w-4" aria-hidden />
-                    Decision Lab
-                  </Link>
-                )}
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500/20 text-emerald-200 font-semibold text-sm px-3 py-2 ring-1 ring-inset ring-emerald-400/30 hover:bg-emerald-500/25 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
-                  >
-                    Admin
-                  </Link>
-                )}
-                <Link
-                  href="/konto/panel-rynkowy"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-white/10 text-white font-semibold text-sm px-3 py-2 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
-                >
-                  Panel (EDU)
-                </Link>
-                <Link
-                  href="/konto/plan"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-white text-slate-900 font-semibold text-sm px-3 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
-                >
-                  Mój plan
-                  <ArrowRight className="h-4 w-4" aria-hidden />
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setShowPlans(v => !v)}
-                  aria-expanded={showPlans}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-white/5 text-white font-semibold text-sm px-3 py-2 ring-1 ring-inset ring-white/10 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
-                >
-                  {showPlans ? 'Ukryj plany' : 'Pokaż plany'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Rząd główny: mini kalendarz + Quick markets */}
-        <section className="grid gap-6 md:grid-cols-3">
-          {/* Lewa kolumna: Kalendarz EDU (stabilny, bez zewnętrznego API) */}
-          <UpcomingCalendarMini />
-
-          {/* Prawa kolumna (2 kolumny): Quick markets */}
-          <div className="md:col-span-2">
-            <div className="mb-2 inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5">
-              <button
-                type="button"
-                onClick={() => setWatchTab('default')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md ${watchTab === 'default' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-              >
-                Domyślna
-              </button>
-              <button
-                type="button"
-                onClick={() => setWatchTab('charts')}
-                className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${watchTab === 'charts' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-              >
-                Wykresy
-              </button>
-              <button
-                type="button"
-                onClick={() => setWatchTab('custom')}
-                className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${watchTab === 'custom' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-              >
-                Moja
-              </button>
-            </div>
-            {watchTab === 'default' ? (
-              topReady ? <WatchlistRealtime /> : <WatchlistSkeleton />
-            ) : watchTab === 'custom' ? (
-              <WatchlistCustom />
-            ) : (
-              <section className="rounded-2xl bg-white/5 border border-white/10 p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex flex-wrap gap-1">
-                    <div className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setChartsAsset('US100')}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'US100' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                        aria-pressed={chartsAsset === 'US100'}
-                      >
-                        US100
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChartsAsset('GOLD')}
-                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'GOLD' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                        aria-pressed={chartsAsset === 'GOLD'}
-                      >
-                        Złoto
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChartsAsset('OIL')}
-                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'OIL' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                        aria-pressed={chartsAsset === 'OIL'}
-                      >
-                        Ropa
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChartsAsset('EURUSD')}
-                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'EURUSD' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                        aria-pressed={chartsAsset === 'EURUSD'}
-                      >
-                        EUR/USD
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChartsAsset('SP500')}
-                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'SP500' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                        aria-pressed={chartsAsset === 'SP500'}
-                      >
-                        SP500
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChartsAsset('DAX40')}
-                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'DAX40' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                        aria-pressed={chartsAsset === 'DAX40'}
-                      >
-                        DAX40
-                      </button>
-                    </div>
-                    <div className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setChartsAsset('BTCUSD')}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'BTCUSD' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                        aria-pressed={chartsAsset === 'BTCUSD'}
-                      >
-                        BTC/USD
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChartsAsset('ETHUSD')}
-                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'ETHUSD' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                        aria-pressed={chartsAsset === 'ETHUSD'}
-                      >
-                        ETH/USD
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChartsAsset('USDJPY')}
-                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'USDJPY' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                        aria-pressed={chartsAsset === 'USDJPY'}
-                      >
-                        USD/JPY
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setChartsAsset('GBPUSD')}
-                        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${chartsAsset === 'GBPUSD' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-                        aria-pressed={chartsAsset === 'GBPUSD'}
-                      >
-                        GBP/USD
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => router.push(`/konto/panel-rynkowy/wykresy?symbol=${chartsAsset}`)}
-                    className="inline-flex items-center justify-center rounded-xl bg-white text-slate-900 font-semibold text-sm px-3 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
-                  >
-                    Otwórz wykres
-                  </button>
-                </div>
-                <p className="mt-3 text-[12px] text-white/60">
-                  Wybierz instrument i otwórz duży wykres w dedykowanym widoku. Wykres nie jest osadzony w tej karcie.
-                </p>
-              </section>
-            )}
-          </div>
-        </section>
-
-        {/* Rząd 2: Nauka + Dzisiejszy brief / AI */}
-        <section className="mt-6 grid gap-6 md:grid-cols-3">
-          {/* Kontynuuj naukę */}
-          <LearningProgressCard />
-
-          {/* Dzisiejszy brief / Emocje rynku (2 kolumny) */}
-          <div className="md:col-span-2 grid gap-6 md:grid-cols-2">
-            <QuickAI />
-            <SparksCard />
-          </div>
-        </section>
-
-        {/* Rząd 3: Porównaj brokerów + Narzędzia */}
-        <section className="mt-6 grid gap-6 md:grid-cols-3">
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-5 transition-colors hover:bg-white/10">
-            <h2 className="text-lg font-semibold">Porównaj brokerów</h2>
-            <p className="mt-1 text-sm text-white/70">
-              Sprawdź opłaty, regulacje i parametry rachunków.
-            </p>
-            <Link
-              href="/rankingi/brokerzy"
-              className="mt-4 inline-flex px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90"
-            >
-              Rankingi brokerów
-            </Link>
-          </div>
-
-          <div className="md:col-span-2 rounded-2xl bg-white/5 border border-white/10 p-5 transition-colors hover:bg-white/10">
-            <h2 className="text-lg font-semibold">Narzędzia</h2>
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <Link
-                href="/symulator"
-                className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
-              >
-                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">
-                  <Calculator className="h-5 w-5" aria-hidden />
-                </div>
-                <div className="mt-3 font-medium">Kalkulator pozycji</div>
-              </Link>
-
-              <Link
-                href="/quizy"
-                className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
-              >
-                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">
-                  <LineChart className="h-5 w-5" aria-hidden />
-                </div>
-                <div className="mt-3 font-medium">Quizy</div>
-              </Link>
-
-              <Link
-                href="/faq"
-                className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
-              >
-                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">
-                  <HelpCircle className="h-5 w-5" aria-hidden />
-                </div>
-                <div className="mt-3 font-medium">FAQ</div>
-              </Link>
-
-              <Link
-                href="/kursy"
-                className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
-              >
-                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">
-                  <BookOpen className="h-5 w-5" aria-hidden />
-                </div>
-                <div className="mt-3 font-medium">Kursy</div>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Rząd 4: EDU hub */}
-        <section className="mt-6 rounded-2xl bg-white/5 border border-white/10 p-5 transition-colors hover:bg-white/10">
-          <h2 className="text-lg font-semibold">EDU hub</h2>
-          <p className="mt-1 text-sm text-white/60">Szybkie przejścia do kluczowych modułów edukacyjnych.</p>
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-            <Link
-              href="/konto/panel-rynkowy/kalendarz-7-dni"
-              className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
-            >
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">
-                <CalendarDays className="h-5 w-5" aria-hidden />
-              </div>
-              <div className="mt-3 font-medium">Kalendarz 7 dni</div>
-            </Link>
-            <Link
-              href="/konto/panel-rynkowy/scenariusze-abc"
-              className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
-            >
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">
-                <ListChecks className="h-5 w-5" aria-hidden />
-              </div>
-              <div className="mt-3 font-medium">Scenariusze A/B/C</div>
-            </Link>
-            <Link
-              href="/konto/panel-rynkowy/mapy-techniczne"
-              className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
-            >
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">
-                <MapIcon className="h-5 w-5" aria-hidden />
-              </div>
-              <div className="mt-3 font-medium">Mapy techniczne</div>
-            </Link>
-            <Link
-              href="/konto/panel-rynkowy/checklisty"
-              className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
-            >
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">
-                <ListChecks className="h-5 w-5" aria-hidden />
-              </div>
-              <div className="mt-3 font-medium">Checklisty</div>
-            </Link>
-            <Link
-              href="/konto/panel-rynkowy/playbooki-eventowe"
-              className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
-            >
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">
-                <BookOpen className="h-5 w-5" aria-hidden />
-              </div>
-              <div className="mt-3 font-medium">Playbooki</div>
-            </Link>
-            <Link
-              href="/konto/panel-rynkowy/coach-ai"
-              className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/10 p-4 text-center transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/20 hover:shadow-lg hover:shadow-black/20 active:translate-y-0"
-            >
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/60 text-white/90 ring-1 ring-inset ring-white/10 transition-colors group-hover:bg-white/20">
-                <Brain className="h-5 w-5" aria-hidden />
-              </div>
-              <div className="mt-3 font-medium">Coach AI</div>
-            </Link>
-          </div>
-        </section>
-      </div>
-
-      {/* Oferta panelu rynkowego — pakiety (zwijane) */}
-      {showPlans && (
-        <section id="plany" className="bg-gradient-to-b from-slate-900 to-slate-950">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold tracking-tight">Oferta panelu rynkowego</h2>
-              <p className="text-sm text-white/60">Wybierz plan dopasowany do Twojej nauki i praktyki.</p>
-            </div>
-
-            {/* Przełącznik rozliczania */}
-            <div className="mb-6">
-              <BillingSwitch />
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-3">
-              {/* Starter */}
-              <StarterCard />
-
-              {/* Pro — wyróżniony */}
-              <ProCard />
-
-              {/* Elite */}
-              <EliteCard />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Mobilny pasek skrótów + Asystent AI (FAB) */}
-      <MobileStickyBar />
-      <AssistantAI />
-    </main>
+    <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/38">
+      <span className="tabular-nums text-white/55">{n}</span>
+      <span className="h-px w-6 bg-white/15" aria-hidden />
+      {children}
+    </p>
   );
 }
 
-// ----------------------------
-// Pricing helpers/components
-// ----------------------------
-
-function getTodayString() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function getYesterdayString() {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function StreakBadge() {
-  const [count, setCount] = useState<number>(0);
-  const [last, setLast] = useState<string>('');
-  const today = getTodayString();
-  const yesterday = getYesterdayString();
-  const doneToday = last === today;
-
-  useEffect(() => {
-    try {
-      const c = Number(localStorage.getItem('streak:count') || '0');
-      const l = String(localStorage.getItem('streak:last') || '');
-      setCount(Number.isFinite(c) ? c : 0);
-      setLast(l);
-    } catch {}
-  }, []);
-
-  const markToday = () => {
-    try {
-      const prevCount = count;
-      let next = 1;
-      if (last === yesterday) next = prevCount + 1;
-      else if (last === today) next = prevCount;
-      else next = 1;
-      localStorage.setItem('streak:count', String(next));
-      localStorage.setItem('streak:last', today);
-      setCount(next);
-      setLast(today);
-    } catch {}
-  };
-
+function SectionLabel({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className="mt-3 flex items-center gap-2">
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 text-white px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ring-white/15">
-        <Flame className="h-3.5 w-3.5 text-amber-300" aria-hidden />
-        Seria: {count} dni
-      </span>
-      <button
-        type="button"
-        onClick={markToday}
-        disabled={doneToday}
-        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold ring-1 ring-inset ${
-          doneToday
-            ? 'bg-white/10 text-white/60 ring-white/10 cursor-default'
-            : 'bg-white text-slate-900 ring-white/20 hover:opacity-90'
-        }`}
-        aria-pressed={doneToday}
+    <p
+      className={`text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 ${className}`.trim()}
+    >
+      {children}
+    </p>
+  );
+}
+
+function NftMembershipVisual({
+  hasNft,
+  nftTier,
+  imageUrl,
+  productName,
+}: {
+  hasNft: boolean;
+  nftTier: "none" | "founders" | "elite";
+  imageUrl: string | null;
+  productName: string;
+}) {
+  if (!hasNft) {
+    return (
+      <div
+        className="relative mx-auto flex aspect-[3/4] w-full max-w-[220px] flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-white/20 bg-slate-900/60 sm:mx-0 sm:max-w-[240px]"
+        aria-hidden
       >
-        {doneToday ? 'Zaliczone' : 'Zaliczyć dziś'}
-      </button>
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+            backgroundSize: "18px 18px",
+          }}
+        />
+        <Lock className="relative h-10 w-10 text-white/35" />
+        <p className="relative mt-3 text-center text-[11px] font-semibold uppercase tracking-wider text-white/40">
+          Brak aktywnego NFT
+        </p>
+        <p className="relative mt-1 px-4 text-center text-[10px] text-white/30">Karta dostępu nie jest przypisana</p>
+      </div>
+    );
+  }
+
+  const isElite = nftTier === "elite";
+
+  if (imageUrl) {
+    return (
+      <div className="relative mx-auto aspect-[3/4] w-full max-w-[220px] overflow-hidden rounded-2xl border border-white/15 bg-black sm:mx-0 sm:max-w-[240px]">
+        <Image
+          src={imageUrl}
+          alt={`Podgląd NFT — ${productName}`}
+          fill
+          className="object-cover"
+          sizes="240px"
+          unoptimized
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`relative mx-auto aspect-[3/4] w-full max-w-[220px] overflow-hidden rounded-2xl border shadow-lg sm:mx-0 sm:max-w-[240px] ${
+        isElite
+          ? "border-cyan-400/35 bg-gradient-to-br from-cyan-950/90 via-slate-950 to-slate-950"
+          : "border-amber-400/40 bg-gradient-to-br from-amber-950/80 via-slate-900 to-slate-950"
+      }`}
+      aria-hidden
+    >
+      <div
+        className="absolute inset-0 opacity-[0.12]"
+        style={{
+          backgroundImage: `linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%)`,
+        }}
+      />
+      <div
+        className="absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+          backgroundSize: "14px 14px",
+        }}
+      />
+      <div className="relative flex h-full flex-col justify-between p-5">
+        <div className="flex items-start justify-between gap-2">
+          <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/45">FXEDULAB</span>
+          {isElite ? (
+            <Sparkles className="h-5 w-5 text-cyan-300/80" />
+          ) : (
+            <Crown className="h-5 w-5 text-amber-300/85" />
+          )}
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">Access pass</p>
+          <p className="mt-1 line-clamp-2 text-sm font-bold leading-tight text-white">{productName}</p>
+        </div>
+      </div>
     </div>
   );
 }
 
-function WatchlistSkeleton() {
+function AccessMembershipCard({
+  membership,
+  hasDecisionCenter,
+}: {
+  membership: ReturnType<typeof getMembershipSnapshot>;
+  hasDecisionCenter: boolean;
+}) {
   return (
-    <section className="rounded-2xl bg-white/5 border border-white/10 p-4">
-      <div className="flex items-center justify-between">
-        <div className="h-5 w-36 rounded bg-white/10" />
-        <div className="h-4 w-32 rounded bg-white/10" />
-      </div>
-      <div className="mt-3 space-y-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="py-3 grid grid-cols-[1fr_auto_auto] gap-4 items-center">
-            <div className="h-4 w-24 rounded bg-white/10" />
-            <div className="text-right">
-              <div className="h-4 w-16 rounded bg-white/10 ml-auto" />
-              <div className="mt-1 h-3 w-12 rounded bg-white/10 ml-auto" />
-            </div>
-            <div className="hidden sm:block">
-              <div className="h-6 w-24 rounded bg-white/10" />
-            </div>
+    <section
+      className="overflow-hidden rounded-3xl border border-white/[0.1] bg-gradient-to-br from-white/[0.07] via-slate-950/95 to-slate-950 p-5 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.75)] sm:p-7 lg:p-8"
+      aria-labelledby="access-card-heading"
+    >
+      <SectionEyebrow n="1">Mój dostęp / moje NFT</SectionEyebrow>
+
+      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,260px)_1fr] lg:items-stretch lg:gap-10 xl:grid-cols-[minmax(0,280px)_1fr]">
+        <div className="flex justify-center lg:justify-start">
+          <NftMembershipVisual
+            hasNft={hasDecisionCenter}
+            nftTier={membership.nftTier}
+            imageUrl={membership.nftImageUrl}
+            productName={membership.nftDisplayName}
+          />
+        </div>
+
+        <div className="min-w-0 space-y-5">
+          <div className="flex flex-wrap items-center gap-2">
+            {hasDecisionCenter ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-100">
+                  <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  Dostęp aktywny
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 text-[11px] font-semibold text-amber-100">
+                  <Crown className="h-3 w-3 shrink-0" aria-hidden />
+                  NFT
+                </span>
+                {membership.nftTier === "elite" && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-100">
+                    <Sparkles className="h-3 w-3 shrink-0" aria-hidden />
+                    Elite
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-3 py-1 text-xs font-semibold text-white/65">
+                <Lock className="h-3.5 w-3.5 shrink-0 text-white/45" aria-hidden />
+                Brak aktywnego NFT — centrum decyzji zablokowane
+              </span>
+            )}
           </div>
+
+          <div>
+            <h2 id="access-card-heading" className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+              {hasDecisionCenter ? "Twoja karta dostępu" : "Stan konta"}
+            </h2>
+            {hasDecisionCenter ? (
+              <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="text-lg font-semibold text-white">{membership.nftDisplayName}</span>
+                <span className="text-sm text-white/35">·</span>
+                <span className="text-sm font-medium text-cyan-200/90">{membership.tierShortLabel}</span>
+                {membership.purchasedPriceUsd != null && (
+                  <>
+                    <span className="text-sm text-white/35">·</span>
+                    <span className="text-sm tabular-nums text-white/70">
+                      Wejście <span className="font-semibold text-white/85">${membership.purchasedPriceUsd} USD</span>
+                    </span>
+                    <span className="text-[10px] text-white/35">demo</span>
+                  </>
+                )}
+              </div>
+            ) : (
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/52">
+                Nie masz przypisanego NFT — w sekcji dostępu widać to wyraźnie. Edukacja (kursy, quizy) działa na koncie.
+                Pełne <span className="text-white/70">centrum decyzji</span> (Decision Block) odblokujesz w marketplace.
+              </p>
+            )}
+            {hasDecisionCenter && (
+              <p className="mt-3 max-w-xl text-sm text-white/45">
+                Główny workspace z wyborem aktywa i Decision Block otworzysz z karty{" "}
+                <span className="font-semibold text-white/70">Centrum decyzji</span> poniżej.
+              </p>
+            )}
+          </div>
+
+          {hasDecisionCenter ? (
+            <div>
+              <SectionLabel>Co odblokowuje</SectionLabel>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-1 lg:max-w-2xl">
+                {membership.nftUnlocksSummary.map((line, i) => (
+                  <li
+                    key={i}
+                    className="flex gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-2.5 text-[13px] leading-snug text-white/75"
+                  >
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400/80" aria-hidden />
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+              <Link
+                href="/marketplace"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-white/40"
+              >
+                <Store className="h-4 w-4 shrink-0" aria-hidden />
+                Kup dostęp — odblokuj centrum decyzji
+              </Link>
+              <Link
+                href="/cennik"
+                className="inline-flex items-center justify-center rounded-xl border border-white/18 bg-white/[0.06] px-5 py-3 text-sm font-semibold text-white/90 hover:bg-white/[0.1] focus:outline-none focus:ring-2 focus:ring-white/25"
+              >
+                Cennik
+              </Link>
+            </div>
+          )}
+
+          {hasDecisionCenter && (
+            <div className="flex flex-wrap gap-2 border-t border-white/10 pt-5">
+              <Link
+                href="/marketplace"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/12 bg-white/[0.04] px-3.5 py-2 text-xs font-semibold text-white/80 hover:bg-white/[0.08] focus:outline-none focus:ring-2 focus:ring-white/20"
+              >
+                <Store className="h-3.5 w-3.5" aria-hidden />
+                Marketplace — NFT i odsprzedaż
+              </Link>
+              <Link
+                href="/cennik"
+                className="inline-flex items-center rounded-lg border border-white/12 px-3.5 py-2 text-xs font-semibold text-white/55 hover:text-white/75 focus:outline-none focus:ring-2 focus:ring-white/15"
+              >
+                Cennik / upgrade
+              </Link>
+              <span className="self-center text-[11px] text-white/35">Obrót wg regulaminu</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MainEntryCards({ hasDecisionCenter, tierQuery }: { hasDecisionCenter: boolean; tierQuery: string }) {
+  const decisionHref = `/client/decision-center${tierQuery}`;
+
+  return (
+    <section className="space-y-5" aria-labelledby="entry-cards-heading">
+      <div>
+        <SectionEyebrow n="2">Główne wejścia</SectionEyebrow>
+        <h2 id="entry-cards-heading" className="mt-3 text-lg font-bold tracking-tight text-white sm:text-xl">
+          Kierunki pracy
+        </h2>
+        <p className="mt-1 max-w-2xl text-sm text-white/45">
+          Cztery wejścia — centrum decyzji jest głównym workspace dla holdera; dla konta bez NFT pokazujemy go jako premium.
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-5">
+        {hasDecisionCenter ? (
+          <Link
+            href={decisionHref}
+            className="group relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-2xl border border-cyan-400/25 bg-gradient-to-br from-cyan-500/[0.12] via-white/[0.05] to-slate-950/90 p-6 shadow-[0_0_0_1px_rgba(34,211,238,0.08)_inset] transition hover:border-cyan-300/40 hover:from-cyan-500/[0.16] focus:outline-none focus:ring-2 focus:ring-cyan-400/35"
+          >
+            <div
+              className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-gradient-to-br from-cyan-400/30 to-transparent blur-2xl"
+              aria-hidden
+            />
+            <div className="relative">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-300/25 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cyan-100/90">
+                Główne
+              </div>
+              <div className="mt-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/12 bg-slate-950/60">
+                <Crosshair className="h-6 w-6 text-cyan-200/95" aria-hidden />
+              </div>
+              <h3 className="mt-4 text-lg font-bold tracking-tight text-white">Centrum decyzji</h3>
+              <p className="mt-1 text-sm text-white/55">Aktywo, Decision Block, kolejne kroki po werdykcie.</p>
+            </div>
+            <span className="relative mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-100/90 group-hover:text-cyan-50">
+              Otwórz workspace
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+            </span>
+          </Link>
+        ) : (
+          <Link
+            href="/marketplace"
+            className="group relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-2xl border border-amber-400/25 bg-gradient-to-br from-amber-500/[0.1] via-white/[0.03] to-slate-950 p-6 transition hover:border-amber-300/35 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+            aria-describedby="dc-locked-desc"
+          >
+            <div
+              className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-gradient-to-br from-amber-400/25 to-transparent blur-2xl"
+              aria-hidden
+            />
+            <div className="relative">
+              <div className="inline-flex items-center gap-1 rounded-full border border-amber-300/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-100/95">
+                <Lock className="h-3 w-3" aria-hidden />
+                Premium
+              </div>
+              <div className="mt-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-slate-950/50">
+                <Crosshair className="h-6 w-6 text-white/35" aria-hidden />
+              </div>
+              <h3 className="mt-4 text-lg font-bold tracking-tight text-white/90">Centrum decyzji</h3>
+              <p id="dc-locked-desc" className="mt-1 text-sm text-white/48">
+                Decision Block i aktywa po zakupie NFT. Kliknij — przejdziesz do marketplace.
+              </p>
+            </div>
+            <span className="relative mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-100/90 group-hover:text-amber-50">
+              Odblokuj w marketplace
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+            </span>
+          </Link>
+        )}
+
+        {(
+          [
+            {
+              href: `/client/decision-lab${tierQuery}`,
+              icon: FlaskConical,
+              title: "Decision Lab",
+              subtitle: "Analiza i eksperymenty",
+              accent: "from-violet-500/20 to-transparent",
+              iconClass: "text-violet-300/90",
+            },
+            {
+              href: "/challenge",
+              icon: Zap,
+              title: "Challenge",
+              subtitle: "Podejmij decyzję",
+              accent: "from-amber-500/20 to-transparent",
+              iconClass: "text-amber-300/90",
+            },
+            {
+              href: "/konto/panel-rynkowy",
+              icon: LayoutGrid,
+              title: "Moduły EDU",
+              subtitle: "Pełny panel rynkowy",
+              accent: "from-cyan-500/20 to-transparent",
+              iconClass: "text-cyan-300/90",
+            },
+          ] as const
+        ).map(({ href, icon: Icon, title, subtitle, accent, iconClass }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group relative flex min-h-[168px] flex-col justify-between overflow-hidden rounded-2xl border border-white/12 bg-white/[0.04] p-6 transition hover:border-white/22 hover:bg-white/[0.07] focus:outline-none focus:ring-2 focus:ring-white/25"
+          >
+            <div
+              className={`pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br ${accent} blur-2xl`}
+              aria-hidden
+            />
+            <div className="relative">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-slate-950/50">
+                <Icon className={`h-6 w-6 ${iconClass}`} aria-hidden />
+              </div>
+              <h3 className="mt-4 text-lg font-bold tracking-tight text-white">{title}</h3>
+              <p className="mt-1 text-sm text-white/48">{subtitle}</p>
+            </div>
+            <span className="relative mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-white/55 group-hover:text-white/85">
+              Otwórz
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" aria-hidden />
+            </span>
+          </Link>
         ))}
       </div>
     </section>
   );
 }
 
-type Billing = 'monthly' | 'yearly';
-
-function useBilling(): [Billing, (b: Billing) => void] {
-  const [billing, setBilling] = useState<Billing>('monthly');
-  return [billing, setBilling];
-}
-
-function BillingSwitch() {
-  const [billing, setBilling] = useBilling();
-  // share state via window for sibling cards (simple global without context)
-  useEffect(() => {
-    (window as any).__billing = billing;
-  }, [billing]);
+function EducationZone({ learning }: { learning: ReturnType<typeof getLearningSnapshot> }) {
+  const pct = learning.totalLessons > 0 ? Math.round((learning.completedLessons / learning.totalLessons) * 100) : 0;
 
   return (
-    <div className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5">
-      <button
-        type="button"
-        onClick={() => setBilling('monthly')}
-        className={`px-3 py-1.5 text-xs font-semibold rounded-md ${billing === 'monthly' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-      >
-        Miesięcznie
-      </button>
-      <button
-        type="button"
-        onClick={() => setBilling('yearly')}
-        className={`ml-1 px-3 py-1.5 text-xs font-semibold rounded-md ${billing === 'yearly' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'}`}
-      >
-        Rocznie (2 mies. gratis)
-      </button>
-    </div>
+    <section
+      id="edukacja"
+      className="scroll-mt-24 rounded-2xl border border-white/[0.08] bg-slate-900/35 p-5 sm:p-6 lg:p-8"
+      aria-labelledby="edu-heading"
+    >
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
+        <div className="min-w-0 max-w-xl space-y-2">
+          <SectionEyebrow n="3">Edukacja</SectionEyebrow>
+          <h2 id="edu-heading" className="text-lg font-bold tracking-tight text-white sm:text-xl">
+            Rozwój — dostępne po rejestracji
+          </h2>
+          <p className="text-sm text-white/48">Kursy, quizy i postęp — zawsze na koncie, także bez NFT.</p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/kursy"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/25"
+          >
+            <BookOpen className="h-4 w-4 text-white/65" aria-hidden />
+            Kursy
+          </Link>
+          <Link
+            href="/quizy"
+            className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/14 focus:outline-none focus:ring-2 focus:ring-white/25"
+          >
+            <LineChart className="h-4 w-4 text-white/65" aria-hidden />
+            Quizy
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 border-t border-white/10 pt-6 lg:grid-cols-2 lg:gap-10">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-wide text-white/38">Postęp lekcji</p>
+          <p className="mt-1 text-sm text-white/78">
+            {learning.completedLessons}/{learning.totalLessons} ukończonych
+          </p>
+          <div className="mt-3 h-2 w-full max-w-md overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-cyan-500/90 to-emerald-500/85"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+        <div className="space-y-3 text-sm">
+          <p>
+            <span className="text-white/42">Ostatni kurs: </span>
+            <span className="text-white/82">{learning.lastCourseTitle}</span>
+          </p>
+          <p>
+            <span className="text-white/42">Następny quiz: </span>
+            <span className="text-white/82">{learning.nextQuizLabel}</span>
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
 
-function usePrice(monthly: number, yearly: number) {
-  const [billing, setBilling] = useState<Billing>(() => (typeof window !== 'undefined' && (window as any).__billing) || 'monthly');
-  useEffect(() => {
-    const id = setInterval(() => {
-      const b = (window as any).__billing as Billing | undefined;
-      if (b && b !== billing) setBilling(b);
-    }, 100);
-    return () => clearInterval(id);
-  }, [billing]);
-  const isYearly = billing === 'yearly';
-  const value = isYearly ? yearly : monthly;
-  const unit = isYearly ? '/rok' : '/mies';
-  return { value, unit, isYearly };
-}
-
-function StarterCard() {
-  const { value, unit } = usePrice(59, 590);
+function MarketplaceSecondaryStrip({
+  hasDecisionCenter,
+  purchaseValueBullets,
+}: {
+  hasDecisionCenter: boolean;
+  purchaseValueBullets: string[];
+}) {
   return (
-    <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <div className="text-xs tracking-wider uppercase text-white/60 font-semibold">Starter</div>
-              <div className="mt-2">
-                <div className="text-4xl font-extrabold">{value} <span className="text-lg font-bold align-top">PLN</span></div>
-                <div className="text-sm text-white/60">{unit}</div>
-              </div>
-              <ul className="mt-6 space-y-3 text-sm">
-                <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                  <span>Kalendarz 7 dni</span>
+    <section
+      className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4 sm:px-6"
+      aria-label="Marketplace w panelu"
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <SectionEyebrow n="4">Marketplace</SectionEyebrow>
+          <p className="mt-2 text-sm text-white/48">
+            {hasDecisionCenter
+              ? "Zarządzaj NFT, kup upgrade lub skorzystaj z marketplace przy odsprzedaży — zgodnie z regulaminem."
+              : "Kup dostęp (NFT), aby odblokować centrum decyzji. Po zakupie sekcja dostępu i kafel zaktualizują się (po podpięciu API)."}
+          </p>
+          {!hasDecisionCenter && purchaseValueBullets.length > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-white/55">
+              {purchaseValueBullets.slice(0, 3).map((b, i) => (
+                <li key={i} className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-amber-400/60" aria-hidden />
+                  {b}
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                  <span>Scenariusze A/B/C (EDU)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                  <span>Checklisty</span>
-                </li>
-              </ul>
-              <Link
-                href="/kontakt?topic=zakup-pakietu&plan=starter"
-                className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-white text-slate-900 font-semibold py-2.5 hover:opacity-90"
-              >
-                Wybierz plan
-              </Link>
-            </div>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href="/marketplace"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/[0.1] focus:outline-none focus:ring-2 focus:ring-white/20"
+          >
+            <Store className="h-4 w-4" aria-hidden />
+            {hasDecisionCenter ? "Marketplace" : "Kup dostęp"}
+          </Link>
+          <Link
+            href="/platnosc"
+            className="inline-flex items-center rounded-xl px-4 py-2.5 text-sm font-medium text-white/45 hover:text-white/65 focus:outline-none focus:ring-2 focus:ring-white/15"
+          >
+            Płatności
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
 
-function ProCard() {
-  const { value, unit } = usePrice(110, 1100);
+function ClientPanelInner() {
+  const searchParams = useSearchParams();
+  const tierParam = searchParams.get("tier");
+  const panel = useClientPanelTier(tierParam);
+
+  if (panel.status === "loading") {
+    return (
+      <main className="min-h-[calc(100vh-4rem)] bg-slate-950 text-white">
+        <div className="mx-auto w-full max-w-[min(1440px,calc(100vw-1.5rem))] px-3 py-10 sm:px-5 lg:px-8">
+          <div className="h-48 animate-pulse rounded-3xl bg-white/[0.05]" aria-hidden />
+        </div>
+      </main>
+    );
+  }
+
+  if (panel.status === "error") {
+    return (
+      <main className="min-h-[calc(100vh-4rem)] bg-slate-950 text-white">
+        <div className="mx-auto max-w-lg px-4 py-16 text-center">
+          <p className="text-sm text-rose-200/90">{panel.message}</p>
+          <Link
+            href="/logowanie?next=/client"
+            className="mt-6 inline-flex rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-white hover:bg-white/[0.1]"
+          >
+            Logowanie
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  const tier: PanelUserTier = panel.tier;
+  const tierQuery = panel.tierQuerySuffix;
+
+  const membership = getMembershipSnapshot(tier);
+  const learning = getLearningSnapshot(tier);
+
+  const hasDecisionCenter = membership.hasAccess && membership.hasNft;
+
   return (
-    <div className="relative rounded-2xl p-[1px] bg-gradient-to-b from-emerald-400/40 via-emerald-400/10 to-transparent">
-              <div className="rounded-2xl bg-slate-900 p-6 border border-white/10">
-                <div className="absolute -top-3 right-4 rounded-full bg-emerald-500/20 text-emerald-200 text-[10px] px-2 py-0.5 font-semibold uppercase tracking-wider">
-                  Najczęściej wybierany
-                </div>
-                <div className="text-xs tracking-wider uppercase text-white/80 font-semibold">Pro</div>
-                <div className="mt-2">
-                  <div className="text-4xl font-extrabold">{value} <span className="text-lg font-bold align-top">PLN</span></div>
-                  <div className="text-sm text-white/60">{unit}</div>
-                </div>
-                <ul className="mt-6 space-y-3 text-sm">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                    <span>Wszystko ze Starter</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                    <span>Mapy techniczne (EDU)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                    <span>Playbooki eventowe</span>
-                  </li>
-                </ul>
-                <Link
-                  href="/kontakt?topic=zakup-pakietu&plan=pro"
-                  className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 text-slate-900 font-extrabold py-2.5 hover:opacity-90"
-                >
-                  Kup pakiet
-                </Link>
-              </div>
-            </div>
+    <main className="min-h-[calc(100vh-4rem)] bg-slate-950 text-white">
+      <div className="mx-auto w-full max-w-[min(1440px,calc(100vw-1.5rem))] px-3 pb-24 pt-5 sm:px-5 sm:pt-7 lg:px-8 lg:pt-9 xl:max-w-[1520px]">
+        <div className="mb-8 flex flex-col gap-2 border-b border-white/[0.07] pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/35">Panel klienta · hub</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">FXEDULAB</h1>
+            <p className="mt-2 max-w-2xl text-sm text-white/40">
+              Start: dostęp, skróty, edukacja i marketplace. Workspace decyzyjny jest na osobnej ścieżce{" "}
+              <span className="text-white/55">/client/decision-center</span>.
+            </p>
+            {panel.source === "account" && panel.plan != null && (
+              <p className="mt-2 text-[11px] text-white/32">
+                Plan konta: <span className="text-white/50">{panel.plan}</span>
+                {panel.plan === "starter" ? " (Founders / NFT)" : null}
+                {panel.plan === "pro" ? " (widok Founders w FXEDULAB)" : null}
+              </p>
+            )}
+          </div>
+          {panel.qaTierQueryAllowed ? (
+            <p className="text-[11px] text-white/32 max-sm:order-first">
+              QA URL:{" "}
+              <code className="rounded bg-white/10 px-1 py-0.5 text-[10px] text-white/50">?tier=free</code>,{" "}
+              <code className="rounded bg-white/10 px-1 py-0.5 text-[10px] text-white/50">founders</code>,{" "}
+              <code className="rounded bg-white/10 px-1 py-0.5 text-[10px] text-white/50">elite</code>
+              {process.env.NODE_ENV === "production" ? (
+                <span className="block mt-1 text-white/25">W produkcji wymaga CLIENT_PANEL_ALLOW_TIER_QUERY=1</span>
+              ) : null}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-10 lg:space-y-14">
+          <AccessMembershipCard membership={membership} hasDecisionCenter={hasDecisionCenter} />
+
+          <MainEntryCards hasDecisionCenter={hasDecisionCenter} tierQuery={tierQuery} />
+
+          <EducationZone learning={learning} />
+
+          <MarketplaceSecondaryStrip
+            hasDecisionCenter={hasDecisionCenter}
+            purchaseValueBullets={membership.purchaseValueBullets}
+          />
+        </div>
+      </div>
+    </main>
   );
 }
 
-function EliteCard() {
-  const { value, unit } = usePrice(199, 1900);
+function ClientPanelFallback() {
   return (
-    <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-              <div className="text-xs tracking-wider uppercase text-white/60 font-semibold">Elite</div>
-              <div className="mt-2">
-                <div className="text-4xl font-extrabold">{value} <span className="text-lg font-bold align-top">PLN</span></div>
-                <div className="text-sm text-white/60">{unit}</div>
-              </div>
-              <div className="mt-2 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-[11px] font-semibold text-cyan-200">
-                ELITE = PRO + Coach AI + Raport
-              </div>
-              <ul className="mt-6 space-y-3 text-sm">
-                <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                  <span>Wszystko z Pro</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                  <span>Coach AI (edukacyjny)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
-                  <span>Raport miesięczny</span>
-                </li>
-              </ul>
-              <Link
-                href="/kontakt?topic=zakup-pakietu&plan=elite"
-                className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-white text-slate-900 font-semibold py-2.5 hover:opacity-90"
-              >
-                Wybierz plan
-              </Link>
-            </div>
+    <main className="min-h-[calc(100vh-4rem)] bg-slate-950 text-white">
+      <div className="mx-auto w-full max-w-[min(1440px,calc(100vw-1.5rem))] px-3 py-10 sm:px-5 lg:px-8">
+        <div className="h-48 animate-pulse rounded-3xl bg-white/[0.05]" aria-hidden />
+      </div>
+    </main>
+  );
+}
+
+export default function ClientPage() {
+  return (
+    <Suspense fallback={<ClientPanelFallback />}>
+      <ClientPanelInner />
+    </Suspense>
   );
 }

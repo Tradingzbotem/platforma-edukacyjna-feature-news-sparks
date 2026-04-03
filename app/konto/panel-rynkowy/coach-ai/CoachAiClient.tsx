@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { ContextSource } from '@/lib/panel/coachContext';
-import { isTierAtLeast, type Tier } from '@/lib/panel/access';
+import { hasFullPanelAccess, type Tier } from '@/lib/panel/access';
 import CoachWorkspace from '@/components/panel/coach-ai/CoachWorkspace';
 import type { IntakeState } from '@/components/panel/coach-ai/CoachIntake';
 
@@ -113,26 +113,11 @@ export default function CoachAiClient() {
     };
   }, []);
 
-  function requiredTierForContext(src: ContextSource): Tier {
-    switch (src) {
-      case 'calendar7d':
-      case 'scenariosABC':
-      case 'checklists':
-        return 'starter';
-      case 'eventPlaybooks':
-      case 'techMaps':
-        return 'pro';
-      default:
-        return 'free';
-    }
-  }
-
   useEffect(() => {
-    const required = requiredTierForContext(contextSource);
-    if (!isTierAtLeast(tier, required)) {
+    if (contextSource !== 'none' && !hasFullPanelAccess(tier)) {
       setContextSource('none');
     }
-  }, [tier]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tier, contextSource]);
 
   async function send(text: string) {
     const content = text.trim();
@@ -155,17 +140,16 @@ export default function CoachAiClient() {
         try {
           payload = await res.json();
         } catch {}
-        const required = (payload?.required || 'elite') as 'elite' | 'pro' | 'starter';
         const message =
-          required === 'elite'
-            ? 'Coach AI jest dostępny wyłącznie w planie ELITE.'
-            : required === 'pro'
-            ? 'Coach AI jest dostępny w planie PRO/ELITE.'
-            : 'Coach AI jest dostępny w planie STARTER/PRO/ELITE.';
-        setAccessBlock({ kind: 'tier', required, message });
+          'Coach AI wymaga pełnego dostępu do panelu (Founders NFT).';
+        setAccessBlock({ kind: 'tier', required: 'starter', message });
         setMessages([
           ...next,
-          { role: 'assistant', content: 'Dostęp zablokowany z powodu planu. Skorzystaj z przycisku „Ulepsz plan” powyżej.' },
+          {
+            role: 'assistant',
+            content:
+              'Pełny dostęp uzyskasz po Founders NFT — zobacz cennik lub marketplace w menu panelu.',
+          },
         ]);
         return;
       }
@@ -244,7 +228,7 @@ export default function CoachAiClient() {
         <div className="px-5 pt-4">
           <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4">
             <div className="text-sm font-semibold text-amber-200">
-              {accessBlock.kind === 'tier' ? 'Dostęp ograniczony planem' : 'Wymagane logowanie'}
+              {accessBlock.kind === 'tier' ? 'Wymagany pełny dostęp' : 'Wymagane logowanie'}
             </div>
             <div className="mt-1 text-sm text-amber-100/90">{accessBlock.message}</div>
           </div>

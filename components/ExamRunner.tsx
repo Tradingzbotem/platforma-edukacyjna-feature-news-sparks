@@ -16,7 +16,7 @@ type Props = {
   title: string;
   questions: Question[];
   demoLimit?: number;   // domyślnie 10
-  isPro?: boolean;      // opcjonalnie wymuszenie PRO (np. z ?pro=1)
+  isPro?: boolean;      // opcjonalnie wymuszenie pełnego testu (np. z ?pro=1)
 };
 
 export default function ExamRunner({
@@ -81,7 +81,11 @@ export default function ExamRunner({
         </p>
         {!unlocked && (
           <div className="mt-3 text-yellow-300">
-            To był wynik z wersji DEMO. Włącz PRO, aby przejść pełny egzamin i wygenerować certyfikat.
+            To był wynik z wersji DEMO. Pełny egzamin i certyfikat po uzyskaniu pełnego dostępu (Founders NFT) — zobacz{" "}
+            <a href="/cennik" className="underline font-medium text-white">
+              cennik
+            </a>
+            .
           </div>
         )}
       </div>
@@ -103,7 +107,14 @@ export default function ExamRunner({
           <div className="text-sm text-slate-900/90">
             <span>Odpowiadasz na pierwsze </span>
             <span>{demoLimit}</span>
-            <span> pytań. Włącz plan PRO (w „Konto”) albo użyj przycisku „Pełny test (PRO)”.</span>
+            <span>
+              {" "}
+              pytań. Pełny egzamin po uzyskaniu pełnego dostępu —{" "}
+              <a href="/cennik" className="underline font-medium text-slate-900">
+                Founders NFT
+              </a>
+              .
+            </span>
           </div>
         </div>
       )}

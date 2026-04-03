@@ -450,6 +450,61 @@ function computeDisciplineMetrics(entries: DecisionEntry[]) {
   };
 }
 
+// Funkcja oceny jakości tezy
+function evaluateThesisQuality(thesis: string): { level: 'GOOD' | 'OK' | 'WEAK'; hints: string[] } {
+  const trimmed = thesis.trim().toLowerCase();
+  const hints: string[] = [];
+
+  // WEAK: < 20 znaków
+  if (trimmed.length < 20) {
+    return { level: 'WEAK', hints: ['Teza jest zbyt krótka (min. 20 znaków)', 'Dodaj konkretne informacje o warunku wejścia', 'Określ poziom lub wydarzenie'] };
+  }
+
+  // Sprawdzanie ogólników
+  const generalPhrases = ['bo tak', 'tak będzie', 'wydaje mi się', 'na pewno', 'myślę że', 'wydaje się', 'prawdopodobnie'];
+  const hasOnlyGenerals = generalPhrases.some(phrase => trimmed.includes(phrase)) && 
+    !/\d{3,}/.test(trimmed) && // brak liczb
+    !/[hH][14]|d1|intraday|swing|position/i.test(trimmed) && // brak timeframe
+    !/(entry|sl|tp|stop loss|take profit|invalidation|rr|wybicie|korekta|konsolidacja|trend|news)/i.test(trimmed); // brak elementów planu
+
+  if (hasOnlyGenerals) {
+    return { level: 'WEAK', hints: ['Unikaj ogólników typu "wydaje mi się"', 'Dodaj konkretne liczby/poziomy', 'Określ warunek wejścia i anulowania'] };
+  }
+
+  // Liczenie konkretów dla GOOD
+  let concreteCount = 0;
+  const concreteElements = [
+    { regex: /\d{3,}/, name: 'poziom/liczba' },
+    { regex: /[hH][14]|d1|intraday|swing|position/i, name: 'timeframe' },
+    { regex: /(entry|sl|tp|stop loss|take profit|invalidation|rr|wybicie|korekta|konsolidacja|trend|news)/i, name: 'element planu' },
+  ];
+
+  concreteElements.forEach(({ regex }) => {
+    if (regex.test(trimmed)) {
+      concreteCount++;
+    }
+  });
+
+  if (concreteCount >= 2) {
+    return { level: 'GOOD', hints: [] };
+  }
+
+  // OK: ma pewne elementy ale nie wystarczające
+  if (concreteCount === 1) {
+    hints.push('Dodaj więcej konkretów (poziomy, timeframe, warunki)');
+    if (!/\d{3,}/.test(trimmed)) {
+      hints.push('Podaj konkretne liczby/poziomy');
+    }
+    return { level: 'OK', hints: hints.slice(0, 2) };
+  }
+
+  // OK: brak konkretów ale nie jest WEAK
+  hints.push('Dodaj konkretne poziomy/liczby');
+  hints.push('Określ timeframe (H1/H4/D1)');
+  hints.push('Opisz warunek wejścia');
+  return { level: 'OK', hints: hints.slice(0, 2) };
+}
+
 export default function DecisionLabPage() {
   const [entries, setEntries] = useState<DecisionEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -464,10 +519,16 @@ export default function DecisionLabPage() {
   const [transactionStatement, setTransactionStatement] = useState('');
   const [analyzingStatement, setAnalyzingStatement] = useState(false);
   const [statementAnalysis, setStatementAnalysis] = useState<any>(null);
+  const [showStatementExample, setShowStatementExample] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   // Filters
   const [filterMarketMode, setFilterMarketMode] = useState<string>('ALL');
-  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const [filterDecisionStatus, setFilterDecisionStatus] = useState<'PENDING' | 'REVIEWED' | 'ALL'>('PENDING');
+  const [showMoreCards, setShowMoreCards] = useState(false);
+  const [expandedAiAnalysisId, setExpandedAiAnalysisId] = useState<number | null>(null);
+  const [expandedStatementAnalysis, setExpandedStatementAnalysis] = useState(false);
+  const [expandedThesisIds, setExpandedThesisIds] = useState<Set<number>>(new Set());
 
   // Form state
   const [formSymbol, setFormSymbol] = useState('US100');
@@ -476,14 +537,34 @@ export default function DecisionLabPage() {
   const [formMarketMode, setFormMarketMode] = useState<'TREND' | 'RANGE' | 'NEWS'>('TREND');
   const [formConfidence, setFormConfidence] = useState<number>(3);
   const [formThesis, setFormThesis] = useState('');
-  const [aiOpinion, setAiOpinion] = useState<{ 
-    opinion: string; 
-    isGood: boolean;
-    strengths?: string[];
-    concerns?: string[];
-    suggestion?: string;
+  const [formEntry, setFormEntry] = useState<string>('');
+  const [formStopLoss, setFormStopLoss] = useState<string>('');
+  const [formTakeProfit, setFormTakeProfit] = useState<string>('');
+  const [formRiskPercent, setFormRiskPercent] = useState<string>('');
+  const [formInvalidation, setFormInvalidation] = useState<string>('');
+  const [formSetupType, setFormSetupType] = useState<'BREAKOUT'|'PULLBACK'|'REVERSAL'|'NEWS'|'OTHER' | ''>('');
+  const [formTimeframes, setFormTimeframes] = useState<string[]>([]);
+  const [aiOpinion, setAiOpinion] = useState<{
+    verdict: 'OK' | 'REVISE' | 'NO_GO';
+    headline: string;
+    summary: string;
+    assumptions?: string[];
+    missing?: string[];
+    risks?: string[];
+    riskManagement: {
+      hasSL: boolean;
+      rr: number | null;
+      positionRiskComment: string;
+    };
+    invalidationQuality?: 'GOOD' | 'WEAK' | 'MISSING';
+    nextChecks?: string[];
+    rewriteDecision?: {
+      thesis?: string;
+      invalidation?: string;
+    };
   } | null>(null);
   const [analyzingDecision, setAnalyzingDecision] = useState(false);
+  const [improvingThesis, setImprovingThesis] = useState(false);
 
   useEffect(() => {
     fetchEntries();
@@ -522,17 +603,61 @@ export default function DecisionLabPage() {
     try {
       setSubmitting(true);
       setError(null);
+
+      const payload: any = {
+        symbol: formSymbol,
+        direction: formDirection,
+        horizon: formHorizon,
+        thesis: formThesis.trim(),
+        market_mode: formMarketMode,
+        confidence: formConfidence,
+      };
+
+      // Konwersje pól numerycznych: Number(x.replace(',', '.')) i jeśli finite -> dodaj
+      if (formEntry.trim()) {
+        const entryNum = Number(formEntry.replace(',', '.'));
+        if (isFinite(entryNum)) {
+          payload.entry = entryNum;
+        }
+      }
+      if (formStopLoss.trim()) {
+        const stopLossNum = Number(formStopLoss.replace(',', '.'));
+        if (isFinite(stopLossNum)) {
+          payload.stopLoss = stopLossNum;
+        }
+      }
+      if (formTakeProfit.trim()) {
+        const takeProfitNum = Number(formTakeProfit.replace(',', '.'));
+        if (isFinite(takeProfitNum)) {
+          payload.takeProfit = takeProfitNum;
+        }
+      }
+      if (formRiskPercent.trim()) {
+        const riskPercentNum = Number(formRiskPercent.replace(',', '.'));
+        if (isFinite(riskPercentNum)) {
+          payload.riskPercent = riskPercentNum;
+        }
+      }
+
+      // invalidation: trim, jeśli nie pusty -> dodaj
+      if (formInvalidation.trim()) {
+        payload.invalidation = formInvalidation.trim();
+      }
+
+      // setupType: jeśli nie pusty string -> dodaj
+      if (formSetupType) {
+        payload.setupType = formSetupType;
+      }
+
+      // timeframes: jeśli nie pusta tablica -> dodaj
+      if (formTimeframes.length > 0) {
+        payload.timeframes = formTimeframes;
+      }
+
       const res = await fetch('/api/decision-lab/entries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          symbol: formSymbol,
-          direction: formDirection,
-          horizon: formHorizon,
-          thesis: formThesis.trim(),
-          market_mode: formMarketMode,
-          confidence: formConfidence,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -585,21 +710,54 @@ export default function DecisionLabPage() {
       return;
     }
 
+    if (!formStopLoss.trim()) {
+      setError('Stop Loss jest wymagany');
+      return;
+    }
+
+    const slNum = Number(formStopLoss.replace(',', '.'));
+    if (!isFinite(slNum)) {
+      setError('Stop Loss musi być liczbą');
+      return;
+    }
+
     setAnalyzingDecision(true);
     setAiOpinion(null);
     try {
       setError(null);
+      const payload: any = {
+        symbol: formSymbol,
+        direction: formDirection,
+        horizon: formHorizon,
+        thesis: formThesis.trim(),
+        market_mode: formMarketMode,
+        confidence: formConfidence,
+        stopLoss: slNum,
+      };
+
+      if (formEntry.trim()) {
+        payload.entry = parseFloat(formEntry);
+      }
+      if (formTakeProfit.trim()) {
+        payload.takeProfit = parseFloat(formTakeProfit);
+      }
+      if (formRiskPercent.trim()) {
+        payload.riskPercent = parseFloat(formRiskPercent);
+      }
+      if (formInvalidation.trim()) {
+        payload.invalidation = formInvalidation.trim();
+      }
+      if (formSetupType) {
+        payload.setupType = formSetupType;
+      }
+      if (formTimeframes.length > 0) {
+        payload.timeframes = formTimeframes;
+      }
+
       const res = await fetch('/api/decision-lab/opinion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          symbol: formSymbol,
-          direction: formDirection,
-          horizon: formHorizon,
-          thesis: formThesis.trim(),
-          market_mode: formMarketMode,
-          confidence: formConfidence,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -608,17 +766,125 @@ export default function DecisionLabPage() {
       }
 
       const data = await res.json();
-      setAiOpinion({
-        opinion: data.opinion || 'Brak opinii',
-        isGood: data.isGood || false,
-        strengths: data.strengths || [],
-        concerns: data.concerns || [],
-        suggestion: data.suggestion || '',
-      });
+      setAiOpinion(data);
     } catch (err: any) {
       setError(err.message || 'Failed to analyze decision');
     } finally {
       setAnalyzingDecision(false);
+    }
+  };
+
+  const handleThesisImprove = async () => {
+    if (!formThesis.trim()) {
+      setError('Teza nie może być pusta');
+      return;
+    }
+
+    setImprovingThesis(true);
+    try {
+      setError(null);
+      const payload: any = {
+        symbol: formSymbol,
+        direction: formDirection,
+        horizon: formHorizon,
+        thesis: formThesis.trim(),
+        market_mode: formMarketMode,
+      };
+
+      if (formEntry.trim()) {
+        const entryNum = Number(formEntry.replace(',', '.'));
+        if (isFinite(entryNum)) {
+          payload.entry = entryNum;
+        }
+      }
+      if (formStopLoss.trim()) {
+        const stopLossNum = Number(formStopLoss.replace(',', '.'));
+        if (isFinite(stopLossNum)) {
+          payload.stopLoss = stopLossNum;
+        }
+      }
+      if (formTakeProfit.trim()) {
+        const takeProfitNum = Number(formTakeProfit.replace(',', '.'));
+        if (isFinite(takeProfitNum)) {
+          payload.takeProfit = takeProfitNum;
+        }
+      }
+      if (formInvalidation.trim()) {
+        payload.invalidation = formInvalidation.trim();
+      }
+      if (formSetupType) {
+        payload.setupType = formSetupType;
+      }
+      if (formTimeframes.length > 0) {
+        payload.timeframes = formTimeframes;
+      }
+
+      const res = await fetch('/api/decision-lab/thesis-improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to improve thesis');
+      }
+
+      const data = await res.json();
+      setFormThesis(data.improvedThesis || formThesis);
+      
+      if (data.improvedInvalidation && (!formInvalidation.trim() || formInvalidation.length < 20)) {
+        setFormInvalidation(data.improvedInvalidation);
+      }
+
+      setSuccess('Teza ulepszona przez AI!');
+    } catch (err: any) {
+      setError(err.message || 'Failed to improve thesis');
+    } finally {
+      setImprovingThesis(false);
+    }
+  };
+
+  const handleFileUpload = async (file: File) => {
+    setUploadingFile(true);
+    try {
+      setError(null);
+      
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      
+      // For CSV files, read directly on client
+      if (fileExtension === 'csv' || fileExtension === 'txt') {
+        const text = await file.text();
+        setTransactionStatement(text);
+        setUploadingFile(false);
+        return;
+      }
+      
+      // For Excel files (xlsx, xls), send to API for parsing
+      if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const res = await fetch('/api/decision-lab/transactions/parse-file', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to parse file');
+        }
+        
+        const data = await res.json();
+        setTransactionStatement(data.text || '');
+        setUploadingFile(false);
+        return;
+      }
+      
+      throw new Error('Nieobsługiwany format pliku. Obsługiwane formaty: CSV, TXT, XLSX, XLS');
+    } catch (err: any) {
+      setError(err.message || 'Failed to upload file');
+      setUploadingFile(false);
     }
   };
 
@@ -730,14 +996,35 @@ export default function DecisionLabPage() {
 
   // Filtered entries (sorted by created_at DESC)
   const filteredEntries = useMemo(() => {
-    return entries
-      .filter((e) => {
-        if (filterMarketMode !== 'ALL' && e.market_mode !== filterMarketMode) return false;
-        if (filterStatus !== 'ALL' && e.status !== filterStatus) return false;
-        return true;
-      })
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }, [entries, filterMarketMode, filterStatus]);
+    let filtered = entries.filter((e) => {
+      if (filterMarketMode !== 'ALL' && e.market_mode !== filterMarketMode) return false;
+      
+      // Filter by decision status (pending/reviewed/all)
+      if (filterDecisionStatus === 'PENDING') {
+        // "Oczekuje na ocenę": status === "OPEN" OR ai_analysis == null
+        return e.status === 'OPEN' || e.ai_analysis == null;
+      } else if (filterDecisionStatus === 'REVIEWED') {
+        // "Ocenione": status === "REVIEWED" OR ai_analysis != null
+        return e.status === 'REVIEWED' || e.ai_analysis != null;
+      }
+      // "Wszystkie": no additional filtering
+      return true;
+    });
+    
+    // Sort: newest first
+    return filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [entries, filterMarketMode, filterDecisionStatus]);
+
+  // Count entries for each filter type
+  const pendingCount = useMemo(() => {
+    return entries.filter((e) => e.status === 'OPEN' || e.ai_analysis == null).length;
+  }, [entries]);
+
+  const reviewedCount = useMemo(() => {
+    return entries.filter((e) => e.status === 'REVIEWED' || e.ai_analysis != null).length;
+  }, [entries]);
+
+  const allCount = entries.length;
 
   // Computed data
   const last30Days = new Date();
@@ -813,193 +1100,52 @@ export default function DecisionLabPage() {
         {/* Premium Hero */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight mb-3 bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
-              Decision Lab — Twój dziennik decyzji rynkowych
-            </h1>
-            <div className="space-y-3 mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                Decision Lab — Twój dziennik decyzji rynkowych
+              </h1>
+              <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60 border border-white/20">
+                Edukacyjnie — bez rekomendacji
+              </span>
+            </div>
+            <div className="space-y-2 mb-4">
               <p className="text-lg text-white/80 leading-relaxed">
-                Decision Lab to miejsce, w którym zapisujesz swoje pomysły na rynek i wracasz do nich, aby sprawdzić, jak faktycznie się zachowałeś. Nie chodzi tu o idealne wejścia, lecz o zrozumienie własnego procesu podejmowania decyzji.
+                Zapisuj pomysły na rynek i wracaj do nich, aby sprawdzić, jak faktycznie się zachowałeś. To narzędzie edukacyjne, które pomaga budować dyscyplinę i świadomość ryzyka.
               </p>
               <p className="text-lg text-white/80 leading-relaxed">
-                Zamiast zgadywać, czy „masz rację”, widzisz, w jakich warunkach podejmujesz najlepsze decyzje, a kiedy emocje lub pośpiech zaczynają przejmować kontrolę.
-              </p>
-              <p className="text-lg text-white/80 leading-relaxed">
-                To narzędzie edukacyjne, które pomaga budować dyscyplinę, świadomość ryzyka i konsekwencję w działaniu.
+                Zamiast zgadywać, czy „masz rację", widzisz, w jakich warunkach podejmujesz najlepsze decyzje, a kiedy emocje lub pośpiech przejmują kontrolę.
               </p>
             </div>
-            <p className="text-sm text-white/50 italic">
-              Materiały mają charakter edukacyjny. Nie zawierają rekomendacji inwestycyjnych ani sygnałów transakcyjnych.
-            </p>
           </div>
 
           <div className="rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 p-6 backdrop-blur">
-            <h2 className="text-lg font-semibold mb-4">Profil decyzyjny (30 dni)</h2>
-            {profile ? (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-2xl font-bold mb-1">{profile.mostCommonSymbol}</div>
-                  <div className="text-xs text-white/60">Najczęstszy instrument</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold mb-1">{getMarketModeLabel(profile.mostCommonMode)}</div>
-                  <div className="text-xs text-white/60">Najczęstsza sytuacja</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold mb-1">
-                    {profile.longPct}% / {profile.shortPct}%
-                  </div>
-                  <div className="text-xs text-white/60">Na wzrost / Na spadek</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold mb-1">{profile.avgConfidence}/5</div>
-                  <div className="text-xs text-white/60">Średnia pewność</div>
+            <h3 className="text-sm font-semibold text-white/90 mb-4">Jak to działa</h3>
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white/20 text-white text-xs font-semibold flex items-center justify-center">1</div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-white/90 mb-1">Zapisz decyzję</div>
+                  <div className="text-xs text-white/60">Dodaj pomysł na rynek z kontekstem i parametrami</div>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-8 text-white/60">
-                Dodaj pierwszą decyzję, aby zbudować profil
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white/20 text-white text-xs font-semibold flex items-center justify-center">2</div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-white/90 mb-1">Oceń przed wejściem</div>
+                  <div className="text-xs text-white/60">Użyj AI, aby zweryfikować hipotezę i zidentyfikować ryzyka</div>
+                </div>
               </div>
-            )}
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-white/20 text-white text-xs font-semibold flex items-center justify-center">3</div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-white/90 mb-1">Wracaj i ucz się</div>
+                  <div className="text-xs text-white/60">Analizuj wyniki i wyciągaj wnioski z przeszłych decyzji</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Best Conditions Analysis */}
-        {(bestConditions.bestEmotionalState || bestConditions.bestTimeOfDay || bestConditions.bestMarketMode || bestConditions.emotionalImpact) && (
-          <div className="rounded-2xl bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20 p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Target className="h-5 w-5 text-purple-400" />
-              Kiedy podejmujesz najlepsze decyzje?
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {bestConditions.bestEmotionalState && (
-                <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                  <div className="text-xs text-white/60 mb-1">Najlepszy stan emocjonalny</div>
-                  <div className="text-lg font-bold mb-1">
-                    {bestConditions.bestEmotionalState.state === 'CALM' && 'Spokojny'}
-                    {bestConditions.bestEmotionalState.state === 'CONFIDENT' && 'Pewny siebie'}
-                    {bestConditions.bestEmotionalState.state === 'UNCERTAIN' && 'Niepewny'}
-                    {bestConditions.bestEmotionalState.state === 'ANXIOUS' && 'Niespokojny'}
-                    {bestConditions.bestEmotionalState.state === 'EXCITED' && 'Podekscytowany'}
-                    {bestConditions.bestEmotionalState.state === 'RUSHED' && 'W pośpiechu'}
-                  </div>
-                  <div className="text-xs text-white/60">
-                    {Math.round(bestConditions.bestEmotionalState.winRate)}% trafności ({bestConditions.bestEmotionalState.total} decyzji)
-                  </div>
-                </div>
-              )}
-              {bestConditions.bestTimeOfDay && (
-                <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                  <div className="text-xs text-white/60 mb-1">Najlepsza pora dnia</div>
-                  <div className="text-lg font-bold mb-1">
-                    {bestConditions.bestTimeOfDay.time === 'MORNING' && 'Rano'}
-                    {bestConditions.bestTimeOfDay.time === 'AFTERNOON' && 'Popołudnie'}
-                    {bestConditions.bestTimeOfDay.time === 'EVENING' && 'Wieczór'}
-                    {bestConditions.bestTimeOfDay.time === 'NIGHT' && 'Noc'}
-                  </div>
-                  <div className="text-xs text-white/60">
-                    {Math.round(bestConditions.bestTimeOfDay.winRate)}% trafności ({bestConditions.bestTimeOfDay.total} decyzji)
-                  </div>
-                </div>
-              )}
-              {bestConditions.bestMarketMode && (
-                <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                  <div className="text-xs text-white/60 mb-1">Najlepsza sytuacja rynkowa</div>
-                  <div className="text-lg font-bold mb-1">
-                    {getMarketModeLabel(bestConditions.bestMarketMode.mode)}
-                  </div>
-                  <div className="text-xs text-white/60">
-                    {Math.round(bestConditions.bestMarketMode.winRate)}% trafności ({bestConditions.bestMarketMode.total} decyzji)
-                  </div>
-                </div>
-              )}
-              {bestConditions.emotionalImpact && bestConditions.emotionalImpact.calmWinRate !== null && bestConditions.emotionalImpact.emotionalWinRate !== null && (
-                <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                  <div className="text-xs text-white/60 mb-1">Wpływ emocji</div>
-                  <div className="text-lg font-bold mb-1">
-                    {bestConditions.emotionalImpact.calmWinRate > bestConditions.emotionalImpact.emotionalWinRate
-                      ? 'Spokój wygrywa'
-                      : 'Emocje obniżają trafność'}
-                  </div>
-                  <div className="text-xs text-white/60">
-                    Spokój: {Math.round(bestConditions.emotionalImpact.calmWinRate)}% vs Emocje: {Math.round(bestConditions.emotionalImpact.emotionalWinRate)}%
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Discipline Metrics */}
-        {disciplineMetrics.plannedVsActual && (
-          <div className="rounded-2xl bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-orange-400" />
-              Plan vs Rzeczywistość — Dyscyplina w działaniu
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div className="text-xs text-white/60 mb-1">Wszedłem zgodnie z planem</div>
-                <div className="text-2xl font-bold mb-1">{Math.round(disciplineMetrics.plannedVsActual.enteredAsPlannedPct)}%</div>
-                <div className="text-xs text-white/60">
-                  {disciplineMetrics.plannedVsActual.total} ocenionych decyzji
-                </div>
-              </div>
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div className="text-xs text-white/60 mb-1">Nie wszedłem / Czekałem zbyt długo</div>
-                <div className="text-2xl font-bold mb-1">{Math.round(disciplineMetrics.plannedVsActual.didNotEnterPct)}%</div>
-                <div className="text-xs text-white/60">Możliwa przesada w ostrożności</div>
-              </div>
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div className="text-xs text-white/60 mb-1">Zmieniłem zdanie / Wszedłem inaczej</div>
-                <div className="text-2xl font-bold mb-1">{Math.round(disciplineMetrics.plannedVsActual.changedMindPct)}%</div>
-                <div className="text-xs text-white/60">Możliwa impulsywność</div>
-              </div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-white/10">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-white/80">Częstotliwość przeglądu decyzji</span>
-                <span className="text-2xl font-bold">{Math.round(disciplineMetrics.reviewRate)}%</span>
-              </div>
-              <div className="text-xs text-white/60 mt-1">
-                {disciplineMetrics.consistency?.reviewedCount} z {disciplineMetrics.consistency?.totalCount} decyzji ocenionych
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Top Insights */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-4 w-4 text-blue-400" />
-              <h3 className="text-sm font-semibold">Sytuacja na rynku</h3>
-            </div>
-            <div className="text-2xl font-bold mb-1">{insights.marketMode.pct}%</div>
-            <div className="text-xs text-white/60">{insights.marketMode.text}</div>
-          </div>
-
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-            <div className="flex items-center gap-2 mb-2">
-              {insights.direction.direction === 'LONG' ? (
-                <ArrowUpRight className="h-4 w-4 text-emerald-400" />
-              ) : (
-                <ArrowDownRight className="h-4 w-4 text-red-400" />
-              )}
-              <h3 className="text-sm font-semibold">Kierunek rynku</h3>
-            </div>
-            <div className="text-2xl font-bold mb-1">{insights.direction.pct}%</div>
-            <div className="text-xs text-white/60">{insights.direction.text}</div>
-          </div>
-
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Target className="h-4 w-4 text-purple-400" />
-              <h3 className="text-sm font-semibold">Konsekwencja</h3>
-            </div>
-            <div className="text-2xl font-bold mb-1">{insights.consistency.pct}%</div>
-            <div className="text-xs text-white/60 line-clamp-2">{insights.consistency.text}</div>
-          </div>
-        </div>
 
         {/* Success message */}
         {success && (
@@ -1017,56 +1163,36 @@ export default function DecisionLabPage() {
           </div>
         )}
 
-        {/* Enhanced Add Decision Form */}
-        <div className="rounded-2xl bg-white/5 border border-white/10 p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Dodaj decyzję</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Top section: Chart left, Options right */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Chart - Left side */}
-              <div className="rounded-xl bg-white/5 border border-white/10 overflow-hidden">
-                <div className="p-3 border-b border-white/10">
-                  <h3 className="text-sm font-semibold text-white/80">Wykres {formSymbol}</h3>
-                </div>
-                <div className="h-[400px] lg:h-[450px]">
-                  <TradingViewAdvancedEmbed
-                    symbol={mapSymbolToTradingView(formSymbol)}
-                    className="w-full h-full"
-                    containerClassName="h-full w-full"
-                  />
-                </div>
-                <div className="px-3 py-2 text-[10px] text-white/50 border-t border-white/10">
-                  Wykres dostarczany przez{' '}
-                  <a
-                    href="https://www.tradingview.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-white/80"
-                  >
-                    TradingView
-                  </a>
-                </div>
-              </div>
+        {/* Quick Start Section */}
+        <div className="rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Szybki start</h2>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById('add-decision-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="flex-1 rounded-xl bg-white text-slate-900 font-semibold px-6 py-4 hover:opacity-90 transition-opacity text-center"
+            >
+              Dodaj decyzję
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById('recent-decisions')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="flex-1 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-6 py-4 transition-colors text-center"
+            >
+              Oceń ostatnie decyzje
+            </button>
+          </div>
+        </div>
 
-              {/* Options - Right side */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Instrument (np. US100, EURUSD)</label>
-                  <select
-                    value={formSymbol}
-                    onChange={(e) => setFormSymbol(e.target.value)}
-                    className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-                  >
-                    {SYMBOLS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Kierunek rynku</label>
+        {/* Main Content: 2-column layout */}
+        <div className="grid grid-cols-12 gap-6 mb-8">
+          {/* Left Column: Add Decision Form (Mobile: order-2, Desktop: order-1, col-span-8) */}
+          <div id="add-decision-form-wrapper" className="col-span-12 lg:col-span-8 order-2 lg:order-1">
+            <form id="add-decision-form" onSubmit={handleSubmit} className="space-y-4">
                   <div className="flex gap-2">
                     {DIRECTIONS.map((d) => (
                       <button
@@ -1090,7 +1216,6 @@ export default function DecisionLabPage() {
                       </button>
                     ))}
                   </div>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Na jaki okres</label>
@@ -1163,11 +1288,13 @@ export default function DecisionLabPage() {
                     Subiektywna ocena — jak bardzo wierzyłeś w tę decyzję w momencie jej podejmowania.
                   </p>
                 </div>
-              </div>
-            </div>
 
             {/* Bottom section: Remaining fields */}
             <div className="space-y-4 pt-4 border-t border-white/10">
+            <div className="mb-2">
+              <h3 className="text-lg font-semibold mb-1">Krok 2: Kontekst</h3>
+              <p className="text-xs text-white/60">Opisz hipotezę i warunki rynkowe</p>
+            </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -1185,77 +1312,285 @@ export default function DecisionLabPage() {
                 className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
                 placeholder="Opisz swoją hipotezę i kontekst rynkowy..."
               />
+              <p className="text-xs text-white/50 mt-1">
+                Im więcej konkretu, tym lepsza analiza
+              </p>
+              {formThesis.trim() && (() => {
+                const quality = evaluateThesisQuality(formThesis);
+                return (
+                  <div className={`mt-2 rounded-lg p-3 ${
+                    quality.level === 'GOOD'
+                      ? 'bg-emerald-500/10 border border-emerald-500/20'
+                      : quality.level === 'OK'
+                        ? 'bg-yellow-500/10 border border-yellow-500/20'
+                        : 'bg-red-500/10 border border-red-500/20'
+                  }`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs font-semibold ${
+                        quality.level === 'GOOD'
+                          ? 'text-emerald-300'
+                          : quality.level === 'OK'
+                            ? 'text-yellow-300'
+                            : 'text-red-300'
+                      }`}>
+                        {quality.level === 'GOOD' && 'Dobra teza'}
+                        {quality.level === 'OK' && 'Da się analizować, ale można doprecyzować'}
+                        {quality.level === 'WEAK' && 'Słaba teza — analiza będzie mało użyteczna'}
+                      </span>
+                    </div>
+                    {quality.hints.length > 0 && (
+                      <ul className="space-y-1 mt-2">
+                        {quality.hints.map((hint, idx) => (
+                          <li key={idx} className="text-xs text-white/70">• {hint}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Trading Parameters Section */}
+            <div className="pt-4 border-t border-white/10">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold mb-1">Parametry (krok 3)</h3>
+                <p className="text-xs text-white/60">Opcjonalne, ale poprawia jakość analizy</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Entry <span className="text-white/50">(opcjonalnie)</span></label>
+                <input
+                  type="number"
+                  value={formEntry}
+                  onChange={(e) => setFormEntry(e.target.value)}
+                  step="any"
+                  className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  placeholder="np. 18250"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Stop Loss <span className="text-red-400">*</span></label>
+                <input
+                  type="number"
+                  value={formStopLoss}
+                  onChange={(e) => setFormStopLoss(e.target.value)}
+                  step="any"
+                  required
+                  className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  placeholder="np. 18100"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Take Profit <span className="text-white/50">(opcjonalnie)</span></label>
+                <input
+                  type="number"
+                  value={formTakeProfit}
+                  onChange={(e) => setFormTakeProfit(e.target.value)}
+                  step="any"
+                  className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  placeholder="np. 18500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Risk % <span className="text-white/50">(opcjonalnie)</span></label>
+                <input
+                  type="number"
+                  value={formRiskPercent}
+                  onChange={(e) => setFormRiskPercent(e.target.value)}
+                  step="any"
+                  min="0"
+                  max="100"
+                  className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  placeholder="np. 2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Invalidation <span className="text-white/50">(opcjonalnie)</span></label>
+                <input
+                  type="text"
+                  value={formInvalidation}
+                  onChange={(e) => setFormInvalidation(e.target.value)}
+                  className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                  placeholder="np. Break below 18000"
+                />
+                <p className="text-xs text-white/50 mt-1">
+                  Warunek unieważnienia — co konkretnie ma się stać (poziom/zdarzenie), żeby anulować decyzję przed/po wejściu. Przykład: 'Dla LONG: zamknięcie H4 poniżej 25480'.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Setup Type <span className="text-white/50">(opcjonalnie)</span></label>
+                <select
+                  value={formSetupType}
+                  onChange={(e) => setFormSetupType(e.target.value as any || '')}
+                  className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                >
+                  <option value="">Wybierz...</option>
+                  <option value="BREAKOUT">BREAKOUT</option>
+                  <option value="PULLBACK">PULLBACK</option>
+                  <option value="REVERSAL">REVERSAL</option>
+                  <option value="NEWS">NEWS</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+                <p className="text-xs text-white/50 mt-1">
+                  Typ setupu — jaki schemat grasz: BREAKOUT (wybicie), PULLBACK (korekta do poziomu), REVERSAL (odwrócenie), NEWS (pod wydarzenie), OTHER (inne).
+                </p>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2">Timeframes <span className="text-white/50">(opcjonalnie)</span></label>
+                <div className="flex gap-2 flex-wrap">
+                  {['H1', 'H4', 'D1'].map((tf) => (
+                    <button
+                      key={tf}
+                      type="button"
+                      onClick={() => {
+                        setFormTimeframes((prev) =>
+                          prev.includes(tf) ? prev.filter((t) => t !== tf) : [...prev, tf]
+                        );
+                      }}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                        formTimeframes.includes(tf)
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                          : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      {tf}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              </div>
             </div>
 
             {/* AI Opinion Button - Show when all fields are filled */}
             {formThesis.trim() && (
-              <div className="pt-4 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={handleDecisionOpinion}
-                  disabled={analyzingDecision}
-                  className="w-full rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-blue-300 px-6 py-3 font-semibold hover:from-blue-500/30 hover:to-purple-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {analyzingDecision ? (
-                    <>
-                      <div className="animate-spin h-4 w-4 border-2 border-blue-300 border-t-transparent rounded-full" />
-                      Analizowanie przez AI...
-                    </>
-                  ) : (
-                    <>
-                      <Brain className="h-4 w-4" />
-                      Analizuj decyzję przez AI
-                    </>
-                  )}
-                </button>
+              <div className="pt-4 border-t border-white/10 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={handleThesisImprove}
+                    disabled={improvingThesis}
+                    className="rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 text-green-300 px-6 py-3 font-semibold hover:from-green-500/30 hover:to-emerald-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {improvingThesis ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-green-300 border-t-transparent rounded-full" />
+                        Ulepszanie...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="h-4 w-4" />
+                        Ulepsz tezę (AI)
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDecisionOpinion}
+                    disabled={analyzingDecision}
+                    className="rounded-xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-blue-300 px-6 py-3 font-semibold hover:from-blue-500/30 hover:to-purple-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {analyzingDecision ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-blue-300 border-t-transparent rounded-full" />
+                        Analizowanie przez AI...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="h-4 w-4" />
+                        Analizuj decyzję przez AI
+                      </>
+                    )}
+                  </button>
+                </div>
 
                 {/* Display AI Opinion */}
                 {aiOpinion && (
                   <div className={`mt-4 rounded-xl border p-4 ${
-                    aiOpinion.isGood 
+                    aiOpinion.verdict === 'OK'
                       ? 'bg-emerald-500/10 border-emerald-500/20' 
-                      : 'bg-orange-500/10 border-orange-500/20'
+                      : aiOpinion.verdict === 'REVISE'
+                        ? 'bg-yellow-500/10 border-yellow-500/20'
+                        : 'bg-red-500/10 border-red-500/20'
                   }`}>
-                    <div className="flex items-start gap-2 mb-2">
+                    <div className="flex items-start gap-2 mb-3">
                       <Brain className={`h-5 w-5 mt-0.5 ${
-                        aiOpinion.isGood ? 'text-emerald-400' : 'text-orange-400'
+                        aiOpinion.verdict === 'OK' ? 'text-emerald-400' : aiOpinion.verdict === 'REVISE' ? 'text-yellow-400' : 'text-red-400'
                       }`} />
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className={`text-sm font-semibold ${
-                            aiOpinion.isGood ? 'text-emerald-300' : 'text-orange-300'
+                          <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                            aiOpinion.verdict === 'OK'
+                              ? 'bg-emerald-500/20 text-emerald-300'
+                              : aiOpinion.verdict === 'REVISE'
+                                ? 'bg-yellow-500/20 text-yellow-300'
+                                : 'bg-red-500/20 text-red-300'
                           }`}>
-                            {aiOpinion.isGood ? '✓ Decyzja wygląda dobrze' : '⚠ Warto przemyśleć'}
+                            {aiOpinion.verdict}
                           </span>
+                          <span className="text-sm font-semibold text-white/90">{aiOpinion.headline}</span>
                         </div>
-                        <p className="text-sm text-white/80 mb-3">{aiOpinion.opinion}</p>
-                        
-                        {aiOpinion.strengths && aiOpinion.strengths.length > 0 && (
+                        <p className="text-sm text-white/80 mb-3">{aiOpinion.summary}</p>
+
+                        {aiOpinion.missing && aiOpinion.missing.length > 0 && (
                           <div className="mb-3">
-                            <div className="text-xs font-medium text-emerald-300 mb-1">Mocne strony:</div>
+                            <div className="text-xs font-medium text-orange-300 mb-1">Brakuje:</div>
                             <ul className="space-y-1">
-                              {aiOpinion.strengths.map((item: string, idx: number) => (
+                              {aiOpinion.missing.map((item: string, idx: number) => (
                                 <li key={idx} className="text-xs text-white/70">• {item}</li>
                               ))}
                             </ul>
                           </div>
                         )}
 
-                        {aiOpinion.concerns && aiOpinion.concerns.length > 0 && (
+                        {aiOpinion.risks && aiOpinion.risks.length > 0 && (
                           <div className="mb-3">
-                            <div className="text-xs font-medium text-orange-300 mb-1">Wątpliwości:</div>
+                            <div className="text-xs font-medium text-red-300 mb-1">Ryzyka:</div>
                             <ul className="space-y-1">
-                              {aiOpinion.concerns.map((item: string, idx: number) => (
+                              {aiOpinion.risks.map((item: string, idx: number) => (
                                 <li key={idx} className="text-xs text-white/70">• {item}</li>
                               ))}
                             </ul>
                           </div>
                         )}
 
-                        {aiOpinion.suggestion && (
+                        {aiOpinion.riskManagement && (
+                          <div className="mb-3 pt-2 border-t border-white/10">
+                            <div className="text-xs font-medium text-blue-300 mb-1">Zarządzanie ryzykiem:</div>
+                            {aiOpinion.riskManagement.rr !== null && (
+                              <div className="text-xs text-white/70 mb-1">R:R = {aiOpinion.riskManagement.rr.toFixed(2)}</div>
+                            )}
+                            {aiOpinion.riskManagement.positionRiskComment && (
+                              <p className="text-xs text-white/70">{aiOpinion.riskManagement.positionRiskComment}</p>
+                            )}
+                          </div>
+                        )}
+
+                        {aiOpinion.nextChecks && aiOpinion.nextChecks.length > 0 && (
+                          <div className="mb-3">
+                            <div className="text-xs font-medium text-purple-300 mb-1">Sprawdź przed wejściem:</div>
+                            <ul className="space-y-1">
+                              {aiOpinion.nextChecks.map((item: string, idx: number) => (
+                                <li key={idx} className="text-xs text-white/70">• {item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {aiOpinion.rewriteDecision && (aiOpinion.rewriteDecision.thesis || aiOpinion.rewriteDecision.invalidation) && (
                           <div className="pt-2 border-t border-white/10">
-                            <div className="text-xs font-medium text-blue-300 mb-1">Sugestia:</div>
-                            <p className="text-xs text-white/70">{aiOpinion.suggestion}</p>
+                            <div className="text-xs font-medium text-cyan-300 mb-1">Sugerowana poprawa:</div>
+                            {aiOpinion.rewriteDecision.thesis && (
+                              <p className="text-xs text-white/70 mb-1"><strong>Teza:</strong> {aiOpinion.rewriteDecision.thesis}</p>
+                            )}
+                            {aiOpinion.rewriteDecision.invalidation && (
+                              <p className="text-xs text-white/70"><strong>Invalidation:</strong> {aiOpinion.rewriteDecision.invalidation}</p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1274,99 +1609,279 @@ export default function DecisionLabPage() {
             </button>
             </div>
           </form>
-        </div>
-
-        {/* Premium Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Radar Chart - Premium */}
-          <div className="lg:col-span-2 rounded-2xl bg-white/5 border border-white/10 p-6">
-            <h3 className="text-lg font-semibold mb-4">Profil decyzji</h3>
-            {radarData.some((d) => d.value > 0) ? (
-              <ResponsiveContainerDynamic width="100%" height={300}>
-                <RadarChartDynamic data={radarData}>
-                  <PolarGridDynamic stroke="rgba(255,255,255,0.1)" />
-                  <PolarAngleAxisDynamic
-                    dataKey="mode"
-                    tickFormatter={(value) => getMarketModeLabel(value)}
-                    tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
-                  />
-                  <PolarRadiusAxisDynamic
-                    angle={90}
-                    domain={[0, 'dataMax']}
-                    tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10 }}
-                  />
-                  <RadarDynamic
-                    name="Decyzje"
-                    dataKey="value"
-                    stroke="#3b82f6"
-                    fill="#3b82f6"
-                    fillOpacity={0.3}
-                  />
-                  <TooltipDynamic
-                    contentStyle={{
-                      backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                      color: '#fff',
-                    }}
-                  />
-                </RadarChartDynamic>
-              </ResponsiveContainerDynamic>
-            ) : (
-              <div className="h-[300px] flex items-center justify-center text-white/40">
-                Brak danych do wyświetlenia
-              </div>
-            )}
           </div>
 
-          {/* Line Chart - Helper */}
-          <div className="rounded-2xl bg-white/5 border border-white/10 p-6">
-            <h3 className="text-lg font-semibold mb-4">Decyzje w czasie (14 dni)</h3>
-            {dayData.length > 0 ? (
-              <ResponsiveContainerDynamic width="100%" height={300}>
-                <LineChartDynamic data={dayData}>
-                  <XAxisDynamic
-                    dataKey="date"
-                    tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 10 }}
-                  />
-                  <YAxisDynamic tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 10 }} />
-                  <TooltipDynamic
-                    contentStyle={{
-                      backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                      color: '#fff',
+          {/* Right Column: Recent Decisions (Mobile: order-1, Desktop: order-2, col-span-4) */}
+          <div id="recent-decisions" className="col-span-12 lg:col-span-4 order-1 lg:order-2">
+            {/* Enhanced Recent Decisions with Filters */}
+            <div className="mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <h2 className="text-xl font-semibold">Ostatnie decyzje</h2>
+                
+                {/* Segmented Control Filter */}
+                <div className="inline-flex rounded-xl bg-white/5 border border-white/10 p-1 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterDecisionStatus('PENDING');
+                      setShowMoreCards(false);
                     }}
-                  />
-                  <LineDynamic
-                    type="monotone"
-                    dataKey="count"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={{ fill: '#3b82f6', r: 4 }}
-                  />
-                </LineChartDynamic>
-              </ResponsiveContainerDynamic>
-            ) : (
-              <div className="h-[300px] flex items-center justify-center text-white/40">
-                Brak danych
-              </div>
-            )}
+                    aria-pressed={filterDecisionStatus === 'PENDING'}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/30 ${
+                      filterDecisionStatus === 'PENDING'
+                        ? 'bg-white/20 text-white'
+                        : 'text-white/60 hover:text-white/80 hover:bg-white/5'
+                    }`}
+                  >
+                    Oczekuje na ocenę ({pendingCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterDecisionStatus('REVIEWED');
+                      setShowMoreCards(false);
+                    }}
+                    aria-pressed={filterDecisionStatus === 'REVIEWED'}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/30 ${
+                      filterDecisionStatus === 'REVIEWED'
+                        ? 'bg-white/20 text-white'
+                        : 'text-white/60 hover:text-white/80 hover:bg-white/5'
+                    }`}
+                  >
+                    Ocenione ({reviewedCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterDecisionStatus('ALL');
+                      setShowMoreCards(false);
+                    }}
+                    aria-pressed={filterDecisionStatus === 'ALL'}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/30 ${
+                      filterDecisionStatus === 'ALL'
+                        ? 'bg-white/20 text-white'
+                        : 'text-white/60 hover:text-white/80 hover:bg-white/5'
+                    }`}
+                  >
+                    Wszystkie ({allCount})
+                  </button>
           </div>
         </div>
 
-        {/* Statement Analysis Section */}
-        <div className="rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Brain className="h-5 w-5 text-blue-400" />
-            Co można było zrobić lepiej - analiza techniczna i fundamentalna
-          </h2>
-          <p className="text-sm text-white/70 mb-4">
-            Wklej pełny statement transakcji z Twojego brokera zawierający listę transakcji z datami, kierunkami (buy/sell, long/short), wartościami P&L, wielkościami pozycji i symbolami instrumentów. AI przeanalizuje Twoje decyzje i wskaże, co można było zrobić lepiej w kontekście analizy technicznej i fundamentalnej.
-          </p>
-          <div className="space-y-4">
+              {loading ? (
+                <div className="text-center py-8 text-white/60">Ładowanie...</div>
+              ) : filteredEntries.length === 0 ? (
+                <div className="text-center py-8 text-white/60">
+                  {entries.length === 0
+                    ? 'Brak decyzji. Dodaj pierwszą!'
+                    : 'Brak decyzji pasujących do filtrów.'}
+                </div>
+              ) : (
+                <>
+                  <div className="mb-3 text-xs text-white/60">
+                    {filterDecisionStatus === 'PENDING' && `${pendingCount} decyzji do oceny`}
+                    {filterDecisionStatus === 'REVIEWED' && `${reviewedCount} decyzji ocenionych`}
+                    {filterDecisionStatus === 'ALL' && `${allCount} decyzji łącznie`}
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {(showMoreCards ? filteredEntries : filteredEntries.slice(0, 6)).map((entry) => {
+                      const thesisLines = entry.thesis.split('\n').length;
+                      const thesisTooLong = entry.thesis.length > 100;
+                      const showExpandThesis = thesisTooLong && !expandedThesisIds.has(entry.id);
+                      
+                      return (
+                        <div
+                          key={entry.id}
+                          className="rounded-2xl bg-white/5 border border-white/10 p-5 hover:bg-white/10 transition-colors"
+                        >
+                          {/* Top bar: instrument + status + date */}
+                          <div className="flex items-start justify-between mb-3">
+                            <h3 className="text-xl font-bold">{entry.symbol}</h3>
+                            <div className="flex items-center gap-2">
+                              {entry.status === 'OPEN' ? (
+                                <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-300">
+                                  {getStatusLabel(entry.status)}
+                                </span>
+                              ) : (
+                                <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-300">
+                                  {getStatusLabel(entry.status)}
+                                </span>
+                              )}
+                              <span className="text-xs text-white/50">
+                                {new Date(entry.created_at).toLocaleDateString('pl-PL', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            <span
+                              className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                entry.direction === 'LONG'
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : 'bg-red-500/20 text-red-300'
+                              }`}
+                            >
+                              {getDirectionLabel(entry.direction)}
+                            </span>
+                            <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/80">
+                              {getMarketModeLabel(entry.market_mode)}
+                            </span>
+                            {entry.status === 'REVIEWED' && entry.outcome && (
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                  entry.outcome === 'WIN'
+                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                    : entry.outcome === 'LOSE'
+                                      ? 'bg-red-500/20 text-red-300'
+                                      : 'bg-white/10 text-white/80'
+                                }`}
+                              >
+                                {getOutcomeLabel(entry.outcome)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Thesis with expand/collapse */}
+                          <div className="mb-3">
+                            {showExpandThesis ? (
+                              <>
+                                <p className="text-sm text-white/80 line-clamp-2 mb-1">{entry.thesis}</p>
+                                <button
+                                  onClick={() => setExpandedThesisIds(new Set([...expandedThesisIds, entry.id]))}
+                                  className="text-xs text-blue-400 hover:text-blue-300 underline"
+                                >
+                                  Pokaż więcej
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-sm text-white/80 mb-1">{entry.thesis}</p>
+                                {expandedThesisIds.has(entry.id) && (
+                                  <button
+                                    onClick={() => {
+                                      const newSet = new Set(expandedThesisIds);
+                                      newSet.delete(entry.id);
+                                      setExpandedThesisIds(newSet);
+                                    }}
+                                    className="text-xs text-blue-400 hover:text-blue-300 underline"
+                                  >
+                                    Pokaż mniej
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {filteredEntries.length > 6 && !showMoreCards && (
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowMoreCards(true)}
+                        className="px-6 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/30"
+                      >
+                        Pokaż więcej ({filteredEntries.length - 6} więcej)
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Statement Analysis Section - Accordion at bottom (only once, at the bottom) */}
+        <div className="rounded-2xl bg-white/5 border border-white/10 mb-8 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setExpandedStatementAnalysis(!expandedStatementAnalysis)}
+            className="w-full flex items-center justify-between p-6 hover:bg-white/5 transition-colors"
+          >
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Brain className="h-5 w-5 text-blue-400" />
+              Analiza statementu (opcjonalnie)
+            </h2>
+            {expandedStatementAnalysis ? (
+              <ChevronUp className="h-5 w-5 text-white/60" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-white/60" />
+            )}
+          </button>
+          {expandedStatementAnalysis && (
+            <div className="px-6 pb-6 border-t border-white/10 pt-6">
+              <p className="text-sm text-white/70 mb-4">
+                Wklej pełny statement transakcji z Twojego brokera zawierający listę transakcji z datami, kierunkami (buy/sell, long/short), wartościami P&L, wielkościami pozycji i symbolami instrumentów. Możesz także wgrać plik (CSV, Excel) od brokera. AI przeanalizuje Twoje decyzje i wskaże, co można było zrobić lepiej w kontekście analizy technicznej i fundamentalnej.
+              </p>
+              
+              {/* Example Statement Section */}
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => setShowStatementExample(!showStatementExample)}
+                  className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors mb-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  {showStatementExample ? 'Ukryj' : 'Pokaż'} przykład jak powinien wyglądać statement
+                  {showStatementExample ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+                {showStatementExample && (
+                  <div className="rounded-lg bg-white/5 border border-white/10 p-4 mb-4">
+                    <p className="text-xs text-white/60 mb-3">
+                      Przykład poprawnego formatu statementu (CSV z nagłówkami):
+                    </p>
+                    <pre className="text-xs text-white/80 bg-black/20 p-3 rounded overflow-x-auto">
+{`Ticket,Open Date,Close Date,Instrument,Type,Volume,Open Price,Close Price,Gross P&L,Swap,Commission,Net P&L
+123456,2024-01-15 10:30:00,2024-01-15 14:20:00,EURUSD,Buy,0.10,1.08500,1.08750,25.00,0.00,0.00,25.00
+123457,2024-01-15 11:15:00,2024-01-15 16:45:00,GBPUSD,Sell,0.10,1.27000,1.26800,20.00,0.00,0.00,20.00
+123458,2024-01-16 09:00:00,2024-01-16 12:30:00,US100,Buy,0.05,16800.00,16850.00,25.00,0.00,0.00,25.00
+123459,2024-01-16 13:00:00,2024-01-16 15:00:00,EURUSD,Sell,0.20,1.09000,1.08800,-40.00,0.00,0.00,-40.00`}
+                    </pre>
+                    <p className="text-xs text-white/60 mt-3">
+                      <strong>Wymagane kolumny:</strong> Instrument (symbol), Type (Buy/Sell lub Long/Short), Net P&L (wartość P&L). 
+                      Opcjonalnie: daty, volume, ceny. Statement może być w formacie CSV, TXT lub Excel (XLSX, XLS).
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">Statement transakcji</label>
+              
+              {/* File Upload Option */}
+              <div className="mb-3">
+                <label className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors cursor-pointer text-sm text-white/80">
+                  <Upload className="h-4 w-4" />
+                  Wgraj plik (CSV, Excel)
+                  <input
+                    type="file"
+                    accept=".csv,.txt,.xlsx,.xls"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleFileUpload(file);
+                      }
+                    }}
+                    className="hidden"
+                    disabled={uploadingFile || analyzingStatement}
+                  />
+                </label>
+                {uploadingFile && (
+                  <span className="text-xs text-blue-400 ml-2">Wgrywanie pliku...</span>
+                )}
+              </div>
+              
               <textarea
                 value={transactionStatement}
                 onChange={(e) => setTransactionStatement(e.target.value)}
@@ -1377,7 +1892,7 @@ export default function DecisionLabPage() {
             </div>
             <button
               onClick={handleStatementAnalysis}
-              disabled={analyzingStatement || !transactionStatement.trim()}
+              disabled={analyzingStatement || !transactionStatement.trim() || uploadingFile}
               className="w-full md:w-auto rounded-xl bg-blue-500 text-white font-semibold px-6 py-3 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {analyzingStatement ? 'Analizowanie...' : (
@@ -1387,9 +1902,9 @@ export default function DecisionLabPage() {
                 </>
               )}
             </button>
-          </div>
-          {statementAnalysis && (
-            <div className="mt-6 pt-6 border-t border-white/10">
+            </div>
+            {statementAnalysis && (
+              <div className="mt-6 pt-6 border-t border-white/10">
               <h3 className="text-lg font-semibold mb-4">Wynik analizy AI</h3>
               {statementAnalysis.summary && (
                 <>
@@ -1468,328 +1983,12 @@ export default function DecisionLabPage() {
                   </div>
                 </div>
               )}
-            </div>
-          )}
-        </div>
-
-        {/* Enhanced Recent Decisions with Filters */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <h2 className="text-xl font-semibold">Ostatnie decyzje</h2>
-            <div className="flex gap-2">
-              <div className="relative">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-                <select
-                  value={filterMarketMode}
-                  onChange={(e) => setFilterMarketMode(e.target.value)}
-                  className="pl-9 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
-                >
-                  <option value="ALL">Wszystkie sytuacje</option>
-                  {MARKET_MODES.map((m) => (
-                    <option key={m} value={m}>
-                      {getMarketModeLabel(m)}
-                    </option>
-                  ))}
-                </select>
               </div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                <option value="ALL">Wszystkie</option>
-                <option value="OPEN">Oczekuje na ocenę</option>
-                <option value="REVIEWED">Ocenione</option>
-              </select>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-8 text-white/60">Ładowanie...</div>
-          ) : filteredEntries.length === 0 ? (
-            <div className="text-center py-8 text-white/60">
-              {entries.length === 0
-                ? 'Brak decyzji. Dodaj pierwszą!'
-                : 'Brak decyzji pasujących do filtrów.'}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredEntries.slice(0, 10).map((entry) => (
-                <div
-                  key={entry.id}
-                  className="rounded-2xl bg-white/5 border border-white/10 p-5 hover:bg-white/10 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-xl font-bold">{entry.symbol}</h3>
-                    {entry.status === 'OPEN' ? (
-                      <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-300">
-                        {getStatusLabel(entry.status)}
-                      </span>
-                    ) : (
-                      <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-300">
-                        {getStatusLabel(entry.status)}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full font-medium ${
-                        entry.direction === 'LONG'
-                          ? 'bg-emerald-500/20 text-emerald-300'
-                          : 'bg-red-500/20 text-red-300'
-                      }`}
-                    >
-                      {getDirectionLabel(entry.direction)}
-                    </span>
-                    <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/80">
-                      {getMarketModeLabel(entry.market_mode)}
-                    </span>
-                    {entry.status === 'REVIEWED' && entry.outcome && (
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          entry.outcome === 'WIN'
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : entry.outcome === 'LOSE'
-                              ? 'bg-red-500/20 text-red-300'
-                              : 'bg-white/10 text-white/80'
-                        }`}
-                      >
-                        {getOutcomeLabel(entry.outcome)}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-sm text-white/80 mb-3 line-clamp-2">{entry.thesis}</p>
-
-                  {(entry.emotional_state || entry.risk_notes) && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {entry.emotional_state && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-300">
-                          {entry.emotional_state === 'CALM' && 'Spokojny'}
-                          {entry.emotional_state === 'CONFIDENT' && 'Pewny siebie'}
-                          {entry.emotional_state === 'UNCERTAIN' && 'Niepewny'}
-                          {entry.emotional_state === 'ANXIOUS' && 'Niespokojny'}
-                          {entry.emotional_state === 'EXCITED' && 'Podekscytowany'}
-                          {entry.emotional_state === 'RUSHED' && 'W pośpiechu'}
-                        </span>
-                      )}
-                      {entry.risk_notes && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-300" title={entry.risk_notes}>
-                          Ryzyko zdefiniowane
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between text-xs text-white/50 mb-3">
-                    <span>
-                      {new Date(entry.created_at).toLocaleDateString('pl-PL', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                    <span>Pewność: {getConfidenceLabel(entry.confidence)}</span>
-                  </div>
-
-                  {/* Chart Section */}
-                  <div className="mt-3 pt-3 border-t border-white/10">
-                    <button
-                      onClick={() => setExpandedChartId(expandedChartId === entry.id ? null : entry.id)}
-                      className="w-full flex items-center justify-between text-xs font-medium text-white/80 hover:text-white transition-colors mb-2"
-                    >
-                      <span className="flex items-center gap-2">
-                        <BarChart3 className="h-4 w-4" />
-                        Wykres {entry.symbol}
-                      </span>
-                      {expandedChartId === entry.id ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </button>
-                    {expandedChartId === entry.id && (
-                      <div className="mt-3 rounded-xl overflow-hidden bg-white/5 border border-white/10">
-                        <TradingViewAdvancedEmbed
-                          symbol={mapSymbolToTradingView(entry.symbol)}
-                          className="w-full"
-                          containerClassName="h-full w-full"
-                        />
-                        <div className="px-3 py-2 text-[10px] text-white/50">
-                          Wykres dostarczany przez{' '}
-                          <a
-                            href="https://www.tradingview.com"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline hover:text-white/80"
-                          >
-                            TradingView
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {entry.status === 'OPEN' && (
-                    <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
-                      <button
-                        onClick={() => handleAIAnalysis(entry.id)}
-                        disabled={analyzingEntryId === entry.id}
-                        className="w-full rounded-lg bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-blue-300 px-4 py-2 text-sm font-medium hover:from-blue-500/30 hover:to-purple-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        {analyzingEntryId === entry.id ? (
-                          <>
-                            <div className="animate-spin h-4 w-4 border-2 border-blue-300 border-t-transparent rounded-full" />
-                            Analizowanie przez AI...
-                          </>
-                        ) : (
-                          <>
-                            <Brain className="h-4 w-4" />
-                            Analizuj decyzję przez AI
-                          </>
-                        )}
-                      </button>
-
-                      <div>
-                        <label className="block text-xs font-medium mb-2 text-white/80">
-                          Co faktycznie zrobiłeś?
-                        </label>
-                        <div className="flex gap-1 flex-wrap">
-                          {ACTUAL_ACTIONS.map((action) => {
-                            const labels: Record<string, string> = {
-                              ENTERED_AS_PLANNED: 'Wszedłem zgodnie z planem',
-                              DID_NOT_ENTER: 'Nie wszedłem',
-                              CHANGED_MIND: 'Zmieniłem zdanie',
-                              ENTERED_DIFFERENTLY: 'Wszedłem inaczej',
-                              WAITED_TOO_LONG: 'Czekałem zbyt długo',
-                            };
-                            return (
-                              <button
-                                key={action}
-                                type="button"
-                                onClick={() =>
-                                  setReviewActualAction((prev) => ({
-                                    ...prev,
-                                    [entry.id]: reviewActualAction[entry.id] === action ? undefined as any : action,
-                                  }))
-                                }
-                                className={`px-2 py-1 text-xs font-medium rounded-lg transition-colors ${
-                                  reviewActualAction[entry.id] === action
-                                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                                    : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
-                                }`}
-                              >
-                                {labels[action]}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() =>
-                          setExpandedNoteId(expandedNoteId === entry.id ? null : entry.id)
-                        }
-                        className="text-xs text-white/60 hover:text-white/80 underline"
-                      >
-                        {expandedNoteId === entry.id ? 'Ukryj notatkę' : 'Dodaj notatkę'}
-                      </button>
-                      {expandedNoteId === entry.id && (
-                        <textarea
-                          value={reviewNote[entry.id] || ''}
-                          onChange={(e) =>
-                            setReviewNote((prev) => ({ ...prev, [entry.id]: e.target.value }))
-                          }
-                          rows={2}
-                          className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
-                          placeholder="Dodaj notatkę (opcjonalnie)..."
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  {entry.status === 'REVIEWED' && (
-                    <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
-                      {entry.ai_analysis && (
-                        <div className="rounded-lg bg-purple-500/10 border border-purple-500/20 p-3 mb-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Brain className="h-4 w-4 text-purple-400" />
-                            <span className="text-xs font-semibold text-purple-300">Analiza AI</span>
-                            {entry.ai_analysis.score && (
-                              <span className="text-xs text-white/60 ml-auto">
-                                Ocena: {entry.ai_analysis.score}/100
-                              </span>
-                            )}
-                          </div>
-                          {entry.ai_analysis.analysis && (
-                            <p className="text-xs text-white/80 mb-2">{entry.ai_analysis.analysis}</p>
-                          )}
-                          {entry.ai_analysis.what_went_well && Array.isArray(entry.ai_analysis.what_went_well) && entry.ai_analysis.what_went_well.length > 0 && (
-                            <div className="mt-2">
-                              <div className="text-xs font-medium text-emerald-300 mb-1">Co poszło dobrze:</div>
-                              <ul className="space-y-1">
-                                {entry.ai_analysis.what_went_well.map((item: string, idx: number) => (
-                                  <li key={idx} className="text-xs text-white/70">• {item}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {entry.ai_analysis.what_could_be_better && Array.isArray(entry.ai_analysis.what_could_be_better) && entry.ai_analysis.what_could_be_better.length > 0 && (
-                            <div className="mt-2">
-                              <div className="text-xs font-medium text-orange-300 mb-1">Co można poprawić:</div>
-                              <ul className="space-y-1">
-                                {entry.ai_analysis.what_could_be_better.map((item: string, idx: number) => (
-                                  <li key={idx} className="text-xs text-white/70">• {item}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {entry.ai_analysis.lessons_learned && Array.isArray(entry.ai_analysis.lessons_learned) && entry.ai_analysis.lessons_learned.length > 0 && (
-                            <div className="mt-2">
-                              <div className="text-xs font-medium text-blue-300 mb-1">Wnioski:</div>
-                              <ul className="space-y-1">
-                                {entry.ai_analysis.lessons_learned.map((item: string, idx: number) => (
-                                  <li key={idx} className="text-xs text-white/70">• {item}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {entry.actual_action && (
-                        <div>
-                          <div className="text-xs text-white/60 mb-1">Faktyczne działanie:</div>
-                          <div className="text-xs text-white/80 font-medium">
-                            {entry.actual_action === 'ENTERED_AS_PLANNED' && '✓ Wszedłem zgodnie z planem'}
-                            {entry.actual_action === 'DID_NOT_ENTER' && '✗ Nie wszedłem'}
-                            {entry.actual_action === 'CHANGED_MIND' && '↻ Zmieniłem zdanie'}
-                            {entry.actual_action === 'ENTERED_DIFFERENTLY' && '↺ Wszedłem inaczej'}
-                            {entry.actual_action === 'WAITED_TOO_LONG' && '⏱ Czekałem zbyt długo'}
-                          </div>
-                        </div>
-                      )}
-                      {entry.risk_notes && (
-                        <div>
-                          <div className="text-xs text-white/60 mb-1">Notatki o ryzyku:</div>
-                          <p className="text-xs text-white/70 italic">{entry.risk_notes}</p>
-                        </div>
-                      )}
-                      {entry.note && (
-                        <div>
-                          <div className="text-xs text-white/60 mb-1">Refleksja:</div>
-                          <p className="text-xs text-white/60 italic">{entry.note}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+            )}
             </div>
           )}
+          </div>
         </div>
-      </div>
     </main>
   );
 }

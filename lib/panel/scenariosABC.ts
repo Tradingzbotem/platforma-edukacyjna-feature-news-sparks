@@ -3,7 +3,7 @@
 export type ScenarioPart = {
   if: string;             // warunek aktywacji
   invalidation: string;   // warunek unieważnienia
-  confirmations: string;  // co obserwować (konfluencje)
+  confirmations: string;  // co obserwować przy scenariuszu A (EDU)
   riskNotes: string;      // ryzyka/uwagi (EDU, bez sygnałów)
 };
 
@@ -28,7 +28,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Po pozytywnych danych inflacyjnych utrzymane zostaje wybicie powyżej 18,100 przy rosnącym wolumenie.',
       invalidation: 'Powrót i domknięcie pod 17,650 bez szybkiego odkupienia.',
-      confirmations: 'Relatywna siła sektora półprzewodników, spłaszczenie VIX, szeroki breadth.',
+      confirmations:
+        'Wzrost potwierdza utrzymanie wybicia, popyt po cofnięciach i szerszy udział ruchu (np. breadth); ważne, by rynek szybko nie oddawał całego impulsu.',
       riskNotes: 'Zależność od mega-capów i krótkoterminowe przegrzanie momentum mogą ograniczyć kontynuację.',
     },
     scenarioB: {
@@ -40,7 +41,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Po „hawkish” sygnałach i gorszych danych pojawia się impuls risk-off z wyłamaniem 17,400.',
       invalidation: 'Szybki powrót ponad 17,650 i akumulacja na dołkach.',
-      confirmations: 'Wzrost DXY i rentowności, podwyższony VIX, presja na growth.',
+      confirmations:
+        'Spadek potwierdza brak utrzymania ostatniego wybicia w górę i podaż na odbiciach. Silniejszy dolar, wyższy VIX i rosnące rentowności dociążają growth i szeroki indeks.',
       riskNotes: 'Możliwe odwrócenia w drugiej części sesji (buy-the-dip) — scenariusz warunkowy.',
     },
     updatedAt: new Date().toISOString(),
@@ -54,7 +56,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Spadek rentowności UST i słabnący USD; utrzymanie powyżej 2285 po danych.',
       invalidation: 'Silny USD i przełamanie 2268 bez reakumulacji.',
-      confirmations: 'Popyt na metalach szlachetnych, risk-off na akcjach defensywnych, stabilny napływ w ETF-ach.',
+      confirmations:
+        'Wzrost potwierdza słabszy USD, niższe rentowności, popyt po cofnięciu oraz popyt na bezpieczną przystań, gdy ryzyko sięga po hedge.',
       riskNotes: 'Szybkie rotacje ryzyka przy publikacjach NFP/CPI — presja na zmienność.',
     },
     scenarioB: {
@@ -66,7 +69,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Wzrost rentowności i umocnienie USD prowadzi do testu 2250.',
       invalidation: 'Szybki powrót powyżej 2285 i popyt na korektach.',
-      confirmations: 'Risk-on w akcjach, silny dolar, podaż na metalach.',
+      confirmations:
+        'Spadek potwierdza silny USD, rosnące rentowności i ucieczkę w stronę akcji przy podaży na metalu; brak popytu po cofnięciu utrwala zjazd.',
       riskNotes: 'Reakcje bywają krótkie, jeśli zmiana wynika tylko z krótkotrwałego impulsu w danych.',
     },
     updatedAt: new Date().toISOString(),
@@ -80,7 +84,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Lepsze perspektywy inflacyjne w EZ i gołębie sygnały z USA wspierają euro powyżej 1.1050.',
       invalidation: 'Domknięcie poniżej 1.0950 i brak kontynuacji na retestach.',
-      confirmations: 'Spadek DXY, poprawa PMI w EZ, popyt na aktywa ryzykowne w EU.',
+      confirmations:
+        'Wzrost potwierdza dane lub komunikaty sprzyjające euro, słabszy dolar w tle oraz utrzymanie kierunku po publikacji bez szybkiego zacierania ruchu.',
       riskNotes: 'Ryzyko nagłych zwrotów po konferencjach banków centralnych.',
     },
     scenarioB: {
@@ -92,7 +97,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Wyższa inflacja w USA i jastrzębi Fed wzmacniają USD; spadek pod 1.0850.',
       invalidation: 'Powrót ponad 1.0950 oraz słabnący impet USD.',
-      confirmations: 'Wzrost DXY, relatywna słabość euro, risk-off na europejskich indeksach.',
+      confirmations:
+        'Spadek potwierdza silniejszego dolara i słabsze euro w parze przy jednoczesnej wyprzedaży europejskich indeksów, bez szybkiego powrotu kursu w górę po publikacji.',
       riskNotes: 'Geopolityka i przepływy miesiąca mogą krótkoterminowo zakłócać obraz.',
     },
     updatedAt: new Date().toISOString(),
@@ -212,7 +218,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Jeśli panuje risk-on, utrzymanie powyżej 5250 często wspiera dalsze podejścia.',
       invalidation: 'Domknięcia pod 5200 bez szybkiego powrotu.',
-      confirmations: 'Szeroki breadth, spokojniejsze VIX, brak podaży na retestach.',
+      confirmations:
+        'Wzrost potwierdza utrzymanie wybicia, popyt po cofnięciach i szerszy udział ruchu; jeśli cały impuls znika po jednej sesji, hipoteza słabnie.',
       riskNotes: 'Sezon wyników i dane makro potrafią przynieść nagłe zwroty.',
     },
     scenarioB: {
@@ -224,7 +231,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Jeśli pojawi się risk-off, zejście pod 5200 bywa krokiem do 5140.',
       invalidation: 'Szybki powrót ponad 5250 i brak podaży na retestach.',
-      confirmations: 'Wyższy VIX, presja na growth, mocniejszy USD.',
+      confirmations:
+        'Spadek potwierdza brak utrzymania wybicia w górę i podaż na każdym odbiciu. Wyższy VIX, mocniejszy USD i rosnące rentowności zwiększają presję na ryzyko.',
       riskNotes: 'Zwroty po południu sesji się zdarzają.',
     },
     updatedAt: new Date().toISOString(),
@@ -238,7 +246,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Akceptacja powyżej 5320 przy spokojnym VIX i szerokim breadth.',
       invalidation: 'Domknięcia pod 5250 bez szybkiego odkupienia.',
-      confirmations: 'Lepsze wyniki mega-capów, stabilne rentowności, brak podaży na wybiciach.',
+      confirmations:
+        'Wzrost potwierdza utrzymanie wybicia, stabilne rentowności i popyt po cofce; szybkie oddanie całego rajdu bez obrony strefy osłabia scenariusz.',
       riskNotes: 'Sezon wyników bywa zmienny; potrzebne potwierdzenia z breadth.',
     },
     scenarioB: {
@@ -250,7 +259,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Presja risk-off i zejście pod 5250 kierują uwagę na 5140.',
       invalidation: 'Szybki powrót ponad 5320 i akceptacja.',
-      confirmations: 'Wyższy VIX, mocniejszy USD, rotacja do defensywy.',
+      confirmations:
+        'Spadek potwierdza podaż po odbiciach, wyższy VIX i rotację w stronę defensywy przy mocniejszym dolarze; brak powrotu nad ostatnie wybicie osłabia kupujących.',
       riskNotes: 'Zwroty w drugiej części sesji są możliwe.',
     },
     updatedAt: new Date().toISOString(),
@@ -264,7 +274,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Jeśli sentyment w EZ jest stabilny, utrzymanie powyżej 18450 bywa sprzyjające.',
       invalidation: 'Wybicie i akceptacja poniżej 18250.',
-      confirmations: 'Lepsze PMI, wsparcie na retestach, spokojniejsze świece.',
+      confirmations:
+        'Wzrost potwierdza lepsze dane z regionu, popyt po retestach wsparcia i brak natychmiastowego ścierania rajdu po wybiciu.',
       riskNotes: 'Geopolityka i dane z USA też potrafią wpłynąć.',
     },
     scenarioB: {
@@ -276,7 +287,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Przy risk-off zejścia pod 18250 mogą zapraszać niższe strefy.',
       invalidation: 'Powrót ponad 18450 i brak presji podaży.',
-      confirmations: 'Słabsze PMI, większy DXY, zjazdy na ryzyku.',
+      confirmations:
+        'Spadek potwierdza słabsze dane z regionu, silniejszego dolara i zjazdy na ryzyku przy podaży na odbiciach, bez utrzymania ostatniego wybicia w górę.',
       riskNotes: 'Ruchy bywają poszarpane w okolicach publikacji.',
     },
     updatedAt: new Date().toISOString(),
@@ -290,7 +302,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Akceptacja powyżej 18600 przy stabilnych PMI i poprawie sentymentu w EZ.',
       invalidation: 'Domknięcie pod 18250 i brak szybkiego powrotu.',
-      confirmations: 'Lepsze PMI, spokojniejsze bundy, rotacja do cyklicznych.',
+      confirmations:
+        'Wzrost potwierdza silniejsze dane z EZ, łagodniejszą presję na obligacje w regionie i utrzymanie poziomu przy rotacji w stronę cyklicznych.',
       riskNotes: 'Wrażliwość na USD i dane z USA pozostaje wysoka.',
     },
     scenarioB: {
@@ -302,7 +315,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Przy pogorszeniu koniunktury zejście pod 18250 kieruje uwagę na 17950.',
       invalidation: 'Powrót nad 18600 i uspokojenie świec.',
-      confirmations: 'Słabsze PMI, mocniejszy USD, risk-off na ryzyku.',
+      confirmations:
+        'Spadek potwierdza pogorszenie danych z EZ, mocniejszego USD i wyprzedaż ryzyka; każde odbicie w górę spotyka się z podażą zamiast z nowym popytem.',
       riskNotes: 'Zwroty po nagłówkach makro są możliwe.',
     },
     updatedAt: new Date().toISOString(),
@@ -369,7 +383,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Spadek real yields i słabszy USD, utrzymanie nad 2310.',
       invalidation: 'Akceptacja pod 2290 bez reakumulacji.',
-      confirmations: 'Popyt w metalach, spokojniejsze świece, risk-off w akcjach.',
+      confirmations:
+        'Wzrost potwierdza słabszy USD, niższe realne rentowności i popyt po cofnięciu, często przy ucieczce od ryzyka w akcjach.',
       riskNotes: 'Publikacje CPI/NFP potrafią odwracać ruchy intraday.',
     },
     scenarioB: {
@@ -381,7 +396,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Przy mocniejszym USD spadek pod 2290 kieruje uwagę na 2268.',
       invalidation: 'Powrót nad 2310 i brak podaży na retestach.',
-      confirmations: 'Wyższy DXY, podaż na metalach.',
+      confirmations:
+        'Spadek potwierdza mocnego dolara i podaż na metalach przy rosnących rentownościach; brak odkupów po cofce utrwala presję w dół.',
       riskNotes: 'Zwroty po nagłówkach geopolitycznych są możliwe.',
     },
     updatedAt: new Date().toISOString(),
@@ -395,7 +411,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Przy lepszym sentymencie i wsparciu popytu utrzymanie powyżej 82 bywa pozytywne.',
       invalidation: 'Spadek pod 80 bez szybkiej reakcji.',
-      confirmations: 'Spokojniejsze świece, brak podaży na retestach, stabilne zapasy.',
+      confirmations:
+        'Wzrost potwierdza utrzymanie wybicia, sygnały ścisku podaży (np. spadek zapasów) i brak szybkiego cofnięcia po nagłówku o rynku ropy.',
       riskNotes: 'Nagłe newsy geopolityczne potrafią zmienić obraz.',
     },
     scenarioB: {
@@ -407,7 +424,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Przy risk-off zejścia pod 80 częściej testują niższe poziomy.',
       invalidation: 'Szybki powrót ponad 82.',
-      confirmations: 'Mocniejszy USD, słabsze ryzyko, większe czerwone świece.',
+      confirmations:
+        'Spadek potwierdza brak utrzymania poziomu po newsie o rynku ropy, szybkie oddanie wzrostu oraz sygnały nadpodaży lub słabszy popyt przy ucieczce od ryzyka i mocniejszym USD.',
       riskNotes: 'Zwroty intraday zdarzają się po nagłówkach.',
     },
     updatedAt: new Date().toISOString(),
@@ -422,7 +440,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Akceptacja ponad 1.1000 przy słabszym DXY i stabilnych rentownościach.',
       invalidation: 'Domknięcie pod 1.0950 bez powrotu.',
-      confirmations: 'Słabszy DXY, risk-on, spokojniejsze świece.',
+      confirmations:
+        'Wzrost potwierdza słabszy dolar w tle oraz utrzymanie kierunku po danych lub wystąpieniu; jeśli ruch jest od razu zacierany, scenariusz traci siłę.',
       riskNotes: 'W oknie danych CPI/PMI zdarzają się fałszywe wybicia.',
     },
     scenarioB: {
@@ -434,7 +453,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Przy mocniejszym USD zejście pod 1.0950 może celować w 1.0900.',
       invalidation: 'Powrót ponad 1.1000 i akceptacja.',
-      confirmations: 'Wyższy DXY, słabsze indeksy europejskie.',
+      confirmations:
+        'Spadek potwierdza silniejszego dolara, słabsze indeksy w Europie oraz brak kontynuacji wzrostu pary po danych lub po komunikacie — ruch w górę jest szybko zacierany.',
       riskNotes: 'Zwroty intraday częste po danych.',
     },
     updatedAt: new Date().toISOString(),
@@ -448,7 +468,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioA: {
       if: 'Jeśli popyt utrzymuje poziom 84, zwykle wspiera to podejścia.',
       invalidation: 'Wejście pod 82 i brak szybkiego powrotu.',
-      confirmations: 'Spokojniejsze świece, stabilne zapasy, brak podaży na retestach.',
+      confirmations:
+        'Wzrost potwierdza utrzymanie wybicia, ograniczone ryzyko podaży (zapasy, geopolityka) i brak ostrego cofnięcia po newsie o rynku ropy.',
       riskNotes: 'Geopolityka potrafi gwałtownie zmienić kierunek.',
     },
     scenarioB: {
@@ -460,7 +481,8 @@ export const SCENARIOS_ABC: ScenarioItem[] = [
     scenarioC: {
       if: 'Przy risk-off spadek pod 82 potrafi kierować uwagę na 80.',
       invalidation: 'Powrót nad 84 i uspokojenie świec.',
-      confirmations: 'Wyższy DXY, słabsze aktywa ryzykowne.',
+      confirmations:
+        'Spadek potwierdza brak utrzymania wybicia po nagłówku o podaży lub zapasach, szybkie oddanie wzrostu oraz słabszy popyt przy mocniejszym USD i wyprzedaży ryzyka.',
       riskNotes: 'Zwroty nie są rzadkie po publikacjach.',
     },
     updatedAt: new Date().toISOString(),

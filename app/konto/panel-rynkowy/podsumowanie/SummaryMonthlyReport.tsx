@@ -58,7 +58,7 @@ export default function SummaryMonthlyReport({ reports }: Props) {
             <p className="text-sm text-white/80 leading-relaxed">{latestReport.tldr}</p>
           </div>
           <span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200 flex-shrink-0">
-            ELITE
+            Pełny dostęp
           </span>
         </div>
 

@@ -28,12 +28,17 @@ export function middleware(req: NextRequest) {
   const isPublicMarketPanel = pathname.startsWith('/konto/panel-rynkowy');
   // Stara zakładka z opisem pakietów (ebooki) dostępna publicznie
   const isPublicEbooki = pathname.startsWith('/ebooki');
+  // Marketplace NFT (Founders) — podgląd ofert i formularz wystawienia bez logowania
+  // Uwaga: zawężamy match, żeby nie whitelistingować przypadkowych ścieżek typu `/marketplace-x`.
+  const isPublicMarketplace = pathname === '/marketplace' || pathname.startsWith('/marketplace/');
   // Strona kontaktowa dostępna publicznie
   const isPublicContact = pathname.startsWith('/kontakt');
   // Strona "O nas" dostępna publicznie
   const isPublicAbout = pathname.startsWith('/o-nas');
   // Strona cennika dostępna publicznie
   const isPublicPricing = pathname.startsWith('/cennik');
+  // Przekierowanie /regulamin → warunki (publiczne)
+  const isPublicRegulaminAlias = pathname.startsWith('/regulamin');
   // Sekcja redakcji dostępna publicznie
   const isPublicRedakcja = pathname.startsWith('/redakcja');
   // Strony prawne i FAQ dostępne publicznie
@@ -51,9 +56,11 @@ export function middleware(req: NextRequest) {
     isPublicRankings ||
     isPublicMarketPanel ||
     isPublicEbooki ||
+    isPublicMarketplace ||
     isPublicContact ||
     isPublicAbout ||
     isPublicPricing ||
+    isPublicRegulaminAlias ||
     isPublicRedakcja ||
     isPublicTerms ||
     isPublicPrivacy ||

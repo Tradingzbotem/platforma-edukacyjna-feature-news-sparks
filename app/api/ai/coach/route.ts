@@ -1,7 +1,7 @@
 // app/api/ai/coach/route.ts — EDU Coach AI (no investment advice, no signals) + selective context
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { resolveTierFromCookiesAndSession, isTierAtLeast } from '@/lib/panel/access';
+import { resolveTierFromCookiesAndSession, hasFullPanelAccess } from '@/lib/panel/access';
 import { getSession } from '@/lib/session';
 import { buildCoachContext, isContextAllowedForTier, filterContextPackByTier, normalizeContextSource, type ContextSource } from '@/lib/panel/coachContext';
 
@@ -52,13 +52,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Brak OPENAI_API_KEY w środowisku.' }, { status: 500 });
     }
 
-    // Tier gating (ELITE only)
     const c = await cookies();
     const session = await getSession();
     const tier = resolveTierFromCookiesAndSession(c, session);
-    if (!isTierAtLeast(tier, 'elite')) {
+    if (!hasFullPanelAccess(tier)) {
       return NextResponse.json(
-        { error: 'ELITE required', code: 'TIER_REQUIRED', required: 'elite' },
+        { error: 'Full panel access required', code: 'TIER_REQUIRED', required: 'starter' },
         { status: 403 }
       );
     }

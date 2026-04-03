@@ -47,6 +47,7 @@ export default function ChallengeCard({
   const [suggested, setSuggested] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const [status, setStatus] = useState<ChallengeStatus>(initialStatus);
+  const [isSaving, setIsSaving] = useState(false);
 
   /* ─── unikalny klucz wyboru (stabilny per runda) ─── */
   const challengeKey = useMemo(
@@ -162,8 +163,25 @@ export default function ChallengeCard({
 
   /* ─── handler zapisu wyboru ─── */
   function handlePick(dir: 'up' | 'down' | 'flat') {
+    // Double-check: jeśli już jest pick, nie pozwól na kolejny
+    if (pick) {
+      return;
+    }
+    
+    if (disabled) {
+      return;
+    }
+    
+    if (isSaving) {
+      return;
+    }
+    
+    setIsSaving(true);
     const payload: UserPick = { dir, confidence, ts: Date.now() };
+    
+    // Update local state immediately for instant feedback - this will disable buttons
     setPick(payload);
+    
     // zapis do backendu Neon
     fetch('/api/challenge/pick', {
       method: 'POST',
@@ -176,7 +194,28 @@ export default function ChallengeCard({
         xp: 0, // XP przyznajemy później po rozliczeniu
         challengeKey, // <<<<<< KLUCZ RUNDY
       }),
-    }).catch((err) => console.warn('Neon save failed', err));
+    })
+      .then((res) => {
+        if (!res.ok) {
+          console.error('Pick save failed', res.status, res.statusText);
+          return res.json().then((data) => {
+            console.error('Pick save error details', data);
+            throw new Error(data.error || 'Failed to save pick');
+          });
+        }
+        return res.json();
+      })
+      .then((data) => {
+        console.log('Pick saved successfully', data);
+      })
+      .catch((err) => {
+        console.error('Neon save failed', err);
+        // Revert the pick if save failed (optional - you might want to keep it)
+        // setPick(null);
+      })
+      .finally(() => {
+        setIsSaving(false);
+      });
     onPick?.(dir, confidence);
   }
 
@@ -215,6 +254,7 @@ export default function ChallengeCard({
           {pick && (
             <span className="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white">
               Twój typ: <b>{dirLabel(pick.dir)}</b> <span className="opacity-80">({pick.confidence}%)</span>
+              {isSaving && <span className="ml-2 text-xs opacity-70">(zapisywanie...)</span>}
             </span>
           )}
         </div>
@@ -296,30 +336,45 @@ export default function ChallengeCard({
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                disabled={disabled}
-                onClick={() => handlePick('up')}
+                disabled={disabled || isSaving}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Button clicked: up', { disabled, isSaving });
+                  handlePick('up');
+                }}
                 className="rounded-xl border border-emerald-500/30 bg-emerald-500/20 px-3 py-3 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed md:py-2 transition-colors"
-                title="Wybierz: wzrost"
+                title={disabled ? `Wyłączone: ${status !== 'open' ? `status=${status}` : msLeft <= 0 ? 'czas minął' : pick ? 'już wybrano' : 'nieznany'}` : "Wybierz: wzrost"}
               >
-                ↑ Wzrost
+                ↑ Wzrost {isSaving && pick?.dir === 'up' && '...'}
               </button>
               <button
                 type="button"
-                disabled={disabled}
-                onClick={() => handlePick('flat')}
+                disabled={disabled || isSaving}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Button clicked: flat', { disabled, isSaving });
+                  handlePick('flat');
+                }}
                 className="rounded-xl border border-yellow-500/30 bg-yellow-500/20 px-3 py-3 text-sm font-semibold text-yellow-300 hover:bg-yellow-500/30 disabled:opacity-50 disabled:cursor-not-allowed md:py-2 transition-colors"
-                title="Wybierz: bez zmian (↔)"
+                title={disabled ? `Wyłączone: ${status !== 'open' ? `status=${status}` : msLeft <= 0 ? 'czas minął' : pick ? 'już wybrano' : 'nieznany'}` : "Wybierz: bez zmian (↔)"}
               >
-                ↔ Bez zmian
+                ↔ Bez zmian {isSaving && pick?.dir === 'flat' && '...'}
               </button>
               <button
                 type="button"
-                disabled={disabled}
-                onClick={() => handlePick('down')}
+                disabled={disabled || isSaving}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Button clicked: down', { disabled, isSaving });
+                  handlePick('down');
+                }}
                 className="rounded-xl border border-rose-500/30 bg-rose-500/20 px-3 py-3 text-sm font-semibold text-rose-300 hover:bg-rose-500/30 disabled:opacity-50 disabled:cursor-not-allowed md:py-2 transition-colors"
-                title="Wybierz: spadek"
+                title={disabled ? `Wyłączone: ${status !== 'open' ? `status=${status}` : msLeft <= 0 ? 'czas minął' : pick ? 'już wybrano' : 'nieznany'}` : "Wybierz: spadek"}
               >
-                ↓ Spadek
+                ↓ Spadek {isSaving && pick?.dir === 'down' && '...'}
               </button>
             </div>
 

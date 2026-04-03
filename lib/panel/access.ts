@@ -40,3 +40,8 @@ export function isTierAtLeast(current: Tier, required: Tier): boolean {
   return ORDER[current] >= ORDER[required];
 }
 
+/** Jednorazowy zakup (NFT) = pełny panel; wartości starter/pro/elite w DB to kompatybilność wsteczna. */
+export function hasFullPanelAccess(tier: Tier): boolean {
+  return tier === 'starter' || tier === 'pro' || tier === 'elite';
+}
+

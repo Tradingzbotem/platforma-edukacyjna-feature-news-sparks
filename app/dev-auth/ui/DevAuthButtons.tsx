@@ -14,19 +14,19 @@ export default function DevAuthButtons() {
         className="rounded-lg border p-3 text-center hover:bg-gray-50 bg-white text-slate-900"
         href="/api/auth/mock-login?plan=starter"
       >
-        STARTER (59 PLN/mies)
+        Pełny panel — tier starter (dev)
       </a>
       <a
         className="rounded-lg border p-3 text-center hover:bg-gray-50 bg-white text-slate-900"
         href="/api/auth/mock-login?plan=pro"
       >
-        PRO (110 PLN/mies)
+        Pełny panel — tier pro (dev)
       </a>
       <a
         className="rounded-lg border p-3 text-center hover:bg-gray-50 bg-white text-slate-900"
         href="/api/auth/mock-login?plan=elite"
       >
-        ELITE (199 PLN/mies)
+        Pełny panel — tier elite (dev)
       </a>
       <a className="rounded-lg border p-3 text-center hover:bg-gray-50" href="/api/auth/logout">
         Wyloguj

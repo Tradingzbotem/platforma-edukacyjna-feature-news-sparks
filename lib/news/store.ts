@@ -33,6 +33,18 @@ function makeSeedItems(): NewsItemEnriched[] {
   const now = Date.now();
   const h = (x: number) => new Date(now - x * 3600 * 1000).toISOString();
   const base: Array<Partial<NewsItemEnriched> & { title: string; url: string; source: string }> = [
+    {
+      title: 'Napięcia na Bliskim Wschodzie — rynek obserwuje dostawy ropy',
+      url: 'https://example.com/mideast-oil',
+      source: 'EDU-SEED',
+      category: 'Geo',
+      instruments: ['WTI', 'UKOIL', 'XAUUSD', 'US100', 'US500'],
+      sentiment: 'negative',
+      impact: 5,
+      timeEdge: 9,
+      summaryShort:
+        'Ryzyko zakłóceń łańcucha dostaw i wyższa premia ryzyka na ropie i złocie; indeksy wrażliwe na awersję do ryzyka.',
+    },
     { title: 'Zaskakująco niska inflacja CPI', url: 'https://example.com/cpi', source: 'EDU-SEED', category: 'Makro', instruments: ['US100','XAUUSD','DXY'], sentiment: 'positive', impact: 4, timeEdge: 6, summaryShort: 'Odczyt CPI poniżej oczekiwań, spada presja na stopy.' },
     { title: 'Wzrost zapasów ropy w USA', url: 'https://example.com/oil', source: 'EDU-SEED', category: 'Surowce', instruments: ['UKOIL','WTI'], sentiment: 'negative', impact: 3, timeEdge: 5, summaryShort: 'Zapasy rosną, presja na ceny ropy.' },
     { title: 'Silniejsze od prognoz NFP', url: 'https://example.com/nfp', source: 'EDU-SEED', category: 'Makro', instruments: ['DXY','EURUSD','US10Y'], sentiment: 'positive', impact: 4, timeEdge: 6, summaryShort: 'Rynek pracy zaskakuje w górę; dolar umacnia się.' },
@@ -407,7 +419,7 @@ export async function saveEnriched(items: NewsItemEnriched[]): Promise<void> {
 }
 
 export async function listNews(query: NewsListQuery = {}): Promise<NewsListResponse> {
-  const hours = query.hours ?? 72;
+  const hours = Math.min(168, Math.max(12, Number(query.hours ?? 72)));
   const since = Date.now() - hours * 3600 * 1000;
 
   let items: NewsItemEnriched[] = [];

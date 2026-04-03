@@ -19,13 +19,13 @@ export default function Team() {
         <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 lg:p-6 hover:bg-white/10 hover:border-white/20 transition-all duration-300 shadow-lg">
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
             {/* Left: Large portrait image */}
-            <div className="relative w-full lg:w-52 h-64 lg:h-auto lg:min-h-[260px] flex-shrink-0 rounded-2xl overflow-hidden bg-slate-800 border border-white/10 shadow-md">
+            <div className="relative w-full lg:w-52 aspect-[3/4] lg:aspect-[3/4] flex-shrink-0 rounded-2xl overflow-hidden bg-slate-800 border border-white/10 shadow-md">
               {!editorError ? (
                 <Image
                   src="/ai/assistant-editor.png.png"
                   alt="Redakcja i metodologia"
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="(max-width: 1024px) 100vw, 208px"
                   onError={() => setEditorError(true)}
                   unoptimized
@@ -67,13 +67,13 @@ export default function Team() {
         <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 lg:p-6 hover:bg-white/10 hover:border-white/20 transition-all duration-300 shadow-lg">
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
             {/* Left: Large portrait image */}
-            <div className="relative w-full lg:w-52 h-64 lg:h-auto lg:min-h-[260px] flex-shrink-0 rounded-2xl overflow-hidden bg-slate-800 border border-white/10 shadow-md">
+            <div className="relative w-full lg:w-52 aspect-[3/4] lg:aspect-[3/4] flex-shrink-0 rounded-2xl overflow-hidden bg-slate-800 border border-white/10 shadow-md">
               {!analystError ? (
                 <Image
                   src="/ai/assistant-analyst.png.png"
                   alt="Produkt i narzędzia edukacyjne"
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="(max-width: 1024px) 100vw, 208px"
                   onError={() => setAnalystError(true)}
                   unoptimized

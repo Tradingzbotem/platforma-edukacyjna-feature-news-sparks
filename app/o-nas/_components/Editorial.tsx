@@ -32,13 +32,15 @@ export default function Editorial() {
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
         <div>
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/50 to-slate-950/50 backdrop-blur-sm p-6">
-            <Image
-              src="/ai/redakcja.png"
-              alt="Redakcja"
-              width={600}
-              height={400}
-              className="w-full h-auto rounded-xl mb-6"
-            />
+            <div className="relative w-full aspect-[3/2] rounded-xl mb-6 overflow-hidden bg-slate-800">
+              <Image
+                src="/ai/redakcja.png"
+                alt="Redakcja"
+                fill
+                className="object-contain"
+                sizes="(max-width: 1024px) 100vw, 600px"
+              />
+            </div>
             <p className="text-white/80 leading-relaxed mb-6">
               Sekcja redakcyjna FX•EDU śledzi wydarzenia na rynkach i dostarcza komentarze, które
               pomagają zrozumieć, co faktycznie wpływa na zmienność i warunki rynkowe — bez obietnic zysku.

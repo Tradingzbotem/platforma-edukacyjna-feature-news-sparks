@@ -30,8 +30,8 @@ export const CONTEXT_MIN_TIER: Record<Exclude<ContextSource, 'none'>, Tier> = {
   calendar7d: 'starter',
   scenariosABC: 'starter',
   checklists: 'starter',
-  eventPlaybooks: 'pro',
-  techMaps: 'pro',
+  eventPlaybooks: 'starter',
+  techMaps: 'starter',
 };
 
 export function isContextAllowedForTier(src: ContextSource, tier: Tier): boolean {

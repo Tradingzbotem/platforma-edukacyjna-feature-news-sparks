@@ -910,13 +910,13 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
 
     // Exam runner
     , "Wynik:": "Score:"
-    , "To był wynik z wersji DEMO. Włącz PRO, aby przejść pełny egzamin i wygenerować certyfikat.":
-      "That was a DEMO result. Enable PRO to take the full exam and generate a certificate."
+    , "To był wynik z wersji DEMO. Pełny egzamin i certyfikat po uzyskaniu pełnego dostępu (Founders NFT) — zobacz":
+      "That was a DEMO result. Full exam and certificate after full access (Founders NFT) — see"
     , "Pytanie": "Question"
     , "Tryb DEMO": "DEMO mode"
     , "Odpowiadasz na pierwsze": "You answer the first"
-    , "pytań. Włącz plan PRO (w „Konto”) albo użyj przycisku „Pełny test (PRO)”.":
-      "questions. Enable the PRO plan (in 'Account') or use the 'Full test (PRO)' button."
+    , " pytań. Pełny egzamin po uzyskaniu pełnego dostępu — ":
+      " questions. Full exam after full access — "
     , "Podpowiedź:": "Hint:"
     , "Sprawdź": "Check"
     , "Dalej →": "Next →"
@@ -1055,10 +1055,10 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
     , "Warunki różnią się między regionami i klasami aktywów – sprawdź lokalną ofertę": "Conditions differ between regions and asset classes — check the local offer"
 
     // ───────── Additional coverage: Legal index blurbs ─────────
-    , "Regulamin subskrypcji, polityka zwrotów/odstąpienia, prywatność (skrót) i disclaimery rynkowe.":
-      "Subscription terms, returns/withdrawal policy, privacy (summary) and market disclaimers."
-    , "Zasady płatności i rozliczeń, odnowienia, anulacje, fair use i reklamacje.":
-      "Payment and settlement rules, renewals, cancellations, fair use and complaints."
+    , "Regulamin NFT, zwroty/odstąpienie, prywatność (skrót) i disclaimery rynkowe.":
+      "NFT terms, returns/withdrawal, privacy (summary) and market disclaimers."
+    , "Cena i krypto, licencja na dostęp, portfel, rynek wtórny — jedyna ścieżka płatnego dostępu do FXEDULAB.":
+      "Price and crypto, access license, wallet, secondary market — the only paid access path to FXEDULAB."
     , "Prawo odstąpienia 14 dni, wyłączenia dla treści cyfrowych, procedura i zwroty.":
       "14‑day withdrawal right, exclusions for digital content, procedure and refunds."
     , "Charakter edukacyjny, ryzyko, dźwignia, opóźnienia danych i ograniczenia odpowiedzialności.":
@@ -1077,8 +1077,8 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
 
     // ───────── Returns & withdrawal (Zwroty i odstąpienie) ─────────
     , "Zwroty i odstąpienie od umowy": "Returns and withdrawal"
-    , "Zasady dotyczące prawa odstąpienia oraz polityki zwrotów dla usług cyfrowych i subskrypcji.":
-      "Rules on the right of withdrawal and refund policy for digital services and subscriptions."
+    , "Zasady dotyczące prawa odstąpienia oraz polityki zwrotów dla usług cyfrowych i zakupu Founders NFT.":
+      "Rules on the right of withdrawal and refund policy for digital services and Founders NFT purchases."
     , "1. Prawo odstąpienia 14 dni": "1. 14‑day right of withdrawal"
     , "2. Wyłączenia prawa odstąpienia": "2. Withdrawal right exclusions"
     , "3. Procedura odstąpienia": "3. Withdrawal procedure"
@@ -1101,15 +1101,15 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
       "The 14‑day period is counted from the day the contract is concluded (for digital services). Sending your statement before the deadline is sufficient to meet it. You may use our form or your own template."
     , "W przypadku skutecznego odstąpienia zwracamy dokonane płatności niezwłocznie, nie później niż w ciągu 14 dni od otrzymania oświadczenia, z wykorzystaniem tego samego sposobu zapłaty, chyba że uzgodniono inaczej.":
       "In case of a valid withdrawal, we refund payments without undue delay and no later than 14 days after receipt of the statement, using the same payment method unless agreed otherwise."
-    , "W przypadku subskrypcji już aktywowanej co do zasady nie realizujemy zwrotów za rozpoczęty okres rozliczeniowy; możliwe jest anulowanie na przyszłość (brak dalszych obciążeń).":
-      "For an already activated subscription we generally do not provide refunds for a started billing period; cancellation for the future (no further charges) is possible."
+    , "W przypadku zakupu NFT po wykonaniu świadczenia (np. przekazaniu tokena) zwrot może nie przysługiwać w zakresie przewidzianym przepisami — zob. Regulamin NFT.":
+      "For an NFT purchase after performance (e.g., token transfer), a refund may not be available to the extent provided by law — see the NFT terms."
     , "W razie braku dostępu lub istotnych problemów technicznych z naszej winy możesz złożyć reklamację. Każdy przypadek rozpatrujemy indywidualnie.":
       "If access is missing or there are significant technical issues on our side, you may file a complaint. Each case is reviewed individually."
 
     // ───────── Compliance (Prawne/compliance) ─────────
     , "Pakiet zgodności (Compliance)": "Compliance package"
-    , "Zestaw najważniejszych dokumentów i informacji: regulamin subskrypcji, polityka zwrotów i odstąpienia, skrót polityki prywatności oraz disclaimery rynkowe. Dokument ma charakter informacyjny i stanowi uzupełnienie szczegółowych polityk w sekcji Prawne.":
-      "A set of key documents and information: subscription terms, returns and withdrawal policy, privacy policy summary and market disclaimers. This document is informational and complements the detailed policies in the Legal section."
+    , "Zestaw najważniejszych dokumentów i informacji: regulamin sprzedaży Founders NFT, polityka zwrotów i odstąpienia, skrót polityki prywatności oraz disclaimery rynkowe. Dokument ma charakter informacyjny i stanowi uzupełnienie szczegółowych polityk w sekcji Prawne.":
+      "A set of key documents and information: Founders NFT sale terms, returns and withdrawal policy, privacy policy summary and market disclaimers. This document is informational and complements the detailed policies in the Legal section."
 
     // ───────── Pricing (Cennik) ─────────
     , "Cennik": "Pricing"
@@ -1141,7 +1141,7 @@ export const LOCAL_DICTIONARIES: Record<string, Record<string, string>> = {
       "If you are not satisfied with the service, you can cancel your subscription and request a refund according to our refund policy."
     , "Szczegóły znajdziesz w": "See details in the"
     , "polityce zwrotów": "refund policy"
-    , "Masz pytania dotyczące cennika lub subskrycji? Skontaktuj się z nami przez": "Questions about pricing or subscriptions? Contact us via the"
+    , "Masz pytania dotyczące cennika lub Founders NFT? Skontaktuj się z nami przez": "Questions about pricing or Founders NFT? Contact us via the"
     , "formularz kontaktowy": "contact form"
     , "FX EduLab to platforma edukacyjna poświęcona nauce Forex i CFD. Nie świadczymy porad inwestycyjnych.":
       "FX EduLab is an educational platform focused on learning Forex and CFDs. We do not provide investment advice."

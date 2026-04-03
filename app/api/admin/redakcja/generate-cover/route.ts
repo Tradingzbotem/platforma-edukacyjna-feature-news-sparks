@@ -75,11 +75,12 @@ async function saveImageToMediaLibrary(
 					}
 				}
 				if (!url) {
-					// Zapisz bajty w Neon (działa na serverless)
+					// Zapisz bajty w Neon (działa na serverless; sql tag accepts primitives only)
 					await ensureMediaAssetBlobTable();
+					const dataHex = buffer.toString('hex');
 					await sql`
 						INSERT INTO "MediaAssetBlob" (id, data, "createdAt", "updatedAt")
-						VALUES (${genId}, ${buffer}, NOW(), NOW())
+						VALUES (${genId}, decode(${dataHex}, 'hex'), NOW(), NOW())
 						ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, "updatedAt" = NOW()
 					`;
 					url = `/api/redakcja/media/file/${genId}`;
@@ -129,9 +130,10 @@ async function saveImageToMediaLibrary(
 				}
 
 				if (!url) {
+					const dataHex = buffer.toString('hex');
 					await sql`
 						INSERT INTO "MediaAssetBlob" (id, data, "createdAt", "updatedAt")
-						VALUES (${genId}, ${buffer}, NOW(), NOW())
+						VALUES (${genId}, decode(${dataHex}, 'hex'), NOW(), NOW())
 						ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, "updatedAt" = NOW()
 					`;
 					url = `/api/redakcja/media/file/${genId}`;

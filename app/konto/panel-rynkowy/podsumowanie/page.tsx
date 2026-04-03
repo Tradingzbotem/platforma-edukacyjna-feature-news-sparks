@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { cookies, headers } from 'next/headers';
 import { getSession } from '@/lib/session';
-import { resolveTierFromCookiesAndSession, isTierAtLeast, type Tier } from '@/lib/panel/access';
+import { resolveTierFromCookiesAndSession, hasFullPanelAccess } from '@/lib/panel/access';
 import { CALENDAR_7D, type CalendarEvent } from '@/lib/panel/calendar7d';
 import { SCENARIOS_ABC, type ScenarioItem } from '@/lib/panel/scenariosABC';
 import { CHECKLISTS } from '@/lib/panel/checklists';
@@ -24,9 +24,7 @@ export default async function Page() {
   const c = await cookies();
 
   const effectiveTier = resolveTierFromCookiesAndSession(c, session);
-  const hasStarter = isTierAtLeast(effectiveTier, 'starter');
-  const hasPro = isTierAtLeast(effectiveTier, 'pro');
-  const hasElite = isTierAtLeast(effectiveTier, 'elite');
+  const hasPaid = hasFullPanelAccess(effectiveTier);
 
   // Pobierz kalendarz (podobnie jak w kalendarz-7-dni/page.tsx)
   let events: CalendarEvent[] = CALENDAR_7D;
@@ -74,10 +72,9 @@ export default async function Page() {
   const topScenarios = SCENARIOS_ABC.slice(0, 5);
 
   // Pobierz mapy techniczne (tylko jeśli użytkownik ma PRO)
-  const techMaps = hasPro ? await getTechMaps() : [];
+  const techMaps = hasPaid ? await getTechMaps() : [];
 
-  // Pobierz raporty miesięczne (tylko jeśli użytkownik ma ELITE)
-  const monthlyReports = hasElite ? getMonthlyReports() : [];
+  const monthlyReports = hasPaid ? getMonthlyReports() : [];
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -102,21 +99,20 @@ export default async function Page() {
             Podsumowanie modułów
           </h1>
           <p className="mt-4 text-lg text-white/80 max-w-3xl leading-relaxed">
-            Przegląd najważniejszych informacji z wszystkich modułów dostępnych w Twoim pakiecie. Wszystko w jednym miejscu, gotowe do wykorzystania.
+            Przegląd najważniejszych informacji ze wszystkich modułów przy pełnym dostępie. Wszystko w jednym miejscu, gotowe do wykorzystania.
           </p>
         </div>
 
         {/* plan badge */}
         <div className="mb-8">
           <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-2 text-sm font-semibold shadow-lg">
-            Plan: {effectiveTier.toUpperCase()}
+            {hasPaid ? 'Pełny dostęp do panelu' : 'Brak pełnego dostępu'}
           </span>
         </div>
 
         {/* modules summary - grid layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {/* STARTER modules */}
-          {hasStarter && (
+          {hasPaid && (
             <>
               {/* Kalendarz 7 dni */}
               <ModuleTile
@@ -131,7 +127,6 @@ export default async function Page() {
                 tier="starter"
               />
 
-              {/* Scenariusze A/B/C */}
               <ModuleTile
                 title="Scenariusze A/B/C"
                 description="Gotowe warianty zachowania rynku na dane aktywo i godzinę — plan A, B i C. Warunki aktywacji, potwierdzenia kierunku i alternatywne scenariusze."
@@ -156,13 +151,7 @@ export default async function Page() {
                 href="#checklisty"
                 tier="starter"
               />
-            </>
-          )}
 
-          {/* PRO modules */}
-          {hasPro && (
-            <>
-              {/* Mapy techniczne */}
               <ModuleTile
                 title="Mapy techniczne (EDU)"
                 description="Poziomy, struktura i zmienność jako kontekst — wiesz gdzie rynek ma sens. Kluczowe poziomy wsparcia i oporu, struktura trendu oraz zmienność jako filtr ryzyka."
@@ -172,10 +161,9 @@ export default async function Page() {
                   </svg>
                 }
                 href="#mapy-techniczne"
-                tier="pro"
+                tier="starter"
               />
 
-              {/* Playbooki eventowe */}
               <ModuleTile
                 title="Playbooki eventowe"
                 description="Typowe reakcje rynku na wydarzenia (CPI, FOMC, NFP) — co zwykle działa i kiedy uważać. Schematy reakcji przed i po publikacji, warunki unieważnienia scenariusza."
@@ -185,15 +173,9 @@ export default async function Page() {
                   </svg>
                 }
                 href="#playbooki-eventowe"
-                tier="pro"
+                tier="starter"
               />
-            </>
-          )}
 
-          {/* ELITE modules */}
-          {hasElite && (
-            <>
-              {/* Coach AI */}
               <ModuleTile
                 title="Coach AI (EDU)"
                 description="Wsparcie w analizie i procesie — pytania/odpowiedzi, bez sygnałów. Wyjaśnienie kontekstu i ryzyk, pomoc w budowie checklisty/scenariusza, edukacyjna interpretacja danych."
@@ -203,10 +185,9 @@ export default async function Page() {
                   </svg>
                 }
                 href="#coach-ai"
-                tier="elite"
+                tier="starter"
               />
 
-              {/* Raport miesięczny */}
               <ModuleTile
                 title="Raport miesięczny (EDU)"
                 description="Podsumowanie miesiąca: kontekst, wnioski i scenariusze na kolejny okres. Najważniejsze tematy i katalizatory, wnioski z zachowania rynku, plan na co patrzeć dalej."
@@ -216,26 +197,25 @@ export default async function Page() {
                   </svg>
                 }
                 href="#raport-miesieczny"
-                tier="elite"
+                tier="starter"
               />
             </>
           )}
 
-          {/* Upgrade prompt if not all modules */}
-          {!hasStarter && (
+          {!hasPaid && (
             <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-6 backdrop-blur-sm">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <div className="text-lg font-semibold text-amber-200">Odblokuj moduły STARTER</div>
+                  <div className="text-lg font-semibold text-amber-200">Pełny dostęp do panelu</div>
                   <div className="text-sm text-amber-200/80 mt-1">
-                    Aby zobaczyć podsumowanie modułów, potrzebujesz pakietu STARTER lub wyższego.
+                    Podsumowanie modułów wymaga Founders NFT (jednorazowy zakup pełnego dostępu).
                   </div>
                 </div>
                 <Link
-                  href="/kontakt?topic=zakup-pakietu"
+                  href="/cennik"
                   className="inline-flex items-center justify-center rounded-lg bg-white text-slate-900 font-semibold px-4 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40 transition-opacity"
                 >
-                  Wybierz pakiet
+                  Zobacz cennik
                 </Link>
               </div>
             </div>
@@ -245,7 +225,7 @@ export default async function Page() {
         {/* Detailed summaries sections */}
         <div className="mt-16 space-y-16">
           {/* Kalendarz 7 dni */}
-          {hasStarter && (
+          {hasPaid && (
             <section id="kalendarz-7-dni" className="scroll-mt-8">
               <div className="mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Kalendarz 7 dni</h2>
@@ -258,7 +238,7 @@ export default async function Page() {
           )}
 
           {/* Scenariusze A/B/C */}
-          {hasStarter && (
+          {hasPaid && (
             <section id="scenariusze-abc" className="scroll-mt-8">
               <div className="mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Scenariusze A/B/C</h2>
@@ -271,7 +251,7 @@ export default async function Page() {
           )}
 
           {/* Checklisty */}
-          {hasStarter && (
+          {hasPaid && (
             <section id="checklisty" className="scroll-mt-8">
               <div className="mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Checklisty</h2>
@@ -284,7 +264,7 @@ export default async function Page() {
           )}
 
           {/* Mapy techniczne */}
-          {hasPro && (
+          {hasPaid && (
             <section id="mapy-techniczne" className="scroll-mt-8">
               <div className="mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Mapy techniczne (EDU)</h2>
@@ -297,7 +277,7 @@ export default async function Page() {
           )}
 
           {/* Playbooki eventowe */}
-          {hasPro && (
+          {hasPaid && (
             <section id="playbooki-eventowe" className="scroll-mt-8">
               <div className="mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Playbooki eventowe</h2>
@@ -310,7 +290,7 @@ export default async function Page() {
           )}
 
           {/* Coach AI */}
-          {hasElite && (
+          {hasPaid && (
             <section id="coach-ai" className="scroll-mt-8">
               <div className="mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Coach AI (EDU)</h2>
@@ -323,7 +303,7 @@ export default async function Page() {
           )}
 
           {/* Raport miesięczny */}
-          {hasElite && (
+          {hasPaid && (
             <section id="raport-miesieczny" className="scroll-mt-8">
               <div className="mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Raport miesięczny (EDU)</h2>

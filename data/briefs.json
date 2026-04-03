@@ -1,5 +1,105 @@
 [
   {
+    "id": "mnhgodqe-synth",
+    "ts_iso": "2026-04-02T12:39:00.230Z",
+    "title": "Szybki briefing — GEN (02.04, 14:39)",
+    "bullets": [
+      "Syntetyczny wpis (fallback) na bazie ruchu US100.",
+      "Dane edukacyjne – bez porad inwestycyjnych."
+    ],
+    "content": "Fallback wygenerowany automatycznie, gdy generator AI był niedostępny. Zawiera podstawowe metryki do celów edukacyjnych.",
+    "sentiment": "Neutralny",
+    "metrics": {
+      "rsi": 1,
+      "adx": 28,
+      "macd": -1.1,
+      "volume": "Średnie",
+      "dist200": "-2.8%"
+    },
+    "opinion": "Przewaga spadku",
+    "type": "GEN"
+  },
+  {
+    "id": "mnhgocn4-synth",
+    "ts_iso": "2026-04-02T12:38:58.816Z",
+    "title": "Szybki briefing — GEN (02.04, 14:38)",
+    "bullets": [
+      "Syntetyczny wpis (fallback) na bazie ruchu US100.",
+      "Dane edukacyjne – bez porad inwestycyjnych."
+    ],
+    "content": "Fallback wygenerowany automatycznie, gdy generator AI był niedostępny. Zawiera podstawowe metryki do celów edukacyjnych.",
+    "sentiment": "Neutralny",
+    "metrics": {
+      "rsi": 1,
+      "adx": 28,
+      "macd": -1.1,
+      "volume": "Średnie",
+      "dist200": "-2.8%"
+    },
+    "opinion": "Przewaga spadku",
+    "type": "GEN"
+  },
+  {
+    "id": "mkmwl9q4-synth",
+    "ts_iso": "2026-01-20T18:04:12.796Z",
+    "title": "Szybki briefing — GEN (20.01, 19:04)",
+    "bullets": [
+      "Syntetyczny wpis (fallback) na bazie ruchu US100.",
+      "Dane edukacyjne – bez porad inwestycyjnych."
+    ],
+    "content": "Fallback wygenerowany automatycznie, gdy generator AI był niedostępny. Zawiera podstawowe metryki do celów edukacyjnych.",
+    "sentiment": "Neutralny",
+    "metrics": {
+      "rsi": 1,
+      "adx": 28,
+      "macd": -1.1,
+      "volume": "Średnie",
+      "dist200": "-2.8%"
+    },
+    "opinion": "Przewaga spadku",
+    "type": "GEN"
+  },
+  {
+    "id": "auto-synth-1768832804682",
+    "ts_iso": "2026-01-19T14:26:44.682Z",
+    "title": "Szybki briefing — GEN (19.01, 15:26)",
+    "bullets": [
+      "Syntetyczny wpis na bazie ruchu US100 (fallback).",
+      "Dane demo — bez porad inwestycyjnych."
+    ],
+    "content": "Wpis uzupełniający powstał automatycznie, aby dostarczyć podstawowe metryki kiedy generator AI był niedostępny.",
+    "sentiment": "Neutralny",
+    "metrics": {
+      "rsi": 1,
+      "adx": 28,
+      "macd": -1.1,
+      "volume": "Średnie",
+      "dist200": "-2.8%"
+    },
+    "opinion": "Przewaga spadku",
+    "type": "GEN"
+  },
+  {
+    "id": "auto-synth-1768832796706",
+    "ts_iso": "2026-01-19T14:26:36.706Z",
+    "title": "Szybki briefing — GEN (19.01, 15:26)",
+    "bullets": [
+      "Syntetyczny wpis na bazie ruchu US100 (fallback).",
+      "Dane demo — bez porad inwestycyjnych."
+    ],
+    "content": "Wpis uzupełniający powstał automatycznie, aby dostarczyć podstawowe metryki kiedy generator AI był niedostępny.",
+    "sentiment": "Neutralny",
+    "metrics": {
+      "rsi": 1,
+      "adx": 28,
+      "macd": -1.1,
+      "volume": "Średnie",
+      "dist200": "-2.8%"
+    },
+    "opinion": "Przewaga spadku",
+    "type": "GEN"
+  },
+  {
     "id": "auto-synth-1768582894090",
     "ts_iso": "2026-01-16T17:01:34.090Z",
     "title": "Szybki briefing — GEN (16.01, 18:01)",

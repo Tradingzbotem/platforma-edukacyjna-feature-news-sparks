@@ -27,7 +27,7 @@ export default function PrivacyPage() {
             <li><b>Dane użycia</b>: aktywność w Serwisie (np. postępy w kursach/quizach), logi techniczne.</li>
             <li><b>Treści użytkownika</b>: wiadomości na forum/czacie, odpowiedzi w quizach.</li>
             <li><b>Dane techniczne</b>: adres IP, nagłówki przeglądarki, identyfikatory sesji, cookies (szczegóły poniżej).</li>
-            <li><b>Płatności/subskrypcje</b> (jeśli używasz): identyfikatory transakcji/abonamentu, statusy rozliczeń (bez pełnych danych kart).</li>
+            <li><b>Płatności (NFT / krypto)</b>: identyfikatory transakcji, adres portfela w zakresie niezbędnym do weryfikacji dostępu (bez przechowywania pełnych kluczy prywatnych).</li>
             <li><b>AI (EDU)</b>: treści zapytań (prompty) i kontekst przekazywane do dostawcy modelu (np. OpenAI) w celu wygenerowania odpowiedzi.</li>
           </ul>
         </section>

@@ -34,7 +34,8 @@ export async function POST(req: Request) {
     const data = await req.json();
     const { entry_id } = data || {};
 
-    if (!entry_id || typeof entry_id !== 'number') {
+    const entryIdNum = typeof entry_id === 'number' ? entry_id : parseInt(String(entry_id), 10);
+    if (!entry_id || !isFinite(entryIdNum) || entryIdNum <= 0) {
       return NextResponse.json({ error: 'Invalid entry_id' }, { status: 400 });
     }
 
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
       SELECT id, user_id, symbol, direction, horizon, thesis, market_mode, confidence, 
              created_at, status, outcome, emotional_state, risk_notes
       FROM decision_lab_entries
-      WHERE id = ${entry_id} AND user_id = ${userId}
+      WHERE id = ${entryIdNum} AND user_id = ${userId}
     `;
 
     if (!entryResult || entryResult.length === 0) {
@@ -155,7 +156,7 @@ ODPOWIEDZ W FORMACIE JSON:
         status = 'REVIEWED',
         outcome = ${aiAnalysis.outcome || null},
         reviewed_at = COALESCE(reviewed_at, ${new Date().toISOString()})
-      WHERE id = ${entry_id} AND user_id = ${userId}
+      WHERE id = ${entryIdNum} AND user_id = ${userId}
       RETURNING id, ai_analysis, ai_analyzed_at, status, outcome, reviewed_at
     `;
 

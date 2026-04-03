@@ -22,10 +22,36 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+function getSiteUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    const url = process.env.VERCEL_URL;
+    return url.startsWith('http') ? url : `https://${url}`;
+  }
+  return "http://localhost:3000";
+}
+
+const META_TITLE = "FX Edu — platforma edukacyjna";
+const META_DESC = "Kursy, quizy i narzędzia FX/CFD + asystent AI (edukacyjny).";
+
 export const metadata: Metadata = {
-  title: "FX Edu — platforma edukacyjna",
-  description: "Kursy, quizy i narzędzia FX/CFD + asystent AI (edukacyjny).",
-  metadataBase: new URL("https://fx-edu.example"),
+  title: META_TITLE,
+  description: META_DESC,
+  metadataBase: new URL(getSiteUrl()),
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    siteName: "FXEduLab",
+    title: META_TITLE,
+    description: META_DESC,
+  },
+  twitter: {
+    card: "summary",
+    title: META_TITLE,
+    description: META_DESC,
+  },
 };
 
 export const viewport: Viewport = {

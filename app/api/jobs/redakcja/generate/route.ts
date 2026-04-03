@@ -205,12 +205,39 @@ function selectRandomTopic(recentTopics: string[], newsContext?: string): string
 	return topicsToChooseFrom[Math.floor(Math.random() * topicsToChooseFrom.length)];
 }
 
-async function generateArticleWithAI(apiKey: string, context?: string): Promise<{
+type GenerateArticleData = {
 	title: string;
 	content: string;
 	tags: string[];
 	readingTime: number;
-} | null> {
+};
+
+type GenerateArticleResult =
+	| { ok: true; data: GenerateArticleData }
+	| { ok: false; error: string; details?: unknown };
+
+function serializeError(err: unknown) {
+	const e = err as {
+		message?: string;
+		status?: number;
+		code?: string;
+		type?: string;
+		name?: string;
+		error?: unknown;
+		response?: { data?: unknown };
+	};
+	return {
+		message: e?.message,
+		status: e?.status,
+		code: e?.code,
+		type: e?.type,
+		name: e?.name,
+		error: e?.error,
+		responseData: e?.response?.data ?? null,
+	};
+}
+
+async function generateArticleWithAI(apiKey: string, context?: string): Promise<GenerateArticleResult> {
 	const openai = new OpenAI({ apiKey });
 
 	const today = new Date();
@@ -236,18 +263,44 @@ async function generateArticleWithAI(apiKey: string, context?: string): Promise<
 		});
 
 		const content = completion.choices?.[0]?.message?.content;
-		if (!content) return null;
+		if (!content) {
+			const details = {
+				finishReason: completion.choices?.[0]?.finish_reason ?? null,
+				completionId: completion.id ?? null,
+			};
+			console.error('OpenAI empty completion:', details);
+			return { ok: false, error: 'OPENAI_EMPTY_RESPONSE', details };
+		}
 
-		const parsed = JSON.parse(content);
+		let parsed: Record<string, unknown>;
+		try {
+			parsed = JSON.parse(content) as Record<string, unknown>;
+		} catch (parseErr) {
+			const pe = serializeError(parseErr);
+			const contentPreview = content.slice(0, 400);
+			console.error('OpenAI JSON parse error:', pe, { contentPreview });
+			return {
+				ok: false,
+				error: 'OPENAI_JSON_PARSE_FAILED',
+				details: { parseError: pe, contentPreview },
+			};
+		}
+
 		return {
-			title: String(parsed.title || 'Artykuł edukacyjny').trim(),
-			content: String(parsed.content || '').trim(),
-			tags: Array.isArray(parsed.tags) ? parsed.tags.map((t: any) => String(t).trim()).filter(Boolean) : ['edukacja'],
-			readingTime: typeof parsed.readingTime === 'number' ? parsed.readingTime : 5,
+			ok: true,
+			data: {
+				title: String(parsed.title || 'Artykuł edukacyjny').trim(),
+				content: String(parsed.content || '').trim(),
+				tags: Array.isArray(parsed.tags)
+					? parsed.tags.map((t: unknown) => String(t).trim()).filter(Boolean)
+					: ['edukacja'],
+				readingTime: typeof parsed.readingTime === 'number' ? parsed.readingTime : 5,
+			},
 		};
-	} catch (e: any) {
-		console.error('OpenAI error:', e?.message);
-		return null;
+	} catch (e: unknown) {
+		const details = serializeError(e);
+		console.error('OpenAI error:', details);
+		return { ok: false, error: 'OPENAI_GENERATION_FAILED', details };
 	}
 }
 
@@ -267,7 +320,7 @@ async function generateImageWithDALLE(apiKey: string, title: string, tags: strin
 			n: 1,
 		});
 
-		const imageUrl = response.data[0]?.url;
+		const imageUrl = response.data?.[0]?.url;
 		if (!imageUrl) return null;
 
 		// Pobierz obraz i zapisz do biblioteki mediów
@@ -700,13 +753,14 @@ export async function GET(request: Request) {
 		}
 
 		// Generuj artykuł
-		const articleData = await generateArticleWithAI(apiKey, context);
-		if (!articleData) {
+		const genResult = await generateArticleWithAI(apiKey, context);
+		if (!genResult.ok) {
 			return NextResponse.json(
-				{ ok: false, error: 'Failed to generate article content' },
+				{ ok: false, error: genResult.error, details: genResult.details },
 				{ status: 500 }
 			);
 		}
+		const articleData = genResult.data;
 
 		// Utwórz artykuł bezpośrednio (bez potrzeby autoryzacji admin)
 		const result = await createArticleInternal(articleData, apiKey);

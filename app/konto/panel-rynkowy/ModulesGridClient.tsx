@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { isTierAtLeast, type Tier } from '@/lib/panel/access';
+import { hasFullPanelAccess, type Tier } from '@/lib/panel/access';
 
 type ModuleTier = Exclude<Tier, 'free'>;
 
@@ -22,54 +22,28 @@ type Props = {
   upgradeHref: string;
 };
 
-const SEGMENTS: Array<{ key: 'all' | ModuleTier; label: string }> = [
-  { key: 'all', label: 'Wszystkie' },
-  { key: 'starter', label: 'Starter' },
-  { key: 'pro', label: 'Pro' },
-  { key: 'elite', label: 'Elite' },
-];
-
 export default function ModulesGridClient({ modules, effectiveTier, upgradeHref }: Props) {
-  const [segment, setSegment] = useState<'all' | ModuleTier>('all');
+  const paid = hasFullPanelAccess(effectiveTier);
   const [query, setQuery] = useState('');
   const [onlyAvailable, setOnlyAvailable] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return modules.filter((m) => {
-      if (segment !== 'all' && m.tier !== segment) return false;
       if (q) {
         const hay = `${m.title} ${m.blurb} ${m.tags.join(' ')}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       if (onlyAvailable) {
-        if (!(isTierAtLeast(effectiveTier, m.tier) && m.implemented)) return false;
+        if (!(paid && m.implemented)) return false;
       }
       return true;
     });
-  }, [modules, segment, query, onlyAvailable, effectiveTier]);
+  }, [modules, query, onlyAvailable, paid]);
 
   return (
     <div className="mt-4">
-      {/* filters */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
-          {SEGMENTS.map((s) => {
-            const active = segment === s.key;
-            return (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => setSegment(s.key)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                  active ? 'bg-white text-slate-900' : 'text-white/80 hover:bg-white/10'
-                }`}
-              >
-                {s.label}
-              </button>
-            );
-          })}
-        </div>
         <div className="flex items-center gap-3">
           <div className="relative">
             <input
@@ -91,11 +65,9 @@ export default function ModulesGridClient({ modules, effectiveTier, upgradeHref 
         </div>
       </div>
 
-      {/* grid */}
       <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filtered.map((m) => {
-          const unlocked = isTierAtLeast(effectiveTier, m.tier);
-          const tierLabel = m.tier === 'starter' ? 'Starter' : m.tier === 'pro' ? 'Pro' : 'Elite';
+          const unlocked = paid;
 
           return (
             <div
@@ -104,7 +76,7 @@ export default function ModulesGridClient({ modules, effectiveTier, upgradeHref 
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-xs text-white/70">{tierLabel}</div>
+                  <div className="text-xs text-white/70">Panel EDU</div>
                   <div className="mt-1 text-lg font-semibold">{m.title}</div>
                 </div>
                 <div className="flex flex-wrap gap-1">
@@ -146,7 +118,7 @@ export default function ModulesGridClient({ modules, effectiveTier, upgradeHref 
                     </span>
                   ) : (
                     <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-white/70">
-                      {m.tier === 'starter' ? 'Wymaga Starter' : m.tier === 'pro' ? 'Wymaga Pro' : 'Wymaga Elite'}
+                      Wymaga pełnego dostępu
                     </span>
                   )}
                 </div>
@@ -161,7 +133,7 @@ export default function ModulesGridClient({ modules, effectiveTier, upgradeHref 
                     </Link>
                   ) : (
                     <Link
-                      href="/ebooki#plany"
+                      href="/cennik"
                       className="inline-flex items-center justify-center rounded-lg bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
                     >
                       Zobacz ofertę
@@ -172,7 +144,7 @@ export default function ModulesGridClient({ modules, effectiveTier, upgradeHref 
                     href={upgradeHref}
                     className="inline-flex items-center justify-center rounded-lg bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
                   >
-                    <span className="mr-1.5" aria-hidden>🔒</span> Ulepsz plan
+                    <span className="mr-1.5" aria-hidden>🔒</span> Uzyskaj dostęp
                   </Link>
                 )}
               </div>
@@ -183,5 +155,3 @@ export default function ModulesGridClient({ modules, effectiveTier, upgradeHref 
     </div>
   );
 }
-
-

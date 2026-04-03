@@ -22,29 +22,79 @@ export function usePriceChange(ticker: string, challengeKey: string, deadlineMs:
   });
   const [loading, setLoading] = useState(true);
 
-  // Mapowanie tickera na override key (jak w TechnicalSnapshotPanel)
+  // Mapowanie tickera na override key
+  // Dla większości aktywów użyj tickera bezpośrednio (override używa tego samego klucza)
   const overrideKey = useMemo(() => {
     const t = ticker.toUpperCase();
+    // Specjalne przypadki mapowania
     if (t === 'OIL.WTI' || t === 'WTI' || t === 'OIL') return 'WTI';
     if (t === 'DE40' || t === 'DAX') return 'DE40';
     if (t === 'XAUUSD' || t === 'GOLD') return 'XAUUSD';
-    if (t === 'EURUSD') return 'EURUSD';
-    if (t === 'USDJPY') return 'USDJPY';
+    if (t === 'XAGUSD' || t === 'SILVER') return 'XAGUSD';
+    if (t === 'NG' || t === 'NATGAS') return 'NG';
     if (t === 'BTCUSD' || t === 'BTC') return 'BTCUSD';
     if (t === 'ETHUSD' || t === 'ETH') return 'ETHUSD';
-    if (t === 'GBPUSD') return 'GBPUSD';
-    if (t === 'NG' || t === 'NATGAS') return 'NG';
-    // Dla akcji (TSLA, NVDA, AAPL) użyj tickera bezpośrednio
+    // Dla pozostałych (forex, akcje, indeksy) użyj tickera bezpośrednio
     return t;
   }, [ticker]);
 
   useEffect(() => {
     let alive = true;
     const storageKey = `fxedu:challenge:startPrice:${challengeKey}`;
+    const lastFetchKey = `fxedu:challenge:lastPriceFetch:${overrideKey}`;
     const now = Date.now();
     const isBeforeDeadline = now < deadlineMs;
 
+    // Sprawdź czy minął dzień od ostatniego odświeżenia
+    function shouldRefreshPrice(): boolean {
+      try {
+        const lastFetchStr = localStorage.getItem(lastFetchKey);
+        if (!lastFetchStr) return true; // Pierwsze odświeżenie
+        
+        const lastFetch = parseInt(lastFetchStr, 10);
+        if (isNaN(lastFetch)) return true;
+        
+        const oneDayMs = 24 * 60 * 60 * 1000; // 24 godziny
+        const timeSinceLastFetch = now - lastFetch;
+        
+        return timeSinceLastFetch >= oneDayMs;
+      } catch {
+        return true;
+      }
+    }
+
+    // Zapisz datę ostatniego odświeżenia
+    function markPriceFetched() {
+      try {
+        localStorage.setItem(lastFetchKey, String(now));
+      } catch {}
+    }
+
     async function fetchPrice() {
+      // Sprawdź czy powinno się odświeżyć (raz dziennie)
+      if (!shouldRefreshPrice()) {
+        // Użyj zapisanej ceny jeśli dostępna
+        try {
+          const stored = localStorage.getItem(storageKey);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            const savedPrice = typeof parsed?.price === 'number' && Number.isFinite(parsed.price) ? parsed.price : null;
+            if (savedPrice !== null && savedPrice > 0) {
+              // Oblicz zmianę na podstawie zapisanej ceny
+              const change = ((savedPrice - savedPrice) / savedPrice) * 100; // 0% bo to ta sama cena
+              setPriceInfo({
+                price: savedPrice,
+                updatedAt: null,
+                change: 0,
+                direction: 'flat',
+              });
+              if (alive) setLoading(false);
+              return;
+            }
+          }
+        } catch {}
+      }
+
       try {
         const res = await fetch(`/api/panel/price-override/${encodeURIComponent(overrideKey)}`, {
           cache: 'no-store',
@@ -101,6 +151,9 @@ export function usePriceChange(ticker: string, challengeKey: string, deadlineMs:
           change,
           direction,
         });
+
+        // Zapisz datę ostatniego odświeżenia
+        markPriceFetched();
       } catch (e: any) {
         if (alive) {
           setPriceInfo({ price: null, updatedAt: null, change: null, direction: null });
@@ -112,12 +165,16 @@ export function usePriceChange(ticker: string, challengeKey: string, deadlineMs:
 
     fetchPrice();
     
-    // Odśwież co 10 sekund
-    const interval = setInterval(fetchPrice, 10000);
+    // Sprawdź co godzinę, czy minął dzień (aby odświeżyć o odpowiedniej porze)
+    const checkInterval = setInterval(() => {
+      if (shouldRefreshPrice()) {
+        fetchPrice();
+      }
+    }, 60 * 60 * 1000); // Co godzinę
 
     return () => {
       alive = false;
-      clearInterval(interval);
+      clearInterval(checkInterval);
     };
   }, [overrideKey, challengeKey, deadlineMs]);
 

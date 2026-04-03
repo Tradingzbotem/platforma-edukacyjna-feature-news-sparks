@@ -199,25 +199,31 @@ export default function Page() {
                 </ul>
               </div>
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                <h3 className="font-semibold">Płatne pakiety wsparcia</h3>
+                <h3 className="font-semibold">Pełny dostęp — Founders NFT</h3>
                 <p className="mt-2 text-slate-300 text-sm mb-2">
-                  Rozszerz swoją naukę o dodatkowe narzędzia edukacyjne dostępne w pakietach:
+                  Panel rynkowy, scenariusze, checklisty, mapy, Coach AI i raporty uzyskasz po jednorazowym zakupie
+                  Founders NFT (bez miesięcznego abonamentu za dostęp).
                 </p>
                 <ul className="mt-2 list-disc pl-5 text-slate-300 space-y-1 text-sm">
-                  <li><strong>STARTER EDU</strong> — kalendarz wydarzeń, scenariusze A/B/C, checklisty decyzyjne</li>
-                  <li><strong>PRO EDU</strong> — wszystko ze Starter + mapy techniczne, playbooki eventowe, analizy makro</li>
-                  <li><strong>ELITE EDU</strong> — wszystko z Pro + Coach AI oraz raporty miesięczne</li>
+                  <li>Płatność w BTC / ETH / USDT — szczegóły przy zakupie</li>
+                  <li>Licencja na korzystanie z narzędzi przypisana do NFT</li>
                 </ul>
                 <p className="mt-3 text-xs text-slate-400">
-                  Szczegóły pakietów znajdziesz w{' '}
                   <Link href="/cennik" className="underline hover:no-underline text-slate-300">
-                    cenniku
+                    Cennik
                   </Link>
-                  {' '}lub{' '}
+                  {' · '}
+                  <Link href="/marketplace" className="underline hover:no-underline text-slate-300">
+                    Marketplace
+                  </Link>
+                  {' · '}
+                  <Link href="/prawne/nft" className="underline hover:no-underline text-slate-300">
+                    Regulamin NFT
+                  </Link>
+                  {' · '}
                   <Link href="/kontakt?topic=zakup-pakietu" className="underline hover:no-underline text-slate-300">
-                    skontaktuj się z nami
+                    Kontakt
                   </Link>
-                  .
                 </p>
               </div>
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">

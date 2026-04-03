@@ -9,7 +9,7 @@ export default async function Page() {
 	const session = await getSession();
 	const c = await cookies();
 
-	const { unlocked } = requireTier(c, session, 'elite'); // ELITE only
+	const { unlocked } = requireTier(c, session, 'starter');
 
 	const reports = getMonthlyReports();
 
@@ -52,13 +52,13 @@ export default async function Page() {
 						<div className="flex items-center justify-between gap-4">
 							<div>
 								<div className="text-lg font-semibold">Zablokowane</div>
-								<div className="text-sm text-white/70 mt-1">Ten moduł jest dostępny wyłącznie w ELITE.</div>
+								<div className="text-sm text-white/70 mt-1">Ten moduł jest w pełnym dostępie (Founders NFT).</div>
 							</div>
 							<Link
-								href="/kontakt?topic=zakup-pakietu"
+								href="/cennik"
 								className="inline-flex items-center justify-center rounded-lg bg-white text-slate-900 font-semibold px-4 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
 							>
-								Ulepsz plan
+								Uzyskaj dostęp
 							</Link>
 						</div>
 					</div>
@@ -77,7 +77,7 @@ export default async function Page() {
 											<h2 className="mt-1 text-lg font-semibold">{r.title}</h2>
 										</div>
 										<span className="inline-flex items-center rounded-full border border-emerald-300/30 bg-emerald-400/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-200">
-											ELITE
+											Pełny dostęp
 										</span>
 									</div>
 									<ul className="mt-3 space-y-1 text-sm text-white/80">

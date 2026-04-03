@@ -13,6 +13,11 @@ export default function AdminPage() {
         desc: 'Zarządzanie planami, przegląd kont i usuwanie użytkowników.',
       },
       {
+        title: 'Darmowe Edulab 7 dni',
+        href: '/admin/uzytkownicy/edulab-trial',
+        desc: 'Zarządzanie prośbami o 7-dniowy trial pakietu Elite.',
+      },
+      {
         title: 'Override ceny',
         href: '/admin/override-ceny',
         desc: 'Aktualizacja cen wykorzystywanych w mapach technicznych.',

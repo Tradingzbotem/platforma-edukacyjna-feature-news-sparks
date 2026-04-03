@@ -13,7 +13,7 @@ type Params = {
 export default async function Page({ params }: Params) {
 	const session = await getSession();
 	const c = await cookies();
-	const { unlocked } = requireTier(c, session, 'elite');
+	const { unlocked } = requireTier(c, session, 'starter');
 
 	const { ym } = await params;
 	const report = getMonthlyReport(ym);
@@ -64,13 +64,13 @@ export default async function Page({ params }: Params) {
 						<div className="flex items-center justify-between gap-4">
 							<div>
 								<div className="text-lg font-semibold">Zablokowane</div>
-								<div className="text-sm text-white/70 mt-1">Ten moduł jest dostępny wyłącznie w ELITE.</div>
+								<div className="text-sm text-white/70 mt-1">Ten moduł jest w pełnym dostępie (Founders NFT).</div>
 							</div>
 							<Link
-								href="/kontakt?topic=zakup-pakietu"
+								href="/cennik"
 								className="inline-flex items-center justify-center rounded-lg bg-white text-slate-900 font-semibold px-4 py-2 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40"
 							>
-								Ulepsz plan
+								Uzyskaj dostęp
 							</Link>
 						</div>
 					</div>

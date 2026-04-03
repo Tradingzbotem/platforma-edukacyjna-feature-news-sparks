@@ -17,7 +17,7 @@ import fs from 'fs';
 import path from 'path';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60; // DALL-E może zająć trochę czasu
+export const maxDuration = 60; // Limit dla Pro plan (można zwiększyć do 300s w ustawieniach Vercel projektu)
 
 const SYSTEM_PROMPT = `
 Jesteś redaktorem tworzącym edukacyjne artykuły o rynkach finansowych i ekonomii.
@@ -228,12 +228,39 @@ function selectRandomTopic(recentTopics: string[], newsContext?: string): string
 	return topicsToChooseFrom[Math.floor(Math.random() * topicsToChooseFrom.length)];
 }
 
-async function generateArticleWithAI(apiKey: string, context?: string): Promise<{
+type GenerateArticleData = {
 	title: string;
 	content: string;
 	tags: string[];
 	readingTime: number;
-} | null> {
+};
+
+type GenerateArticleResult =
+	| { ok: true; data: GenerateArticleData }
+	| { ok: false; error: string; details?: unknown };
+
+function serializeError(err: unknown) {
+	const e = err as {
+		message?: string;
+		status?: number;
+		code?: string;
+		type?: string;
+		name?: string;
+		error?: unknown;
+		response?: { data?: unknown };
+	};
+	return {
+		message: e?.message,
+		status: e?.status,
+		code: e?.code,
+		type: e?.type,
+		name: e?.name,
+		error: e?.error,
+		responseData: e?.response?.data ?? null,
+	};
+}
+
+async function generateArticleWithAI(apiKey: string, context?: string): Promise<GenerateArticleResult> {
 	const openai = new OpenAI({ apiKey });
 
 	const today = new Date();
@@ -262,18 +289,44 @@ async function generateArticleWithAI(apiKey: string, context?: string): Promise<
 		});
 
 		const content = completion.choices?.[0]?.message?.content;
-		if (!content) return null;
+		if (!content) {
+			const details = {
+				finishReason: completion.choices?.[0]?.finish_reason ?? null,
+				completionId: completion.id ?? null,
+			};
+			console.error('OpenAI empty completion:', details);
+			return { ok: false, error: 'OPENAI_EMPTY_RESPONSE', details };
+		}
 
-		const parsed = JSON.parse(content);
+		let parsed: Record<string, unknown>;
+		try {
+			parsed = JSON.parse(content) as Record<string, unknown>;
+		} catch (parseErr) {
+			const pe = serializeError(parseErr);
+			const contentPreview = content.slice(0, 400);
+			console.error('OpenAI JSON parse error:', pe, { contentPreview });
+			return {
+				ok: false,
+				error: 'OPENAI_JSON_PARSE_FAILED',
+				details: { parseError: pe, contentPreview },
+			};
+		}
+
 		return {
-			title: String(parsed.title || 'Artykuł edukacyjny').trim(),
-			content: String(parsed.content || '').trim(),
-			tags: Array.isArray(parsed.tags) ? parsed.tags.map((t: any) => String(t).trim()).filter(Boolean) : ['edukacja'],
-			readingTime: typeof parsed.readingTime === 'number' ? parsed.readingTime : 5,
+			ok: true,
+			data: {
+				title: String(parsed.title || 'Artykuł edukacyjny').trim(),
+				content: String(parsed.content || '').trim(),
+				tags: Array.isArray(parsed.tags)
+					? parsed.tags.map((t: unknown) => String(t).trim()).filter(Boolean)
+					: ['edukacja'],
+				readingTime: typeof parsed.readingTime === 'number' ? parsed.readingTime : 5,
+			},
 		};
-	} catch (e: any) {
-		console.error('OpenAI error:', e?.message);
-		return null;
+	} catch (e: unknown) {
+		const details = serializeError(e);
+		console.error('OpenAI error:', details);
+		return { ok: false, error: 'OPENAI_GENERATION_FAILED', details };
 	}
 }
 
@@ -288,19 +341,56 @@ async function generateImageWithDALLE(
 	const prompt = `Professional, modern illustration for an educational article about finance and economics. Title: "${title}". Theme: ${tagStr || 'finance education'}. Style: clean, minimalist, professional, suitable for a financial education platform. No text, no charts, just a conceptual illustration.`;
 	
 	try {
-		const response = await openai.images.generate({
-			model: 'dall-e-3',
-			prompt: prompt,
-			size: '1792x1024',
-			quality: 'standard',
-			n: 1,
-		});
+		// Dodaj timeout dla generowania obrazu (30 sekund max, żeby zostawić czas na resztę procesu)
+		const timeoutId = setTimeout(() => {
+			console.warn('DALL-E generation taking too long, will timeout soon');
+		}, 25000);
 
-		const imageUrl = response.data[0]?.url;
+		let response: Awaited<ReturnType<typeof openai.images.generate>>;
+		try {
+			response = await Promise.race([
+				openai.images.generate({
+					model: 'dall-e-3',
+					prompt: prompt,
+					size: '1792x1024',
+					quality: 'standard',
+					n: 1,
+				}),
+				new Promise<never>((_, reject) => {
+					setTimeout(() => reject(new Error('DALL-E generation timeout after 30s')), 30000);
+				}),
+			]);
+			clearTimeout(timeoutId);
+		} catch (timeoutError: any) {
+			clearTimeout(timeoutId);
+			if (timeoutError?.message?.includes('timeout')) {
+				console.warn('DALL-E generation timeout after 30s, using fallback');
+				return null;
+			}
+			throw timeoutError;
+		}
+
+		const imageUrl = response.data?.[0]?.url;
 		if (!imageUrl) return null;
 
 		try {
-			const imageResponse = await fetch(imageUrl);
+			// Timeout dla pobierania obrazu (8 sekund, żeby zmieścić się w limicie)
+			const fetchController = new AbortController();
+			const fetchTimeout = setTimeout(() => fetchController.abort(), 8000);
+
+			let imageResponse: Response;
+			try {
+				imageResponse = await fetch(imageUrl, { signal: fetchController.signal });
+				clearTimeout(fetchTimeout);
+			} catch (fetchError: any) {
+				clearTimeout(fetchTimeout);
+				if (fetchError.name === 'AbortError') {
+					console.error('Failed to fetch DALL-E image: timeout');
+					return { url: imageUrl, alt: title, persisted: false }; // Fallback do bezpośredniego URL z DALL-E
+				}
+				throw fetchError;
+			}
+			
 			if (!imageResponse.ok) {
 				console.error('Failed to fetch DALL-E image:', imageResponse.status);
 				return { url: imageUrl, alt: title, persisted: false }; // Fallback do bezpośredniego URL z DALL-E
@@ -404,10 +494,11 @@ async function saveImageToMediaLibrary(
 						pathname = null;
 						console.log('Image saved to Vercel Blob (SQL path):', url);
 					} catch {
-						// Fall back to DB bytes if Vercel Blob fails
+						// Fall back to DB bytes if Vercel Blob fails (sql tag accepts primitives only)
+						const dataHex = buffer.toString('hex');
 						await sql`
 							INSERT INTO "MediaAssetBlob" (id, data, "createdAt", "updatedAt")
-							VALUES (${genId}, ${buffer}, NOW(), NOW())
+							VALUES (${genId}, decode(${dataHex}, 'hex'), NOW(), NOW())
 							ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, "updatedAt" = NOW()
 						`;
 						url = `/api/redakcja/media/file/${genId}`;
@@ -415,10 +506,11 @@ async function saveImageToMediaLibrary(
 						console.log('Image saved to DB blob (fallback from Vercel):', url);
 					}
 				} else {
-					// Dev: zapisz do MediaAssetBlob w Neon
+					// Dev: zapisz do MediaAssetBlob w Neon (sql tag accepts primitives only)
+					const dataHex = buffer.toString('hex');
 					await sql`
 						INSERT INTO "MediaAssetBlob" (id, data, "createdAt", "updatedAt")
-						VALUES (${genId}, ${buffer}, NOW(), NOW())
+						VALUES (${genId}, decode(${dataHex}, 'hex'), NOW(), NOW())
 						ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, "updatedAt" = NOW()
 					`;
 					url = `/api/redakcja/media/file/${genId}`;
@@ -714,20 +806,19 @@ async function createArticleInternal(
 }
 
 export async function POST(request: Request) {
-	const isAdmin = await getIsAdmin();
-	if (!isAdmin) {
-		return NextResponse.json({ ok: false, error: 'FORBIDDEN', message: 'Forbidden' }, { status: 403 });
-	}
-
-	const apiKey = process.env.OPENAI_API_KEY;
-	if (!apiKey) {
-		return NextResponse.json(
-			{ ok: false, error: 'OPENAI_API_KEY missing' },
-			{ status: 500 }
-		);
-	}
-
 	try {
+		const isAdmin = await getIsAdmin();
+		if (!isAdmin) {
+			return NextResponse.json({ ok: false, error: 'FORBIDDEN', message: 'Forbidden' }, { status: 403 });
+		}
+
+		const apiKey = process.env.OPENAI_API_KEY;
+		if (!apiKey) {
+			return NextResponse.json(
+				{ ok: false, error: 'OPENAI_API_KEY missing' },
+				{ status: 500 }
+			);
+		}
 		const origin = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '') ||
 			(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 		
@@ -747,13 +838,14 @@ export async function POST(request: Request) {
 			// Ignore news fetch errors
 		}
 
-		const articleData = await generateArticleWithAI(apiKey, context);
-		if (!articleData) {
+		const genResult = await generateArticleWithAI(apiKey, context);
+		if (!genResult.ok) {
 			return NextResponse.json(
-				{ ok: false, error: 'Failed to generate article content' },
+				{ ok: false, error: genResult.error, details: genResult.details },
 				{ status: 500 }
 			);
 		}
+		const articleData = genResult.data;
 
 		const result = await createArticleInternal(articleData, apiKey);
 		if (!result.ok) {

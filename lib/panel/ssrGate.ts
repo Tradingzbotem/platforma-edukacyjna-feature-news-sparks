@@ -3,7 +3,7 @@ import { resolveTierFromCookiesAndSession, isTierAtLeast } from '@/lib/panel/acc
 
 export function requireTier(
   c: CookieGetter,
-  session: { plan?: 'free' | 'pro' } | undefined,
+  session: { plan?: 'free' | 'starter' | 'pro' | 'elite' } | undefined,
   required: Tier
 ): { tier: Tier; unlocked: boolean } {
   const tier = resolveTierFromCookiesAndSession(c, session);

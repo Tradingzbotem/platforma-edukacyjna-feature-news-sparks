@@ -223,7 +223,12 @@ button, a, input, select, textarea {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.4s ease-out both;
+}
+
+/* Opóźnione wejście — kolejne karty / sekcje na landingu */
+.animate-fade-in-delay-sm {
+  animation: fadeIn 0.55s ease-out 0.12s both;
 }
 
 .animate-fade-in-scale {

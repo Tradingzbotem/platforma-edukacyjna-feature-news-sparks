@@ -17,7 +17,22 @@ export default function GenerateArticleButton() {
 				method: 'POST',
 			});
 
-			const data = await res.json();
+			let data: any;
+			const contentType = res.headers.get('content-type');
+			
+			if (contentType && contentType.includes('application/json')) {
+				try {
+					data = await res.json();
+				} catch (jsonError: any) {
+					// Jeśli parsowanie JSON się nie powiodło, spróbuj odczytać jako tekst
+					const text = await res.text();
+					throw new Error(`Błąd serwera: ${text || 'Nieprawidłowa odpowiedź JSON'}`);
+				}
+			} else {
+				// Jeśli odpowiedź nie jest JSON, odczytaj jako tekst
+				const text = await res.text();
+				throw new Error(`Błąd serwera: ${text || 'Nieoczekiwany format odpowiedzi'}`);
+			}
 
 			if (!res.ok || !data.ok) {
 				throw new Error(data.error || 'Nie udało się wygenerować artykułu');

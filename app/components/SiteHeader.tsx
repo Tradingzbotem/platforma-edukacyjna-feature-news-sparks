@@ -124,6 +124,7 @@ export default function SiteHeader({ showTicker = false, initialIsLoggedIn = nul
 	}, [pathname]);
 
 	return (
+		<>
 		<header className="sticky top-0 z-40 backdrop-blur-md supports-[backdrop-filter]:bg-slate-900/80 bg-slate-900/70 border-b border-white/10 shadow-lg shadow-black/20">
 			<nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
 				{/* LEWO: logo */}
@@ -324,167 +325,6 @@ export default function SiteHeader({ showTicker = false, initialIsLoggedIn = nul
 				</div>
 			</nav>
 
-			{/* MOBILE MENU */}
-			{mobileOpen && (
-				<div
-					className="md:hidden fixed inset-0 z-50"
-					role="dialog"
-					aria-modal="true"
-					aria-label="Menu"
-					onMouseDown={(e) => {
-						if (e.target === e.currentTarget) setMobileOpen(false);
-					}}
-				>
-					<div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-					<div className="absolute right-0 top-0 h-full w-[min(22rem,85vw)] bg-slate-950 border-l border-white/10 shadow-2xl shadow-black/60 flex flex-col">
-						<div className="h-16 px-4 flex items-center justify-between border-b border-white/10">
-							<div className="flex items-center gap-3 min-w-0">
-								<div className="w-9 h-9 rounded-xl bg-gradient-to-br from-white/15 to-white/5 border border-white/10 flex items-center justify-center">
-									<span className="font-bold text-white">FX</span>
-								</div>
-								<div className="min-w-0">
-									<div className="font-semibold text-white truncate">EduLab</div>
-									<div className="text-xs text-white/60 truncate">{t(dictLang, 'home')}</div>
-								</div>
-							</div>
-							<button
-								type="button"
-								onClick={() => setMobileOpen(false)}
-								className="inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 w-10 h-10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
-								aria-label="Zamknij"
-							>
-								<span aria-hidden className="text-lg leading-none">✕</span>
-							</button>
-						</div>
-
-						<div className="flex-1 overflow-y-auto p-4">
-							<div className="space-y-2">
-								<Link href="/" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white">
-									{t(dictLang, 'home')}
-								</Link>
-
-								{/* Nauka */}
-								<button
-									type="button"
-									onClick={() => setMobileStudyOpen(v => !v)}
-									className="w-full flex items-center justify-between rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white"
-									aria-expanded={mobileStudyOpen}
-								>
-									<span>{t(dictLang, 'learn_nav')}</span>
-									<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 transition-transform ${mobileStudyOpen ? 'rotate-180' : ''}`}>
-										<path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-									</svg>
-								</button>
-								{mobileStudyOpen && (
-									<div className="ml-2 pl-2 border-l border-white/10 space-y-1">
-										<Link href="/kursy" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
-											{t(dictLang, 'courses')}
-										</Link>
-										<Link href="/quizy" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
-											{t(dictLang, 'quizzes')}
-										</Link>
-										<Link href="/challenge" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
-											{t(dictLang, 'challenge')}
-										</Link>
-									</div>
-								)}
-
-								{/* Panel rynkowy */}
-								<button
-									type="button"
-									onClick={() => setMobileMarketOpen(v => !v)}
-									className="w-full flex items-center justify-between rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white"
-									aria-expanded={mobileMarketOpen}
-								>
-									<span className="inline-flex items-center gap-2">
-										{t(dictLang, 'market_panel_nav')}
-										<span className="inline-flex items-center rounded-md bg-gradient-to-r from-yellow-500/25 to-yellow-500/15 text-yellow-300 text-[10px] leading-4 font-semibold px-1.5 py-0.5 ring-1 ring-inset ring-yellow-400/40">
-											VIP
-										</span>
-									</span>
-									<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 transition-transform ${mobileMarketOpen ? 'rotate-180' : ''}`}>
-										<path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-									</svg>
-								</button>
-								{mobileMarketOpen && (
-									<div className="ml-2 pl-2 border-l border-white/10 space-y-1">
-										<Link href="/ebooki#plany" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
-											{t(dictLang, 'market_panel_nav')} <span className="text-yellow-300">VIP</span>
-										</Link>
-										<Link href="/news" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
-											{t(dictLang, 'news')}
-										</Link>
-										<Link href="/symulator" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
-											{t(dictLang, 'calculator')}
-										</Link>
-									</div>
-								)}
-
-								<Link href="/rankingi/brokerzy" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/90">
-									{t(dictLang, 'broker_rankings')}
-								</Link>
-								<Link href="/redakcja" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/90">
-									Redakcja
-								</Link>
-								<Link href="/o-nas" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/90">
-									{t(dictLang, 'about_nav')}
-								</Link>
-							</div>
-
-							<div className="mt-6 pt-4 border-t border-white/10">
-								{isLoggedIn === null ? null : isLoggedIn ? (
-									<div className="space-y-2">
-										<Link
-											href="/client"
-											onClick={() => setMobileOpen(false)}
-											className="block rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 border border-white/15 text-white"
-										>
-											{t(dictLang, 'account')}
-										</Link>
-										{isAdmin && (
-											<Link
-												href="/admin"
-												onClick={() => setMobileOpen(false)}
-												className="block rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 border border-white/15 text-white"
-											>
-												Admin
-											</Link>
-										)}
-										<form action="/api/auth/logout" method="post">
-											<button
-												type="submit"
-												className="w-full rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 border border-white/15 text-white text-left focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
-											>
-												{t(dictLang, 'logout')}
-											</button>
-										</form>
-									</div>
-								) : (
-									<div className="space-y-2">
-										<Link
-											href="/logowanie"
-											onClick={() => setMobileOpen(false)}
-											className="block rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 border border-white/15 text-white"
-										>
-											{t(dictLang, 'login')}
-										</Link>
-										<Link
-											href="/rejestracja"
-											onClick={() => setMobileOpen(false)}
-											className="block rounded-xl px-4 py-3 bg-white text-slate-900 font-semibold hover:opacity-90 border border-white/10"
-										>
-											{t(dictLang, 'join_free')}
-										</Link>
-									</div>
-								)}
-								<div className="mt-4">
-									<LanguageSwitcher className="w-full" />
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			)}
 
 			{showTicker && (
 				<TickerFinnhubNoSSR
@@ -501,6 +341,169 @@ export default function SiteHeader({ showTicker = false, initialIsLoggedIn = nul
 				/>
 			)}
 		</header>
+
+		{/* MOBILE MENU - Renderowane poza header aby uniknąć stacking context */}
+		{mobileOpen && (
+			<div
+				className="md:hidden fixed inset-0 z-[60]"
+				role="dialog"
+				aria-modal="true"
+				aria-label="Menu"
+				onMouseDown={(e) => {
+					if (e.target === e.currentTarget) setMobileOpen(false);
+				}}
+			>
+				<div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+				<div className="absolute right-0 top-0 h-full w-[min(28rem,92vw)] bg-slate-950 border-l border-white/10 shadow-2xl shadow-black/60 flex flex-col">
+					<div className="h-16 px-4 flex items-center justify-between border-b border-white/10">
+						<div className="flex items-center gap-3 min-w-0">
+							<div className="w-9 h-9 rounded-xl bg-gradient-to-br from-white/15 to-white/5 border border-white/10 flex items-center justify-center">
+								<span className="font-bold text-white">FX</span>
+							</div>
+							<div className="min-w-0">
+								<div className="font-semibold text-white truncate">EduLab</div>
+								<div className="text-xs text-white/60 truncate">{t(dictLang, 'home')}</div>
+							</div>
+						</div>
+						<button
+							type="button"
+							onClick={() => setMobileOpen(false)}
+							className="inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 w-10 h-10 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+							aria-label="Zamknij"
+						>
+							<span aria-hidden className="text-lg leading-none">✕</span>
+						</button>
+					</div>
+
+					<div className="flex-1 overflow-y-auto p-4">
+						<div className="space-y-2">
+							<Link href="/" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white">
+								{t(dictLang, 'home')}
+							</Link>
+
+							{/* Nauka */}
+							<button
+								type="button"
+								onClick={() => setMobileStudyOpen(v => !v)}
+								className="w-full flex items-center justify-between rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+								aria-expanded={mobileStudyOpen}
+							>
+								<span>{t(dictLang, 'learn_nav')}</span>
+								<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 transition-transform ${mobileStudyOpen ? 'rotate-180' : ''}`}>
+									<path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+								</svg>
+							</button>
+							{mobileStudyOpen && (
+								<div className="ml-2 pl-2 border-l border-white/10 space-y-1">
+									<Link href="/kursy" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
+										{t(dictLang, 'courses')}
+									</Link>
+									<Link href="/quizy" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
+										{t(dictLang, 'quizzes')}
+									</Link>
+									<Link href="/challenge" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
+										{t(dictLang, 'challenge')}
+									</Link>
+								</div>
+							)}
+
+							{/* Panel rynkowy */}
+							<button
+								type="button"
+								onClick={() => setMobileMarketOpen(v => !v)}
+								className="w-full flex items-center justify-between rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+								aria-expanded={mobileMarketOpen}
+							>
+								<span className="inline-flex items-center gap-2">
+									{t(dictLang, 'market_panel_nav')}
+									<span className="inline-flex items-center rounded-md bg-gradient-to-r from-yellow-500/25 to-yellow-500/15 text-yellow-300 text-[10px] leading-4 font-semibold px-1.5 py-0.5 ring-1 ring-inset ring-yellow-400/40">
+										VIP
+									</span>
+								</span>
+								<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 transition-transform ${mobileMarketOpen ? 'rotate-180' : ''}`}>
+									<path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+								</svg>
+							</button>
+							{mobileMarketOpen && (
+								<div className="ml-2 pl-2 border-l border-white/10 space-y-1">
+									<Link href="/ebooki#plany" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
+										{t(dictLang, 'market_panel_nav')} <span className="text-yellow-300">VIP</span>
+									</Link>
+									<Link href="/news" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
+										{t(dictLang, 'news')}
+									</Link>
+									<Link href="/symulator" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
+										{t(dictLang, 'calculator')}
+									</Link>
+								</div>
+							)}
+
+							<Link href="/rankingi/brokerzy" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/90">
+								{t(dictLang, 'broker_rankings')}
+							</Link>
+							<Link href="/redakcja" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/90">
+								Redakcja
+							</Link>
+							<Link href="/o-nas" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/90">
+								{t(dictLang, 'about_nav')}
+							</Link>
+						</div>
+
+						<div className="mt-6 pt-4 border-t border-white/10">
+							{isLoggedIn === null ? null : isLoggedIn ? (
+								<div className="space-y-2">
+									<Link
+										href="/client"
+										onClick={() => setMobileOpen(false)}
+										className="block rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 border border-white/15 text-white"
+									>
+										{t(dictLang, 'account')}
+									</Link>
+									{isAdmin && (
+										<Link
+											href="/admin"
+											onClick={() => setMobileOpen(false)}
+											className="block rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 border border-white/15 text-white"
+										>
+											Admin
+										</Link>
+									)}
+									<form action="/api/auth/logout" method="post">
+										<button
+											type="submit"
+											className="w-full rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 border border-white/15 text-white text-left focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+										>
+											{t(dictLang, 'logout')}
+										</button>
+									</form>
+								</div>
+							) : (
+								<div className="space-y-2">
+									<Link
+										href="/logowanie"
+										onClick={() => setMobileOpen(false)}
+										className="block rounded-xl px-4 py-3 bg-white/10 hover:bg-white/15 border border-white/15 text-white"
+									>
+										{t(dictLang, 'login')}
+									</Link>
+									<Link
+										href="/rejestracja"
+										onClick={() => setMobileOpen(false)}
+										className="block rounded-xl px-4 py-3 bg-white text-slate-900 font-semibold hover:opacity-90 border border-white/10"
+									>
+										{t(dictLang, 'join_free')}
+									</Link>
+								</div>
+							)}
+							<div className="mt-4">
+								<LanguageSwitcher className="w-full" />
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		)}
+		</>
 	);
 }
 

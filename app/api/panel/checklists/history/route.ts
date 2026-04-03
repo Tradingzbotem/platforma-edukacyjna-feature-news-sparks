@@ -1,7 +1,7 @@
 // app/api/panel/checklists/history/route.ts
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
-import { insertChecklistHistory, listChecklistHistory, isDatabaseConfigured } from '@/lib/db';
+import { insertChecklistHistory, listChecklistHistory, deleteChecklistHistory, isDatabaseConfigured } from '@/lib/db';
 
 export async function GET() {
   const session = await getSession();
@@ -40,6 +40,24 @@ export async function POST(req: Request) {
     risk: body?.risk ?? null,
     checks: typeof body?.checks === 'object' ? body.checks : null,
   });
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(req: Request) {
+  const session = await getSession();
+  const userId = session.userId;
+  if (!userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!isDatabaseConfigured()) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
+  }
+  const url = new URL(req.url);
+  const id = url.searchParams.get('id');
+  if (!id) {
+    return NextResponse.json({ error: 'Missing id parameter' }, { status: 400 });
+  }
+  await deleteChecklistHistory(userId, id);
   return NextResponse.json({ ok: true });
 }
 

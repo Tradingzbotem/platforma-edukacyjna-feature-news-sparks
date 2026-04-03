@@ -28,7 +28,22 @@ export default function TermsPage() {
           <p>Zakaz spamu, treści obraźliwych, reklam bez zgody operatora.</p>
         </section>
         <section>
-          <h2 className="font-semibold">5. Zmiany warunków</h2>
+          <h2 className="font-semibold">5. Founders NFT</h2>
+          <p>
+            Dostęp może być nabywany przez Founders NFT (licencja na korzystanie z Serwisu, płatność w krypto). NFT nie
+            jest instrumentem finansowym. Szczegóły:{" "}
+            <Link href="/prawne/nft" className="underline">
+              Regulamin sprzedaży NFT
+            </Link>
+            ,{" "}
+            <Link href="/cennik" className="underline">
+              cennik
+            </Link>
+            .
+          </p>
+        </section>
+        <section>
+          <h2 className="font-semibold">6. Zmiany warunków</h2>
           <p>Operator może modyfikować treść w każdym czasie. Aktualna wersja obowiązuje od publikacji.</p>
         </section>
       </div>

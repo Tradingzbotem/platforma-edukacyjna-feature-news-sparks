@@ -73,7 +73,7 @@ export default function ModuleTile({
               <div className="flex items-center gap-3 mb-2 flex-wrap">
                 <h2 className="text-xl md:text-2xl font-bold text-white">{title}</h2>
                 <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${colors.badge}`}>
-                  {tier.toUpperCase()}
+                  Pełny dostęp
                 </span>
               </div>
             </div>

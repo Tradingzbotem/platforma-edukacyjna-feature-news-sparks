@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
+import AdminFoundersModal from './AdminFoundersModal';
+import {
+  panelTierToDbPlan,
+  panelUserTierFromDbPlan,
+  type PanelUserTier,
+} from '@/lib/client/panelTier';
 
 type UserRow = {
   id: string;
@@ -14,12 +21,17 @@ type UserRow = {
   decisionLabEnabled?: boolean;
 };
 
+type Banner = { kind: 'ok' | 'err'; text: string };
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [savingPlanFor, setSavingPlanFor] = useState<string | null>(null);
+  const [togglingFlagFor, setTogglingFlagFor] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [banner, setBanner] = useState<Banner | null>(null);
+  const [foundersModalUser, setFoundersModalUser] = useState<UserRow | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -30,29 +42,30 @@ export default function AdminUsersPage() {
         const data = await r.json();
         if (!mounted) return;
         const usersData = (data?.users ?? []) as UserRow[];
-        
-        // Fetch feature flags for each user
+
         const usersWithFlags = await Promise.all(
           usersData.map(async (user) => {
             try {
-              const flagsRes = await fetch(`/api/admin/feature-flags?userId=${encodeURIComponent(user.id)}`, { cache: 'no-store' });
+              const flagsRes = await fetch(`/api/admin/feature-flags?userId=${encodeURIComponent(user.id)}`, {
+                cache: 'no-store',
+              });
               if (flagsRes.ok) {
                 const flagsData = await flagsRes.json();
-                const decisionLabFlag = flagsData.flags?.find((f: any) => f.feature === 'decision_lab');
+                const decisionLabFlag = flagsData.flags?.find((f: { feature: string }) => f.feature === 'decision_lab');
                 return { ...user, decisionLabEnabled: decisionLabFlag?.enabled || false };
               }
             } catch {
-              // Ignore errors fetching flags
+              // ignore
             }
             return { ...user, decisionLabEnabled: false };
-          })
+          }),
         );
-        
+
         if (!mounted) return;
         setUsers(usersWithFlags);
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (!mounted) return;
-        setError(e?.message || 'Nie udało się pobrać użytkowników');
+        setError(e instanceof Error ? e.message : 'Nie udało się pobrać użytkowników');
       } finally {
         if (!mounted) return;
         setLoading(false);
@@ -63,30 +76,39 @@ export default function AdminUsersPage() {
     };
   }, []);
 
-  async function applyPlan(userId: string, plan: UserRow['plan']) {
-    setBusy(userId);
+  function showBanner(kind: Banner['kind'], text: string) {
+    setBanner({ kind, text });
+    window.setTimeout(() => setBanner(null), kind === 'ok' ? 2800 : 5000);
+  }
+
+  async function savePlanAuto(userId: string, tier: PanelUserTier) {
+    const newPlan = panelTierToDbPlan(tier);
+    const prev = users.find((u) => u.id === userId);
+    const previousPlan = prev?.plan ?? 'free';
+
+    setUsers((list) => list.map((u) => (u.id === userId ? { ...u, plan: newPlan } : u)));
+    setSavingPlanFor(userId);
     try {
       const r = await fetch(`/api/admin/users/${encodeURIComponent(userId)}/plan`, {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan: newPlan }),
       });
       if (!r.ok) {
         const t = await r.text().catch(() => '');
         throw new Error(t || `HTTP ${r.status}`);
       }
-      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, plan } : u)));
-      setNotice(`Zaktualizowano plan użytkownika na ${plan.toUpperCase()}.`);
-      window.setTimeout(() => setNotice(null), 3500);
-    } catch (e: any) {
-      setError(e?.message || 'Zmiana planu nie powiodła się');
+      showBanner('ok', 'Zapisano plan dostępu.');
+    } catch (e: unknown) {
+      setUsers((list) => list.map((u) => (u.id === userId ? { ...u, plan: previousPlan } : u)));
+      showBanner('err', e instanceof Error ? e.message : 'Nie udało się zapisać planu.');
     } finally {
-      setBusy(null);
+      setSavingPlanFor(null);
     }
   }
 
   async function toggleFeatureFlag(userId: string, feature: string, enabled: boolean) {
-    setBusy(userId);
+    setTogglingFlagFor(userId);
     try {
       const r = await fetch('/api/admin/feature-flags', {
         method: 'POST',
@@ -99,21 +121,20 @@ export default function AdminUsersPage() {
       }
       setUsers((prev) =>
         prev.map((u) => {
-          if (u.id === userId) {
-            if (feature === 'decision_lab') {
-              return { ...u, decisionLabEnabled: enabled };
-            }
-            return u;
+          if (u.id === userId && feature === 'decision_lab') {
+            return { ...u, decisionLabEnabled: enabled };
           }
           return u;
-        })
+        }),
       );
-      setNotice(`Zaktualizowano flagę ${feature} dla użytkownika.`);
-      window.setTimeout(() => setNotice(null), 3500);
-    } catch (e: any) {
-      setError(e?.message || 'Zmiana flagi nie powiodła się');
+      showBanner('ok', `Zaktualizowano flagę „${feature}”.`);
+    } catch (e: unknown) {
+      showBanner('err', e instanceof Error ? e.message : 'Zmiana flagi nie powiodła się');
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId && feature === 'decision_lab' ? { ...u, decisionLabEnabled: !enabled } : u)),
+      );
     } finally {
-      setBusy(null);
+      setTogglingFlagFor(null);
     }
   }
 
@@ -122,127 +143,185 @@ export default function AdminUsersPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
         <nav className="mb-4">
           <BackButton />
         </nav>
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Użytkownicy — subskrypcje</h1>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">Użytkownicy</h1>
+          <p className="mt-2 max-w-3xl text-sm text-white/50">
+            Dostęp do centrum decyzji i widoku NFT w panelu klienta wynika z{' '}
+            <span className="text-white/70">planu konta</span> (kolumna „Plan dostępu”). Osobno możesz nadać rekord{' '}
+            <span className="text-white/70">Founders w bazie</span> (członkostwo półmanualne, bez portfela). Feature flags
+            są jeszcze innym mechanizmem.
+          </p>
         </div>
-        {notice && (
-          <div className="mb-4 flex items-start justify-between gap-4 rounded-md border border-emerald-300/30 bg-emerald-500/10 px-4 py-3 text-emerald-200 text-sm">
-            <div>{notice}</div>
+
+        {banner && (
+          <div
+            className={`mb-4 flex items-start justify-between gap-4 rounded-md border px-4 py-3 text-sm ${
+              banner.kind === 'ok'
+                ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-200'
+                : 'border-rose-300/30 bg-rose-500/10 text-rose-200'
+            }`}
+          >
+            <div>{banner.text}</div>
             <button
-              onClick={() => setNotice(null)}
-              className="rounded-md px-2 py-0.5 text-emerald-200/80 hover:text-emerald-100 hover:bg-emerald-500/10"
-              aria-label="Zamknij powiadomienie"
+              type="button"
+              onClick={() => setBanner(null)}
+              className="rounded-md px-2 py-0.5 opacity-80 hover:opacity-100"
+              aria-label="Zamknij"
             >
               ×
             </button>
           </div>
         )}
 
-        <div className="rounded-2xl border border-white/10 bg-white/5">
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-sm text-white/70 border-b border-white/10">
-            <div className="col-span-4">E‑mail</div>
-            <div className="col-span-2">Plan</div>
-            <div className="col-span-3">Feature flags</div>
-            <div className="col-span-3">Akcje</div>
+        {foundersModalUser ? (
+          <AdminFoundersModal
+            userId={foundersModalUser.id}
+            email={foundersModalUser.email}
+            open={!!foundersModalUser}
+            onClose={() => setFoundersModalUser(null)}
+            onSaved={(msg) => showBanner('ok', msg)}
+          />
+        ) : null}
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+          <div className="grid grid-cols-12 gap-3 px-4 py-3 text-sm border-b border-white/10 bg-white/[0.03]">
+            <div className="col-span-12 sm:col-span-3 font-medium text-white/80">E‑mail</div>
+            <div className="col-span-12 sm:col-span-3">
+              <div className="font-medium text-white/80">Plan dostępu</div>
+              <p className="mt-1 text-[10px] font-normal leading-snug text-white/40">
+                <span className="text-white/55">Free</span> — brak centrum decyzji.{' '}
+                <span className="text-white/55">Founders</span> — centrum decyzji (NFT).{' '}
+                <span className="text-white/55">Elite</span> — rozszerzony dostęp. Zapisuje się automatycznie po zmianie.
+              </p>
+            </div>
+            <div className="col-span-12 sm:col-span-3">
+              <div className="font-medium text-white/80">Feature flags</div>
+              <p className="mt-1 text-[10px] font-normal leading-snug text-white/40">
+                Osobno od planu — nie steruje centrum decyzji w FXEDULAB.
+              </p>
+            </div>
+            <div className="col-span-12 sm:col-span-3 font-medium text-white/80">Akcje</div>
           </div>
-          {users.map((u) => (
-            <div key={u.id} className="grid grid-cols-12 gap-2 px-4 py-3 border-b border-white/5">
-              <div className="col-span-4 break-all">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`inline-block h-2.5 w-2.5 rounded-full ${u.is_online ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-500'}`}
-                    title={u.is_online ? 'Online' : 'Offline'}
-                    aria-label={u.is_online ? 'Online' : 'Offline'}
-                  />
-                  <span>{u.email}</span>
+
+          {users.map((u) => {
+            const saving = savingPlanFor === u.id;
+            const flagBusy = togglingFlagFor === u.id;
+            const delBusy = deletingId === u.id;
+
+            return (
+              <div
+                key={u.id}
+                className="grid grid-cols-12 gap-3 px-4 py-4 border-b border-white/5 last:border-b-0 items-start"
+              >
+                <div className="col-span-12 sm:col-span-3 break-all">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${u.is_online ? 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-500'}`}
+                      title={u.is_online ? 'Online' : 'Offline'}
+                      aria-label={u.is_online ? 'Online' : 'Offline'}
+                    />
+                    <span>{u.email}</span>
+                  </div>
+                  <div className="mt-1 text-xs text-white/45">
+                    Ostatnia aktywność: {u.last_active_at ? new Date(u.last_active_at).toLocaleString() : '—'}
+                  </div>
+                  {(u.plan === 'starter' || u.plan === 'pro') && (
+                    <div className="mt-1 text-[10px] text-white/35">
+                      W bazie: <span className="text-white/45">{u.plan}</span>
+                      {u.plan === 'starter' ? ' (Founders)' : ' (legacy → widok jak Founders)'}
+                    </div>
+                  )}
                 </div>
-                <div className="mt-1 text-xs text-white/50">
-                  Ostatnia aktywność:{' '}
-                  {u.last_active_at ? new Date(u.last_active_at).toLocaleString() : '—'}
+
+                <div className="col-span-12 sm:col-span-3">
+                  <div className="flex items-center gap-2 max-w-[260px]">
+                    <select
+                      value={panelUserTierFromDbPlan(u.plan)}
+                      disabled={saving}
+                      onChange={(e) => {
+                        const tier = e.target.value as PanelUserTier;
+                        void savePlanAuto(u.id, tier);
+                      }}
+                      className="min-w-0 flex-1 rounded-md bg-slate-800 border border-white/10 px-2 py-2 text-sm disabled:opacity-60"
+                      aria-label={`Plan dostępu dla ${u.email}`}
+                    >
+                      <option value="free">Free</option>
+                      <option value="founders">Founders (centrum decyzji)</option>
+                      <option value="elite">Elite</option>
+                    </select>
+                    {saving ? (
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-white/50" aria-label="Zapisywanie" />
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-              <div className="col-span-2">
-                <select
-                  value={u.plan}
-                  onChange={(e) => {
-                    const plan = e.target.value as UserRow['plan'];
-                    setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, plan } : x)));
-                  }}
-                  className="rounded-md bg-slate-800 border border-white/10 px-2 py-1 text-sm"
-                >
-                  <option value="free">FREE</option>
-                  <option value="starter">STARTER</option>
-                  <option value="pro">PRO</option>
-                  <option value="elite">ELITE</option>
-                </select>
-              </div>
-              <div className="col-span-3">
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+
+                <div className="col-span-12 sm:col-span-3">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer text-white/80">
                     <input
                       type="checkbox"
                       checked={u.decisionLabEnabled || false}
                       onChange={(e) => {
                         const enabled = e.target.checked;
                         setUsers((prev) =>
-                          prev.map((x) => (x.id === u.id ? { ...x, decisionLabEnabled: enabled } : x))
+                          prev.map((x) => (x.id === u.id ? { ...x, decisionLabEnabled: enabled } : x)),
                         );
-                        toggleFeatureFlag(u.id, 'decision_lab', enabled);
+                        void toggleFeatureFlag(u.id, 'decision_lab', enabled);
                       }}
-                      disabled={busy === u.id}
+                      disabled={flagBusy || saving}
                       className="rounded border-white/20 bg-slate-800 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
                     />
-                    <span className="text-white/80">Decision Lab</span>
+                    <span>{flagBusy ? '…' : 'Decision Lab'}</span>
                   </label>
                 </div>
+
+                <div className="col-span-12 sm:col-span-3 flex flex-wrap gap-2">
+                  <Link
+                    href={`/admin/uzytkownicy/${encodeURIComponent(u.id)}/aktywnosc`}
+                    className="inline-flex items-center rounded-md bg-slate-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-600 border border-white/10"
+                  >
+                    Podgląd aktywności
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setFoundersModalUser(u)}
+                    disabled={saving || delBusy}
+                    className="inline-flex items-center rounded-md bg-amber-700/90 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-600 border border-white/10 disabled:opacity-50"
+                  >
+                    Founders
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm(`Usunąć konto użytkownika ${u.email}? Tej operacji nie można cofnąć.`)) return;
+                      setDeletingId(u.id);
+                      try {
+                        const r = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, { method: 'DELETE' });
+                        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                        setUsers((prev) => prev.filter((x) => x.id !== u.id));
+                        showBanner('ok', 'Konto usunięte.');
+                      } catch (e: unknown) {
+                        showBanner('err', e instanceof Error ? e.message : 'Usunięcie nie powiodło się');
+                      } finally {
+                        setDeletingId(null);
+                      }
+                    }}
+                    disabled={delBusy || saving}
+                    className="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
+                  >
+                    {delBusy ? '…' : 'Usuń konto'}
+                  </button>
+                </div>
               </div>
-              <div className="col-span-3 flex items-center gap-2">
-                <Link
-                  href={`/admin/uzytkownicy/${encodeURIComponent(u.id)}/aktywnosc`}
-                  className="inline-flex items-center rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500"
-                >
-                  Aktywność
-                </Link>
-                <button
-                  onClick={() => applyPlan(u.id, u.plan)}
-                  disabled={busy === u.id}
-                  className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
-                >
-                  Zapisz
-                </button>
-                <button
-                  onClick={async () => {
-                    if (!confirm(`Usunąć konto użytkownika ${u.email}? Tej operacji nie można cofnąć.`)) return;
-                    setBusy(u.id);
-                    try {
-                      const r = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, { method: 'DELETE' });
-                      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                      setUsers((prev) => prev.filter((x) => x.id !== u.id));
-                    } catch (e: any) {
-                      setError(e?.message || 'Usunięcie konta nie powiodło się');
-                    } finally {
-                      setBusy(null);
-                    }
-                  }}
-                  disabled={busy === u.id}
-                  className="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 disabled:opacity-50"
-                >
-                  Usuń
-                </button>
-              </div>
-            </div>
-          ))}
-          {users.length === 0 && (
-            <div className="px-4 py-6 text-white/70 text-sm">Brak użytkowników</div>
-          )}
+            );
+          })}
+
+          {users.length === 0 && <div className="px-4 py-6 text-white/70 text-sm">Brak użytkowników</div>}
         </div>
       </div>
     </main>
   );
 }
-
-

@@ -52,7 +52,8 @@ export type Brief = {
 };
 
 export type NewsListQuery = {
-  hours?: 24 | 48 | 72;
+  /** Okno czasu wstecz (godziny), typowo 24–168; domyślnie 72. */
+  hours?: number;
   q?: string;
   categories?: NewsCategory[];
   minImpact?: number;

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Page() {
   const Updated = () => (
-    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-01-01</p>
+    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-04-02</p>
   );
 
   const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => (
@@ -39,10 +39,9 @@ export default function Page() {
       <header className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold">Pakiet zgodności (Compliance)</h1>
         <p className="text-slate-300">
-          Zestaw najważniejszych dokumentów i informacji: regulamin subskrypcji,
-          polityka zwrotów i odstąpienia, skrót polityki prywatności oraz
-          disclaimery rynkowe. Dokument ma charakter informacyjny i stanowi
-          uzupełnienie szczegółowych polityk w sekcji Prawne.
+          Zestaw najważniejszych dokumentów i informacji: regulamin sprzedaży Founders NFT, polityka zwrotów i odstąpienia,
+          skrót polityki prywatności oraz disclaimery rynkowe. Dokument ma charakter informacyjny i stanowi uzupełnienie
+          szczegółowych polityk w sekcji Prawne.
         </p>
         <Updated />
       </header>
@@ -52,7 +51,7 @@ export default function Page() {
         <div className="text-sm text-white/80 mb-3 font-semibold">Spis treści</div>
         <ul className="grid md:grid-cols-2 gap-2 text-sm">
           {[
-            ["subskrypcja", "1. Regulamin subskrypcji"],
+            ["nft-licencja", "1. Founders NFT i licencja dostępu"],
             ["zwroty", "2. Zwroty i odstąpienie od umowy"],
             ["prywatnosc", "3. Polityka prywatności (skrót)"],
             ["disclaimers", "4. Disclaimery rynkowe"],
@@ -70,49 +69,36 @@ export default function Page() {
         </ul>
       </Card>
 
-      {/* 1. Regulamin subskrypcji */}
+      {/* 1. Founders NFT */}
       <section className="space-y-3">
-        <H2 id="subskrypcja">1. Regulamin subskrypcji</H2>
+        <H2 id="nft-licencja">1. Founders NFT i licencja dostępu</H2>
+        <p className="text-white/80">
+          <b>Founders NFT:</b> jednorazowy zakup tokenu powiązanego z licencją dostępu do FXEDULAB; płatność w krypto;
+          brak miesięcznej opłaty za dostęp dla posiadacza NFT; rynek wtórny na własne ryzyko. Pełny dokument:{" "}
+          <Link href="/prawne/nft" className="underline font-semibold">Regulamin sprzedaży NFT</Link> —{" "}
+          <Link href="/cennik" className="underline">cennik</Link>.
+        </p>
         <ul className="list-disc pl-6 text-white/80 space-y-1">
           <li>
-            <b>Zakres usług:</b> dostęp do treści edukacyjnych, kursów, quizów i narzędzi
-            udostępnianych w Serwisie w ramach wybranego planu.
+            <b>Zakres:</b> licencja uprawnia do korzystania z treści edukacyjnych, kursów, quizów i narzędzi Serwisu w
+            zakresie opublikowanym przy sprzedaży NFT.
           </li>
           <li>
-            <b>Konto:</b> korzystanie wymaga aktywnego konta. Użytkownik odpowiada za
-            poufność danych logowania i działania wykonane na koncie.
+            <b>Konto:</b> korzystanie wymaga aktywnego konta i weryfikacji powiązania z NFT zgodnie z instrukcjami w
+            Serwisie. Użytkownik odpowiada za poufność danych logowania i działania na koncie.
           </li>
           <li>
-            <b>Płatności cykliczne:</b> subskrypcja odnawia się automatycznie w okresach
-            rozliczeniowych (np. co miesiąc/rok) do czasu anulowania.
+            <b>Uczciwe korzystanie:</b> zakazane jest udostępnianie konta w celu ominięcia modelu licencyjnego oraz
+            działania naruszające bezpieczeństwo Serwisu.
           </li>
           <li>
-            <b>Okres próbny (jeśli dostępny):</b> po jego zakończeniu subskrypcja przechodzi
-            automatycznie w plan płatny, chyba że zostanie anulowana przed końcem okresu próbnego.
-          </li>
-          <li>
-            <b>Anulowanie:</b> możesz anulować w dowolnym momencie w ustawieniach konta
-            (np. <span className="whitespace-nowrap">Konto → Ustawienia → Subskrypcja</span>).
-            Anulowanie skutkuje brakiem odnowienia od kolejnego okresu rozliczeniowego;
-            dostęp pozostaje aktywny do końca bieżącego okresu.
-          </li>
-          <li>
-            <b>Zmiany cen i planów:</b> możemy zaktualizować ceny lub zakres planów; o
-            zmianach poinformujemy z wyprzedzeniem. Zmiany obowiązują od kolejnego okresu
-            rozliczeniowego.
-          </li>
-          <li>
-            <b>Uczciwe korzystanie:</b> zakazane jest udostępnianie konta osobom trzecim
-            oraz działania naruszające bezpieczeństwo Serwisu.
-          </li>
-          <li>
-            <b>Charakter edukacyjny:</b> Serwis nie świadczy doradztwa inwestycyjnego ani
-            rekomendacji; szczegóły w części „Disclaimery rynkowe”.
+            <b>Charakter edukacyjny:</b> Serwis nie świadczy doradztwa inwestycyjnego ani rekomendacji; szczegóły w części
+            „Disclaimery rynkowe”.
           </li>
         </ul>
         <p className="text-white/80">
-          Pełny dokument:{" "}
-          <Link href="/prawne/subskrypcja" className="underline font-semibold">Regulamin subskrypcji</Link>.
+          Nie sprzedajemy abonamentu miesięcznego za dostęp do Serwisu — wyłącznie model jednorazowy (NFT) opisany
+          powyżej.
         </p>
       </section>
 
@@ -128,14 +114,13 @@ export default function Page() {
             o utracie prawa odstąpienia.
           </p>
           <p>
-            <b>Treści cyfrowe / subskrypcja:</b> aktywacja subskrypcji i uzyskanie dostępu do
-            treści oznacza rozpoczęcie świadczenia usługi. W takim przypadku prawo odstąpienia
-            nie przysługuje w zakresie rozpoczętego okresu rozliczeniowego.
+            <b>Treści cyfrowe:</b> po rozpoczęciu świadczenia usługi cyfrowej za wyraźną zgodą konsumenta prawo odstąpienia
+            może nie przysługiwać w zakresie przewidzianym przepisami.
           </p>
           <p>
-            <b>Anulowanie na przyszłość:</b> możesz anulować subskrypcję w dowolnym momencie —
-            skuteczność od kolejnego okresu rozliczeniowego. Co do zasady nie realizujemy zwrotów
-            proporcjonalnych za okres już rozpoczęty.
+            <b>NFT i krypto:</b> po zaksięgowaniu płatności i przekazaniu NFT może dojść do natychmiastowego wykonania
+            świadczenia; prawo odstąpienia może być wyłączone po spełnieniu przesłanek ustawowych i wyraźnej zgody — zob.{" "}
+            <Link href="/prawne/nft" className="underline">Regulamin NFT</Link>.
           </p>
           <p>
             <b>Wyjątki i reklamacje:</b> w razie oczywistych błędów technicznych lub braku
@@ -208,7 +193,7 @@ export default function Page() {
       <section className="space-y-3">
         <H2 id="kontakt">5. Kontakt</H2>
         <p className="text-white/80">
-          W sprawach subskrypcji, odstąpienia, reklamacji lub prywatności skontaktuj się przez{" "}
+          W sprawach NFT, odstąpienia, reklamacji lub prywatności skontaktuj się przez{" "}
           <Link href="/kontakt" className="underline">formularz kontaktowy</Link>.
         </p>
       </section>

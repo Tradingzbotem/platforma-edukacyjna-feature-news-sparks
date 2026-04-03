@@ -42,6 +42,11 @@ export type User = {
   id: string;
   email: string;
   password_hash: string;
+  /**
+   * Poziom konta. W FXEDULAB /client mapuje się przez `panelUserTierFromDbPlan`:
+   * `free` → brak centrum decyzji; `starter` → Founders (NFT); `pro` → ten sam widok co Founders (legacy);
+   * `elite` → Elite.
+   */
   plan?: 'free' | 'starter' | 'pro' | 'elite';
   phone: string | null;
   name: string | null;
@@ -499,4 +504,203 @@ export async function listChecklistHistory(userId: string, limit = 50): Promise<
     ...r,
     created_at: new Date(r.created_at).toISOString(),
   }));
+}
+
+export async function deleteChecklistHistory(userId: string, id: string): Promise<void> {
+  if (!hasPostgres()) return;
+  await ensureChecklistHistoryTable();
+  await sql`
+    DELETE FROM checklist_history
+    WHERE user_id = ${userId} AND id = ${id}::bigint
+  `;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Elite Trial (7-day free trial for Edulab)
+
+export type EliteTrial = {
+  user_id: string;
+  requested_at: string;
+  started_at: string | null;
+  expires_at: string | null;
+  is_active: boolean;
+  original_plan: string | null;
+  created_at: string;
+};
+
+export async function ensureEliteTrialsTable() {
+  if (!hasPostgres()) return;
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS elite_trials (
+        user_id TEXT PRIMARY KEY,
+        requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        started_at TIMESTAMPTZ NULL,
+        expires_at TIMESTAMPTZ NULL,
+        is_active BOOLEAN NOT NULL DEFAULT false,
+        original_plan TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `;
+  } catch (e: any) {
+    const code = e?.code || e?.originalError?.code;
+    const msg = String(e?.message || '').toLowerCase();
+    if (code !== '42P07' && !msg.includes('already exists')) {
+      throw e;
+    }
+  }
+  await sql`CREATE INDEX IF NOT EXISTS idx_elite_trials_status ON elite_trials (is_active, started_at)`;
+}
+
+export async function getEliteTrial(userId: string): Promise<EliteTrial | null> {
+  if (!hasPostgres()) return null;
+  await ensureEliteTrialsTable();
+  const { rows } = await sql<{
+    user_id: string;
+    requested_at: Date;
+    started_at: Date | null;
+    expires_at: Date | null;
+    is_active: boolean;
+    original_plan: string | null;
+    created_at: Date;
+  }>`
+    SELECT user_id, requested_at, started_at, expires_at, is_active, original_plan, created_at
+    FROM elite_trials
+    WHERE user_id = ${userId}
+    LIMIT 1
+  `;
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    user_id: r.user_id,
+    requested_at: r.requested_at.toISOString(),
+    started_at: r.started_at ? r.started_at.toISOString() : null,
+    expires_at: r.expires_at ? r.expires_at.toISOString() : null,
+    is_active: Boolean(r.is_active),
+    original_plan: r.original_plan,
+    created_at: r.created_at.toISOString(),
+  };
+}
+
+export async function requestEliteTrial(userId: string, originalPlan: string): Promise<void> {
+  if (!hasPostgres()) return;
+  await ensureEliteTrialsTable();
+  await sql`
+    INSERT INTO elite_trials (user_id, original_plan, is_active)
+    VALUES (${userId}, ${originalPlan}, false)
+    ON CONFLICT (user_id) DO NOTHING
+  `;
+}
+
+export async function activateEliteTrial(userId: string): Promise<void> {
+  if (!hasPostgres()) return;
+  await ensureEliteTrialsTable();
+  
+  // Get current plan and save as original if not already saved
+  const user = await findUserById(userId);
+  if (!user) throw new Error('User not found');
+  
+  const trial = await getEliteTrial(userId);
+  const originalPlan = trial?.original_plan || user.plan || 'free';
+  
+  // Update trial: set started_at, expires_at (7 days), is_active = true
+  await sql`
+    UPDATE elite_trials
+    SET started_at = NOW(),
+        expires_at = NOW() + INTERVAL '7 days',
+        is_active = true,
+        original_plan = ${originalPlan}
+    WHERE user_id = ${userId}
+  `;
+  
+  // Update user plan to elite
+  await updateUserPlan(userId, 'elite');
+  
+  // Enable decision_lab feature flag
+  await sql`
+    INSERT INTO user_feature_flags (user_id, feature, enabled, updated_at)
+    VALUES (${userId}, 'decision_lab', true, now())
+    ON CONFLICT (user_id, feature)
+    DO UPDATE SET enabled = true, updated_at = now()
+  `;
+}
+
+export async function deactivateEliteTrial(userId: string): Promise<void> {
+  if (!hasPostgres()) return;
+  await ensureEliteTrialsTable();
+  
+  const trial = await getEliteTrial(userId);
+  if (!trial) return;
+  
+  // Update trial: set is_active = false
+  await sql`
+    UPDATE elite_trials
+    SET is_active = false
+    WHERE user_id = ${userId}
+  `;
+  
+  // Restore original plan
+  if (trial.original_plan && (trial.original_plan === 'free' || trial.original_plan === 'starter' || trial.original_plan === 'pro' || trial.original_plan === 'elite')) {
+    await updateUserPlan(userId, trial.original_plan as 'free' | 'starter' | 'pro' | 'elite');
+  } else {
+    await updateUserPlan(userId, 'free');
+  }
+  
+  // Disable decision_lab feature flag
+  await sql`
+    INSERT INTO user_feature_flags (user_id, feature, enabled, updated_at)
+    VALUES (${userId}, 'decision_lab', false, now())
+    ON CONFLICT (user_id, feature)
+    DO UPDATE SET enabled = false, updated_at = now()
+  `;
+}
+
+export async function listEliteTrials(): Promise<Array<EliteTrial & { email: string; days_elapsed: number | null }>> {
+  if (!hasPostgres()) return [];
+  await ensureEliteTrialsTable();
+  const { rows } = await sql<{
+    user_id: string;
+    email: string;
+    requested_at: Date;
+    started_at: Date | null;
+    expires_at: Date | null;
+    is_active: boolean;
+    original_plan: string | null;
+    created_at: Date;
+    days_elapsed: number | null;
+  }>`
+    SELECT 
+      et.user_id,
+      u.email,
+      et.requested_at,
+      et.started_at,
+      et.expires_at,
+      et.is_active,
+      et.original_plan,
+      et.created_at,
+      CASE 
+        WHEN et.started_at IS NOT NULL THEN EXTRACT(EPOCH FROM (NOW() - et.started_at)) / 86400
+        ELSE NULL
+      END AS days_elapsed
+    FROM elite_trials et
+    LEFT JOIN users u ON et.user_id = u.id
+    ORDER BY et.requested_at DESC
+  `;
+  return rows.map((r) => ({
+    user_id: r.user_id,
+    email: r.email,
+    requested_at: r.requested_at.toISOString(),
+    started_at: r.started_at ? r.started_at.toISOString() : null,
+    expires_at: r.expires_at ? r.expires_at.toISOString() : null,
+    is_active: Boolean(r.is_active),
+    original_plan: r.original_plan,
+    created_at: r.created_at.toISOString(),
+    days_elapsed: r.days_elapsed ? Math.floor(r.days_elapsed) : null,
+  }));
+}
+
+export async function deleteEliteTrial(userId: string): Promise<void> {
+  if (!hasPostgres()) return;
+  await ensureEliteTrialsTable();
+  await sql`DELETE FROM elite_trials WHERE user_id = ${userId}`;
 }

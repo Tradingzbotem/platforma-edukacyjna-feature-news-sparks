@@ -8,13 +8,13 @@ const ITEMS: Item[] = [
     href: "/prawne/compliance",
     title: "Pakiet zgodności (Compliance)",
     blurb:
-      "Regulamin subskrypcji, polityka zwrotów/odstąpienia, prywatność (skrót) i disclaimery rynkowe.",
+      "Regulamin NFT, zwroty/odstąpienie, prywatność (skrót) i disclaimery rynkowe.",
   },
   {
-    href: "/prawne/subskrypcja",
-    title: "Regulamin subskrypcji",
+    href: "/prawne/nft",
+    title: "Regulamin sprzedaży Founders NFT",
     blurb:
-      "Zasady płatności i rozliczeń, odnowienia, anulacje, fair use i reklamacje.",
+      "Cena i krypto, licencja na dostęp, portfel, rynek wtórny — jedyna ścieżka płatnego dostępu do FXEDULAB.",
   },
   {
     href: "/prawne/zwroty-odstapienie",

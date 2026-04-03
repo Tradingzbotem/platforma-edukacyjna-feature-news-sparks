@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { IntakeState } from './CoachIntake';
 import type { ContextSource } from '@/lib/panel/coachContext';
-import { isTierAtLeast, type Tier } from '@/lib/panel/access';
+import { hasFullPanelAccess, type Tier } from '@/lib/panel/access';
 import CoachGlossary from './CoachGlossary';
 
 type ChecklistItem = { id: string; label: string };
@@ -113,20 +113,20 @@ export default function CoachStickyPanel({
             aria-label="Kontekst modułów"
           >
             <option value="none">Brak</option>
-            <option value="calendar7d" disabled={!isTierAtLeast(tier, 'starter')}>
-              {isTierAtLeast(tier, 'starter') ? 'Kalendarz 7 dni' : 'Kalendarz 7 dni (STARTER) 🔒'}
+            <option value="calendar7d" disabled={!hasFullPanelAccess(tier)}>
+              {hasFullPanelAccess(tier) ? 'Kalendarz 7 dni' : 'Kalendarz 7 dni 🔒'}
             </option>
-            <option value="scenariosABC" disabled={!isTierAtLeast(tier, 'starter')}>
-              {isTierAtLeast(tier, 'starter') ? 'Scenariusze A/B/C' : 'Scenariusze A/B/C (STARTER) 🔒'}
+            <option value="scenariosABC" disabled={!hasFullPanelAccess(tier)}>
+              {hasFullPanelAccess(tier) ? 'Scenariusze A/B/C' : 'Scenariusze A/B/C 🔒'}
             </option>
-            <option value="checklists" disabled={!isTierAtLeast(tier, 'starter')}>
-              {isTierAtLeast(tier, 'starter') ? 'Checklisty' : 'Checklisty (STARTER) 🔒'}
+            <option value="checklists" disabled={!hasFullPanelAccess(tier)}>
+              {hasFullPanelAccess(tier) ? 'Checklisty' : 'Checklisty 🔒'}
             </option>
-            <option value="eventPlaybooks" disabled={!isTierAtLeast(tier, 'pro')}>
-              {isTierAtLeast(tier, 'pro') ? 'Playbooki eventowe' : 'Playbooki eventowe (PRO) 🔒'}
+            <option value="eventPlaybooks" disabled={!hasFullPanelAccess(tier)}>
+              {hasFullPanelAccess(tier) ? 'Playbooki eventowe' : 'Playbooki eventowe 🔒'}
             </option>
-            <option value="techMaps" disabled={!isTierAtLeast(tier, 'pro')}>
-              {isTierAtLeast(tier, 'pro') ? 'Mapy techniczne' : 'Mapy techniczne (PRO) 🔒'}
+            <option value="techMaps" disabled={!hasFullPanelAccess(tier)}>
+              {hasFullPanelAccess(tier) ? 'Mapy techniczne' : 'Mapy techniczne 🔒'}
             </option>
           </select>
         </div>

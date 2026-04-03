@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Page() {
   const Updated = () => (
-    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-01-02</p>
+    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-04-02</p>
   );
 
   const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => (
@@ -29,7 +29,7 @@ export default function Page() {
       <header className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold">Zwroty i odstąpienie od umowy</h1>
         <p className="text-slate-300">
-          Zasady dotyczące prawa odstąpienia oraz polityki zwrotów dla usług cyfrowych i subskrypcji.
+          Zasady dotyczące prawa odstąpienia oraz polityki zwrotów dla usług cyfrowych i zakupu Founders NFT.
         </p>
         <Updated />
       </header>
@@ -72,6 +72,16 @@ export default function Page() {
           nie przysługuje, jeżeli świadczenie rozpoczęto za wyraźną zgodą konsumenta przed upływem terminu odstąpienia
           i po poinformowaniu o utracie tego prawa.
         </p>
+        <p className="text-white/80">
+          <strong>Founders NFT:</strong> nabycie tokenu związanego z licencją dostępu może oznaczać rozpoczęcie lub
+          wykonanie świadczenia niezwłocznie po zaksięgowaniu transakcji (w tym zapisie na blockchainie). W takim
+          zakresie mogą znajdować zastosowanie ustawowe wyłączenia prawa odstąpienia — szczegóły procesu, zgód i
+          reklamacji:{" "}
+          <Link href="/prawne/nft" className="underline">
+            Regulamin sprzedaży NFT
+          </Link>
+          .
+        </p>
       </section>
 
       <section className="space-y-3">
@@ -92,7 +102,7 @@ export default function Page() {
         </p>
         <p className="text-white/80">
           Przykładowy wzór: „Ja/My … niniejszym informuję/informujemy o odstąpieniu od umowy zawartej dnia …
-          dotyczącej (plan/abonament) na koncie … (email)”.
+          dotyczącej (Founders NFT / dostęp do Serwisu) na koncie … (email)”.
         </p>
       </section>
 
@@ -103,8 +113,12 @@ export default function Page() {
           od otrzymania oświadczenia, z wykorzystaniem tego samego sposobu zapłaty, chyba że uzgodniono inaczej.
         </p>
         <p className="text-white/80">
-          W przypadku subskrypcji już aktywowanej co do zasady nie realizujemy zwrotów za rozpoczęty okres rozliczeniowy;
-          możliwe jest anulowanie na przyszłość (brak dalszych obciążeń).
+          W przypadku zakupu NFT po wykonaniu świadczenia (np. przekazaniu tokena) zwrot może nie przysługiwać w zakresie
+          przewidzianym przepisami — zob.{" "}
+          <Link href="/prawne/nft" className="underline">
+            Regulamin NFT
+          </Link>
+          .
         </p>
       </section>
 

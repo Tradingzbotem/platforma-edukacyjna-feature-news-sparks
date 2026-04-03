@@ -2,25 +2,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
-import { useLang } from '@/lib/i18n-client';
-import { t, type Lang as DictLang } from '@/lib/i18n';
+import { useCallback } from 'react';
 import { BookOpen, Target, Users, CheckCircle2 } from 'lucide-react';
 
 export default function EbookiPage() {
-  const lang = useLang('pl');
-  const dictLang: DictLang = lang === 'en' ? 'en' : 'pl';
-  const router = useRouter();
-  const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
-
-  const handleChoose = useCallback(async (planId: 'starter' | 'pro' | 'elite') => {
-    const planName = planId === 'starter' ? 'STARTER EDU' : planId === 'pro' ? 'PRO EDU' : 'ELITE EDU';
-    const message = encodeURIComponent(`Dzień dobry,\n\nChcę skorzystać z darmowego tygodnia próbnego dla pakietu ${planName}.\nProszę o kontakt w sprawie aktywacji.\n\nPozdrawiam,\n`);
-    const target = `/kontakt?topic=zakup-pakietu&plan=${encodeURIComponent(planId)}&message=${message}`;
-    router.push(target);
-  }, [router]);
-
   const scrollToPlany = useCallback(() => {
     document.getElementById('plany')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
@@ -58,7 +43,7 @@ export default function EbookiPage() {
                 onClick={scrollToPlany}
                 className="inline-flex items-center justify-center rounded-xl bg-white text-slate-900 font-semibold px-6 py-3 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40 transition-opacity"
               >
-                Odkryj pakiety
+                Founders NFT — szczegóły
               </button>
               <Link
                 href={`/kontakt?topic=ogolne&subject=${encodeURIComponent("Darmowy dostęp")}`}
@@ -191,135 +176,114 @@ export default function EbookiPage() {
 
       {/* SEKCJA D: PAKIETY / PLANY */}
       <section id="plany" className="scroll-mt-24 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-6">
-            {t(dictLang, 'plans_title')}
-          </h2>
-          <p className="text-lg text-white/80 max-w-3xl mx-auto leading-relaxed mb-8">
-            Masz kontekst na tacy: momentum, scenariusze A/B/C, checklisty, statystykę i ramy ryzyka. Zamiast szukać informacji po wielu źródłach — łączysz je w jeden proces decyzyjny.
-          </p>
-        </div>
+        {/* NOWA SEKCJA SPRZEDAŻOWA - PRE-PRICING */}
+        <div className="mb-16">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 mb-4 uppercase tracking-wider">
+              PROCES DECYZYJNY
+            </div>
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-6 text-white">
+              Dlaczego większość traci, a nie zarabia?
+            </h2>
+            <div className="max-w-3xl mx-auto space-y-4 mb-10">
+              <p className="text-lg text-white/80 leading-relaxed">
+                Bo większość inwestorów próbuje decydować, zamiast reagować na warunki, które tworzy rynek.
+              </p>
+              <p className="text-lg text-white/80 leading-relaxed">
+                Rynek to system oparty na czasie, zmienności, wolumenie i przepływie informacji — zarabiają ci, którzy potrafią rozpoznać moment, gdy te elementy układają się w przewagę.
+              </p>
+            </div>
+          </div>
 
-        {/* Przełącznik rozliczania */}
-        <div className="flex justify-center mb-8">
-          <div className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5">
-            <button
-              type="button"
-              onClick={() => setBilling('monthly')}
-              className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
-                billing === 'monthly' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'
-              }`}
-            >
-              {t(dictLang, 'billing_monthly')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setBilling('yearly')}
-              className={`ml-1 px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
-                billing === 'yearly' ? 'bg-white text-slate-900' : 'text-white/70 hover:text-white'
-              }`}
-            >
-              {t(dictLang, 'billing_yearly_2mo')}
-            </button>
+          {/* 2 kafelki */}
+          <div className="grid gap-6 md:grid-cols-2 mb-8">
+            {/* Lewy kafelek */}
+            <div className="rounded-2xl bg-white/5 border border-white/10 shadow-lg backdrop-blur p-6">
+              <h3 className="text-xl font-semibold text-white mb-3">
+                Rynek nie spełnia oczekiwań. Rynek tworzy warunki.
+              </h3>
+              <p className="text-white/80 leading-relaxed">
+                Nie szukasz odpowiedzi 'co rynek zrobi'. Szukasz sygnałów, że warunki sprzyjają.
+              </p>
+            </div>
+
+            {/* Prawy kafelek */}
+            <div className="rounded-2xl bg-white/5 border border-white/10 shadow-lg backdrop-blur p-6">
+              <ul className="space-y-3">
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-300" />
+                  <span className="text-white/80">Czy pojawiło się momentum?</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-300" />
+                  <span className="text-white/80">Czy wolumen potwierdza ruch?</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-300" />
+                  <span className="text-white/80">Jakie są scenariusze A/B/C?</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-300" />
+                  <span className="text-white/80">Czy makro i newsy wspierają czy podważają ten kierunek?</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Subtle linia na dole */}
+          <div className="text-center pt-6 border-t border-white/10">
+            <p className="text-sm text-white/60">
+              Edukacyjnie — bez rekomendacji inwestycyjnych. Materiały pomagają uporządkować proces decyzyjny.
+            </p>
           </div>
         </div>
 
-        {/* Karty planów */}
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 mt-10">
-          {[
-            {
-              id: 'starter' as const,
-              name: t(dictLang, 'plan_starter_name'),
-              price: '59',
-              features: [
-                t(dictLang, 'plan_starter_1'),
-                t(dictLang, 'plan_starter_2'),
-                t(dictLang, 'plan_starter_3'),
-              ],
-              accentClass: 'text-white/70',
-              popular: false,
-            },
-            {
-              id: 'pro' as const,
-              name: t(dictLang, 'plan_pro_name'),
-              price: '110',
-              features: [
-                t(dictLang, 'plan_pro_1'),
-                t(dictLang, 'plan_pro_2'),
-                t(dictLang, 'plan_pro_3'),
-              ],
-              accentClass: 'text-emerald-300',
-              popular: true,
-            },
-            {
-              id: 'elite' as const,
-              name: t(dictLang, 'plan_elite_name'),
-              price: '199',
-              features: [
-                t(dictLang, 'plan_elite_1'),
-                t(dictLang, 'plan_elite_2'),
-                t(dictLang, 'plan_elite_3'),
-              ],
-              accentClass: 'text-cyan-300',
-              popular: false,
-            },
-          ].map((plan, i) => (
-            <div
-              key={i}
-              className={`relative flex flex-col rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-6 transition ${
-                plan.popular ? 'ring-1 ring-emerald-300/40' : ''
-              }`}
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl font-extrabold mb-6">Founders NFT — pełny dostęp</h2>
+          <p className="text-lg text-white/80 max-w-3xl mx-auto leading-relaxed mb-8">
+            Masz kontekst na tacy: momentum, scenariusze A/B/C, checklisty i ramy ryzyka. Pełny panel rynkowy EDU,
+            w tym Coach AI i raporty, uzyskujesz po jednorazowym zakupie Founders NFT — bez miesięcznego abonamentu za
+            dostęp.
+          </p>
+        </div>
+
+        <div className="max-w-lg mx-auto rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/50 to-slate-900 p-8">
+          <p className="text-center text-4xl font-extrabold">od ~500 USD</p>
+          <p className="text-center text-sm text-white/55 mt-1">cena referencyjna — aktualna kwota przy zamówieniu</p>
+          <ul className="mt-6 space-y-3 text-sm text-white/85">
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-300" />
+              <span>Płatność BTC / ETH / USDT</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-300" />
+              <span>Licencja na korzystanie z narzędzi przypisana do NFT</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-300" />
+              <span>NFT nie jest instrumentem finansowym — zob. regulamin</span>
+            </li>
+          </ul>
+          <div className="mt-8 flex flex-col sm:flex-row flex-wrap gap-3 justify-center">
+            <Link
+              href="/marketplace"
+              className="inline-flex items-center justify-center rounded-xl bg-emerald-500 text-slate-950 font-semibold px-5 py-2.5 hover:bg-emerald-400"
             >
-              {plan.popular && (
-                <div className="absolute -top-3 right-4 inline-flex items-center rounded-full bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-200 ring-1 ring-emerald-300/30">
-                  {t(dictLang, 'plan_most_popular')}
-                </div>
-              )}
-              <div className={`text-xs font-semibold tracking-widest ${plan.accentClass}`}>
-                {plan.name}
-              </div>
-              <div className="mt-2 text-3xl font-extrabold">
-                {(() => {
-                  const monthly = plan.id === 'starter' ? 59 : plan.id === 'pro' ? 110 : 199;
-                  const yearly = plan.id === 'starter' ? 590 : plan.id === 'pro' ? 1100 : 1900;
-                  const value = billing === 'monthly' ? monthly : yearly;
-                  return (
-                    <>
-                      {value} {t(dictLang, 'currency_pln')}
-                      <span className="text-base font-semibold text-white/60">
-                        {billing === 'monthly' ? t(dictLang, 'per_month') : t(dictLang, 'per_year')}
-                      </span>
-                    </>
-                  );
-                })()}
-              </div>
-              {plan.id === 'elite' && (
-                <div className="mt-2 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-[11px] font-semibold text-cyan-200">
-                  {t(dictLang, 'elite_plus_badge')}
-                </div>
-              )}
-              <div className="mt-2 inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-200">
-                Darmowe 7 dni
-              </div>
-              <ul className="mt-4 space-y-2 text-sm text-white/80">
-                {plan.features.map((f, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-300" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={() => handleChoose(plan.id)}
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-white text-slate-900 font-semibold px-4 py-2.5 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/40 transition-opacity"
-                >
-                  Wybierz plan
-                </button>
-              </div>
-            </div>
-          ))}
+              Marketplace
+            </Link>
+            <Link
+              href="/cennik"
+              className="inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 px-5 py-2.5 text-sm font-semibold"
+            >
+              Cennik
+            </Link>
+            <Link
+              href="/prawne/nft"
+              className="inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 px-5 py-2.5 text-sm font-semibold"
+            >
+              Regulamin NFT
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -340,7 +304,7 @@ export default function EbookiPage() {
             {
               number: '1',
               title: 'UCZYĆ SIĘ',
-              desc: 'Zbuduj solidny fundament dzięki jasnym lekcjom podstaw rynku Forex i wykorzystuj je z dostępnymi pakietami.',
+              desc: 'Zbuduj solidny fundament dzięki jasnym lekcjom podstaw rynku Forex i wykorzystuj je z narzędziami po uzyskaniu dostępu (np. Founders NFT).',
             },
             {
               number: '2',

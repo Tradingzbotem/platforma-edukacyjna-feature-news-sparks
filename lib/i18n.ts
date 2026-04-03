@@ -31,7 +31,7 @@ const DICT: Dict = {
     market_panel_title: 'Panel rynkowy (EDU)',
     market_panel_lead:
       'Makro, technika, scenariusze i checklisty — edukacyjnie. Bez sygnałów i rekomendacji.',
-    choose_plan: 'Wybierz plan',
+    choose_plan: 'Founders NFT — pełny dostęp',
 
     // Included
     whats_included_title: 'Co dostajesz',
@@ -42,17 +42,17 @@ const DICT: Dict = {
     included_5: 'Ramy zarządzania ryzykiem i praktyczne checklisty',
 
     // Pricing
-    plans_title: 'Plany',
-    plan_starter_name: 'STARTER EDU',
-    plan_pro_name: 'PRO EDU',
-    plan_elite_name: 'ELITE EDU',
+    plans_title: 'Pełny dostęp',
+    plan_starter_name: 'Founders NFT',
+    plan_pro_name: 'Founders NFT',
+    plan_elite_name: 'Founders NFT',
     plan_starter_1: 'Kalendarz 7 dni',
     plan_starter_2: 'Scenariusze A/B/C',
     plan_starter_3: 'Checklisty',
-    plan_pro_1: 'Wszystko ze Starter',
+    plan_pro_1: 'Wszystkie moduły panelu w jednym zakupie',
     plan_pro_2: 'Mapy techniczne (EDU)',
     plan_pro_3: 'Playbooki eventowe',
-    plan_elite_1: 'Wszystko z Pro',
+    plan_elite_1: 'Bez subskrypcji — jednorazowo',
     plan_elite_2: 'Coach AI (edukacyjny)',
     plan_elite_3: 'Raport miesięczny',
     plan_most_popular: 'Najczęściej wybierany',
@@ -61,8 +61,8 @@ const DICT: Dict = {
     currency_pln: 'PLN',
     billing_monthly: 'Miesięcznie',
     billing_yearly_2mo: 'Rocznie (2 mies. gratis)',
-    elite_plus_badge: 'ELITE = PRO + Coach AI + Raport',
-    trial_starter: 'Wypróbuj 7 dni (trial)',
+    elite_plus_badge: 'Jeden zakup = cały panel EDU',
+    trial_starter: 'Founders NFT',
 
     // FAQ
     faq_title: 'FAQ',
@@ -126,7 +126,7 @@ const DICT: Dict = {
     market_panel_title: 'Market Panel (EDU)',
     market_panel_lead:
       'Macro, technicals, scenarios and checklists — educational. No signals or recommendations.',
-    choose_plan: 'Choose plan',
+    choose_plan: 'Founders NFT — full access',
 
     // Included
     whats_included_title: 'What you get',
@@ -137,17 +137,17 @@ const DICT: Dict = {
     included_5: 'Risk management framework and practical checklists',
 
     // Pricing
-    plans_title: 'Plans',
-    plan_starter_name: 'STARTER EDU',
-    plan_pro_name: 'PRO EDU',
-    plan_elite_name: 'ELITE EDU',
+    plans_title: 'Full access',
+    plan_starter_name: 'Founders NFT',
+    plan_pro_name: 'Founders NFT',
+    plan_elite_name: 'Founders NFT',
     plan_starter_1: '7‑day calendar',
     plan_starter_2: 'A/B/C scenarios',
     plan_starter_3: 'Checklists',
-    plan_pro_1: 'Everything in Starter',
+    plan_pro_1: 'All market panel modules in one purchase',
     plan_pro_2: 'Technical maps (EDU)',
     plan_pro_3: 'Event playbooks',
-    plan_elite_1: 'Everything in Pro',
+    plan_elite_1: 'One-time purchase — no subscription',
     plan_elite_2: 'AI coach (educational)',
     plan_elite_3: 'Monthly report',
     plan_most_popular: 'Most popular',
@@ -156,8 +156,8 @@ const DICT: Dict = {
     currency_pln: 'PLN',
     billing_monthly: 'Monthly',
     billing_yearly_2mo: 'Yearly (2 months free)',
-    elite_plus_badge: 'ELITE = PRO + AI coach + Monthly report',
-    trial_starter: 'Try 7 days (trial)',
+    elite_plus_badge: 'One purchase = full EDU panel',
+    trial_starter: 'Founders NFT',
 
     // FAQ
     faq_title: 'FAQ',

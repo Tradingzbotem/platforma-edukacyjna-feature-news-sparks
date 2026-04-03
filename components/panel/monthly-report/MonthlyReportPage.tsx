@@ -61,7 +61,7 @@ export default function MonthlyReportPage({ report, allReports, hideTabsSidebar 
 						<p className="mt-2 text-white/80 max-w-3xl">{report.tldr}</p>
 					</div>
 					<span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-						ELITE
+						Pełny dostęp
 					</span>
 				</div>
 				<div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4">

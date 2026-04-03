@@ -83,10 +83,10 @@ export default function SummaryCoachAI() {
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <h3 className="text-xl md:text-2xl font-extrabold tracking-tight text-white">
-                Coach AI (EDU) — Premium
+                Coach AI (EDU)
               </h3>
               <span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-                ELITE
+                Pełny dostęp
               </span>
             </div>
             <p className="text-sm text-white/80 leading-relaxed mb-2">
@@ -94,7 +94,7 @@ export default function SummaryCoachAI() {
               interpretacja danych.
             </p>
             <p className="text-xs text-white/60">
-              Moduł premium — dostajesz prowadzenie krok po kroku: przygotowanie → publikacja → weryfikacja → debrief.
+              Prowadzenie krok po kroku: przygotowanie → publikacja → weryfikacja → debrief.
             </p>
           </div>
         </div>
