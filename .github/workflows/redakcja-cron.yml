@@ -13,11 +13,16 @@ jobs:
       - name: Generate daily article
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          REDAKCJA_GENERATE_URL: ${{ vars.REDAKCJA_GENERATE_URL || secrets.REDAKCJA_GENERATE_URL }}
         run: |
-          echo "Generating article: /api/jobs/redakcja/generate"
+          if [ -z "$REDAKCJA_GENERATE_URL" ]; then
+            echo "::error::Ustaw zmienne Actions: REDAKCJA_GENERATE_URL (pełny URL, np. https://platforma-edukacyjna.com/api/jobs/redakcja/generate) — Repository variables lub Secrets."
+            exit 1
+          fi
+          echo "Generating article: $REDAKCJA_GENERATE_URL"
           curl -sS -i --fail-with-body \
             --max-time 120 --connect-timeout 10 \
             --retry 2 --retry-delay 2 --retry-connrefused \
             -H "x-cron-secret: ${CRON_SECRET}" \
-            "https://platforma-edukacyjna-feature-news-s.vercel.app/api/jobs/redakcja/generate" \
+            "${REDAKCJA_GENERATE_URL}" \
             -w "\nHTTP_STATUS:%{http_code}\n"
