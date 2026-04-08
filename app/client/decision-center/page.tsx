@@ -9,7 +9,9 @@ import { useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
   ChevronDown,
+  Circle,
   FlaskConical,
   LayoutGrid,
   Lock,
@@ -26,13 +28,17 @@ import type { RedakcjaNewsContextDto } from "@/lib/redakcja/redakcjaNewsContextT
 import { useDecisionBlock } from "./useDecisionBlock";
 import { isFoundersMarketplaceSalesPaused } from "@/lib/marketplace/offers";
 import {
-  buildBearishConfirmationLine,
-  buildBullishConfirmationLine,
-  buildNoTradeLine,
-  buildObserveNowBullets,
-  buildPrimaryTakeaway,
+  buildGrowthConditionRows,
+  buildModuleQuickLines,
+  buildNewsAssetBridge,
+  buildOperationalChecklist24h,
+  buildScenarioNarrativePack,
+  buildWeaknessConditionRows,
+  framePrimaryTakeawayForDisplay,
   humanizeMarketLanguage,
   macroMoodLabel,
+  shouldShowNoEdgeBlock,
+  type DecisionConditionRow,
 } from "./decisionBlockCopy";
 import {
   DECISION_HORIZON_OPTIONS,
@@ -131,9 +137,11 @@ function worldFeedSentimentBadgeClass(s: string): string {
 function WorldMarketContextStrip({
   event,
   redakcjaNewsContext,
+  block,
 }: {
   event: WorldRelatedEvent;
   redakcjaNewsContext: RedakcjaNewsContextDto | null;
+  block: DecisionBlockV1;
 }) {
   const bodyText =
     event.whyItMatters && event.whyItMatters.trim().length > 0
@@ -141,6 +149,7 @@ function WorldMarketContextStrip({
       : event.summaryShort && event.summaryShort.trim().length > 0
         ? event.summaryShort.trim()
         : null;
+  const bridge = buildNewsAssetBridge(block, event);
   const impacts = (event.impacts ?? []).slice(0, 2);
   const watches = (event.watch ?? []).slice(0, 2);
   const sourceUrlOk = Boolean(event.url && /^https?:\/\//i.test(event.url));
@@ -174,7 +183,11 @@ function WorldMarketContextStrip({
           ) : null}
         </div>
       )}
-      {bodyText ? <p className="mt-2 text-[13px] leading-relaxed text-white/65">{bodyText}</p> : null}
+      <div className="mt-3 rounded-lg border border-white/[0.08] bg-slate-950/40 px-3 py-2.5 sm:px-3.5 sm:py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/55">Wpływ na wybrane aktywo</p>
+        <p className="mt-1.5 text-[13px] font-medium leading-relaxed text-white/82 sm:text-[14px]">{bridge}</p>
+      </div>
+      {bodyText ? <p className="mt-2 text-[12px] leading-relaxed text-white/48">Źródło — streszczenie: {bodyText}</p> : null}
       {impacts.length > 0 ? (
         <div className="mt-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">Szczegółowy wpływ</p>
@@ -223,6 +236,54 @@ function WorldMarketContextStrip({
         ) : null}
       </div>
     </aside>
+  );
+}
+
+function ConditionStatusRow({ row }: { row: DecisionConditionRow }) {
+  const met = row.state === "met";
+  const unknown = row.state === "unknown";
+  const statusLabel = met ? "spełnione" : unknown ? "brak danych" : "niespełnione";
+  return (
+    <li className="flex gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+      <span className="mt-0.5 shrink-0" aria-hidden>
+        {met ? <Check className="h-4 w-4 text-emerald-400/90" strokeWidth={2.5} /> : <Circle className="h-4 w-4 text-white/22" strokeWidth={1.5} />}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className="text-[13px] font-semibold leading-snug text-white/88 sm:text-[14px]">{row.label}</span>
+          <span
+            className={`text-[10px] font-semibold uppercase tracking-[0.12em] ${met ? "text-emerald-300/75" : "text-white/35"}`}
+          >
+            {statusLabel}
+          </span>
+        </div>
+        {row.description ? <p className="mt-0.5 text-[12px] leading-relaxed text-white/42">{row.description}</p> : null}
+      </div>
+    </li>
+  );
+}
+
+function ScenarioNarrativePanel({ block }: { block: DecisionBlockV1 }) {
+  const pack = buildScenarioNarrativePack(block);
+  const items = [pack.base, pack.risk, pack.alt] as const;
+  return (
+    <section className="space-y-3" aria-labelledby="edu-scenario-narratives">
+      <EduSectionTitle id="edu-scenario-narratives">Scenariusze (narracja)</EduSectionTitle>
+      <p className="text-[12px] leading-relaxed text-white/45">
+        Trzy ramy z lekcji — bez sztucznych procentów; liczy się spójność zachowania ceny i makro w Twoim horyzoncie.
+      </p>
+      <div className="grid gap-2.5 sm:grid-cols-3">
+        {items.map((item) => (
+          <div
+            key={item.title}
+            className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-3.5 py-3 sm:min-h-[7.5rem]"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-200/70">{item.title}</p>
+            <p className="mt-2 text-[12px] leading-relaxed text-white/72 sm:text-[13px]">{item.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -304,11 +365,12 @@ function DecisionBlockFromApi({
   if (fetchState.status !== "success") return null;
 
   const { block, redakcjaNewsContext } = fetchState;
-  const primary = buildPrimaryTakeaway(block);
-  const bullConf = buildBullishConfirmationLine(block);
-  const bearConf = buildBearishConfirmationLine(block);
-  const noTrade = buildNoTradeLine(block);
-  const observeBullets = buildObserveNowBullets(block, 3);
+  const primary = framePrimaryTakeawayForDisplay(block);
+  const growthRows = buildGrowthConditionRows(block);
+  const weaknessRows = buildWeaknessConditionRows(block);
+  const showNoEdge = shouldShowNoEdgeBlock(block, growthRows, weaknessRows);
+  const checklist24 = buildOperationalChecklist24h(block);
+  const moduleLines = buildModuleQuickLines(block);
   const moduleLink = (path: string) =>
     buildPanelModuleDeepLink({
       path,
@@ -355,39 +417,56 @@ function DecisionBlockFromApi({
           <WorldMarketContextStrip
             event={block.worldContext.relatedEvents[0]}
             redakcjaNewsContext={redakcjaNewsContext ?? null}
+            block={block}
           />
         ) : null}
 
-        <section className="space-y-2.5" aria-labelledby="edu-bull-confirm">
-          <EduSectionTitle id="edu-bull-confirm">Co potwierdza wzrost</EduSectionTitle>
-          <p className="text-[14px] leading-relaxed text-white/75 sm:text-[15px]">{bullConf}</p>
+        <section className="space-y-3" aria-labelledby="edu-growth-conditions">
+          <EduSectionTitle id="edu-growth-conditions">Warunki wzrostu</EduSectionTitle>
+          <ul className="flex flex-col gap-2">
+            {growthRows.map((row, i) => (
+              <ConditionStatusRow key={i} row={row} />
+            ))}
+          </ul>
         </section>
 
-        <section className="space-y-2.5" aria-labelledby="edu-bear-confirm">
-          <EduSectionTitle id="edu-bear-confirm">Co potwierdza słabość / spadek</EduSectionTitle>
-          <p className="text-[14px] leading-relaxed text-white/75 sm:text-[15px]">{bearConf}</p>
+        <section className="space-y-3" aria-labelledby="edu-weak-conditions">
+          <EduSectionTitle id="edu-weak-conditions">Warunki słabości / spadku</EduSectionTitle>
+          <ul className="flex flex-col gap-2">
+            {weaknessRows.map((row, i) => (
+              <ConditionStatusRow key={i} row={row} />
+            ))}
+          </ul>
         </section>
 
-        <section className="space-y-2.5" aria-labelledby="edu-no-trade">
-          <EduSectionTitle id="edu-no-trade">Kiedy nie robić nic</EduSectionTitle>
-          <p className="text-[14px] leading-relaxed text-white/78 sm:text-[15px]">{noTrade}</p>
+        {showNoEdge ? (
+          <aside
+            className="rounded-xl border border-amber-400/20 bg-amber-500/[0.06] px-4 py-3.5 sm:px-5 sm:py-4"
+            aria-labelledby="edu-no-edge"
+          >
+            <p id="edu-no-edge" className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200/80">
+              Brak przewagi
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed text-white/78 sm:text-[14px]">
+              Sygnały są mieszane albo brak większości potwierdzeń po obu stronach — nie wymuszaj strony, dopóki struktura i
+              makro nie rozstrzygną obrazu. To nie jest zaproszenie do „nie rób nic zawsze”, tylko do czytelnego odczekania.
+            </p>
+          </aside>
+        ) : null}
+
+        <section className="space-y-3" aria-labelledby="edu-checklist-48">
+          <EduSectionTitle id="edu-checklist-48">Checklista 24–48h</EduSectionTitle>
+          <ul className="flex flex-col gap-2">
+            {checklist24.map((line, i) => (
+              <li key={i} className="flex gap-2.5 text-[13px] leading-relaxed text-white/72 sm:text-[14px]">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400/55" aria-hidden />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
         </section>
 
-        <section className="space-y-3" aria-labelledby="edu-observe">
-          <EduSectionTitle id="edu-observe">Co obserwować teraz</EduSectionTitle>
-          {observeBullets.length ? (
-            <ul className="flex flex-col gap-2">
-              {observeBullets.map((line, i) => (
-                <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-white/75">
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-400/50" aria-hidden />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-[13px] text-white/45">Brak listy obserwacji w tej odpowiedzi.</p>
-          )}
-        </section>
+        <ScenarioNarrativePanel block={block} />
 
         <div className="mt-6">
           <h3 className="mb-3 text-sm font-semibold text-white/70">Potwierdzenia</h3>
@@ -396,29 +475,33 @@ function DecisionBlockFromApi({
               href={moduleLink("/konto/panel-rynkowy/scenariusze-abc")}
               className="group rounded-xl border border-white/10 p-4 transition hover:border-white/30"
             >
-              <div className="text-xs text-white/50">Scenariusze ABC</div>
-              <div className="mt-1 text-sm font-medium text-white">Zobacz scenariusze dla aktywa</div>
+              <p className="text-[12px] leading-snug text-white/65">{moduleLines.scenarios}</p>
+              <div className="mt-2 text-xs text-white/50">Scenariusze ABC</div>
+              <div className="mt-0.5 text-sm font-medium text-white">Zobacz scenariusze dla aktywa</div>
             </a>
             <a
               href={moduleLink("/konto/panel-rynkowy/kalendarz-7-dni")}
               className="group rounded-xl border border-white/10 p-4 transition hover:border-white/30"
             >
-              <div className="text-xs text-white/50">Kalendarz</div>
-              <div className="mt-1 text-sm font-medium text-white">Sprawdź wydarzenia makro</div>
+              <p className="text-[12px] leading-snug text-white/65">{moduleLines.calendar}</p>
+              <div className="mt-2 text-xs text-white/50">Kalendarz</div>
+              <div className="mt-0.5 text-sm font-medium text-white">Sprawdź wydarzenia makro</div>
             </a>
             <a
               href={moduleLink("/konto/panel-rynkowy/mapy-techniczne")}
               className="group rounded-xl border border-white/10 p-4 transition hover:border-white/30"
             >
-              <div className="text-xs text-white/50">Technika</div>
-              <div className="mt-1 text-sm font-medium text-white">Analiza techniczna</div>
+              <p className="text-[12px] leading-snug text-white/65">{moduleLines.technical}</p>
+              <div className="mt-2 text-xs text-white/50">Technika</div>
+              <div className="mt-0.5 text-sm font-medium text-white">Analiza techniczna</div>
             </a>
             <a
               href={moduleLink("/konto/panel-rynkowy/checklisty")}
               className="group rounded-xl border border-white/10 p-4 transition hover:border-white/30"
             >
-              <div className="text-xs text-white/50">Checklisty</div>
-              <div className="mt-1 text-sm font-medium text-white">Sprawdź warunki wejścia</div>
+              <p className="text-[12px] leading-snug text-white/65">{moduleLines.checklists}</p>
+              <div className="mt-2 text-xs text-white/50">Checklisty</div>
+              <div className="mt-0.5 text-sm font-medium text-white">Sprawdź warunki wejścia</div>
             </a>
           </div>
         </div>

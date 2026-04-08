@@ -420,7 +420,7 @@ function itemTouchesMacroOrGeo(it: LiveNewsContextItem): boolean {
 }
 
 /**
- * Wybiera PRIMARY MARKET DRIVER na podstawie listy newsów (np. z fetchLiveNewsContextItems).
+ * Wybiera PRIMARY MARKET DRIVER na podstawie listy newsów (np. z getLiveNewsContextItems / RSS).
  * Nie generuje tekstu briefu — tylko kategorię, etykietę tematu i powiązane nagłówki.
  */
 export function selectPrimaryMarketDriver(items: LiveNewsContextItem[]): MarketDriverSelection {

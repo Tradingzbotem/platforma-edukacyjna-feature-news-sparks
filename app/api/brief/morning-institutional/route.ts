@@ -1,6 +1,7 @@
 // app/api/brief/morning-institutional/route.ts — institutional morning briefing (cluster-grounded sketch JSON)
-import OpenAI from "openai";
+import type OpenAI from "openai";
 import { NextRequest, NextResponse } from "next/server";
+import { createOpenAIClient } from "@/lib/openaiSdkClient";
 import { extractJsonObject } from "@/lib/brief/extractJsonObject";
 import type { BriefingLanguage } from "@/lib/brief/morningInstitutionalBriefingTypes";
 import {
@@ -9,6 +10,12 @@ import {
 	MORNING_MARKET_SNAPSHOT_FETCH_MS,
 } from "@/lib/brief/morningBriefMarketSnapshot";
 import { overlayMorningBriefingAssetPriceFields } from "@/lib/brief/overlayMorningBriefAssetPrices";
+import {
+	buildFallbackNarrativeBriefing,
+	buildFallbackStructuredMorningBrief,
+	FALLBACK_MORNING_BRIEF_ASSET_KEYS,
+	noDataBriefMessage,
+} from "@/lib/brief/fallbackMorningBriefNoNews";
 import { assembleMorningBriefClusterInputs } from "@/lib/brief/assembleMorningBriefClusterInputs";
 import { MANUAL_DRIVER_SYSTEM_ADDON } from "@/lib/brief/morningManualTopicPrompt";
 import {
@@ -270,11 +277,6 @@ async function refineTldrIfOverlapping(
 }
 
 export async function POST(req: NextRequest) {
-	const apiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
-	if (!apiKey) {
-		return NextResponse.json({ ok: false, error: "OPENAI_API_KEY missing" }, { status: 500 });
-	}
-
 	const wallStart = Date.now();
 
 	try {
@@ -306,6 +308,55 @@ export async function POST(req: NextRequest) {
 				},
 				{ status: 400 },
 			);
+		}
+
+		const stats = assembled.autoClusterStats;
+		const noClusterNews =
+			!assembled.manual.active &&
+			stats != null &&
+			(stats.clusterSize === 0 || stats.relatedNewsToModel === 0);
+
+		if (noClusterNews) {
+			console.info("[narrative-debug] no-cluster guard — skipping OpenAI", {
+				clusterSize: stats?.clusterSize,
+				relatedNewsToModel: stats?.relatedNewsToModel,
+				briefingFormat,
+			});
+			const snapshotFallback = await fetchMorningBriefMarketSnapshotForKeys(
+				req,
+				FALLBACK_MORNING_BRIEF_ASSET_KEYS,
+				{ fetchMs: MORNING_MARKET_SNAPSHOT_FETCH_MS },
+			);
+			const message = noDataBriefMessage(language);
+			if (briefingFormat === "narrative") {
+				const briefing = buildFallbackNarrativeBriefing(language, snapshotFallback.perLabel);
+				return NextResponse.json({
+					ok: true,
+					success: true,
+					status: "no_data",
+					fallback: true,
+					message,
+					briefing,
+					briefingFormat: "narrative" as const,
+				});
+			}
+			const briefingRecord = buildFallbackStructuredMorningBrief(language);
+			overlayMorningBriefingAssetPriceFields(briefingRecord, snapshotFallback.perLabel);
+			stripNonSketchBriefSections(briefingRecord);
+			return NextResponse.json({
+				ok: true,
+				success: true,
+				status: "no_data",
+				fallback: true,
+				message,
+				briefing: briefingRecord,
+				briefingFormat: "structured" as const,
+			});
+		}
+
+		const apiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+		if (!apiKey) {
+			return NextResponse.json({ ok: false, error: "OPENAI_API_KEY missing" }, { status: 500 });
 		}
 
 		const snapshotResult = await fetchMorningBriefMarketSnapshotForKeys(req, canonicalAssetKeys, {
@@ -391,11 +442,7 @@ export async function POST(req: NextRequest) {
 			].join("\n");
 		}
 
-		const client = new OpenAI({
-			apiKey,
-			organization: process.env.OPENAI_ORG_ID,
-			project: process.env.OPENAI_PROJECT,
-		});
+		const client = createOpenAIClient(apiKey);
 
 		const maxTokens =
 			briefingFormat === "narrative"

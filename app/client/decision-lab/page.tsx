@@ -22,6 +22,7 @@ import {
   FileText,
 } from 'lucide-react';
 import BackButton from '@/components/BackButton';
+import { getRetrospectiveAnalyzeEligibility } from '@/lib/decision-lab/retrospectiveAnalyzeEligibility';
 
 // Dynamic import for TradingView to avoid SSR issues
 const TradingViewAdvancedEmbed = dynamic(
@@ -142,6 +143,17 @@ function mapSymbolToTradingView(symbol: string): string {
 }
 
 // Helper functions
+function formatRoughTimeUntilFromHoursRemaining(hoursRemaining: number): string {
+  if (hoursRemaining <= 0) return '';
+  if (hoursRemaining < 24) {
+    const h = Math.ceil(hoursRemaining);
+    return `za ok. ${h} godz.`;
+  }
+  const d = Math.ceil(hoursRemaining / 24);
+  if (d === 1) return 'za ok. 1 dzień';
+  return `za ok. ${d} dni`;
+}
+
 function aggregateByMode(entries: DecisionEntry[]) {
   const counts: Record<string, number> = { TREND: 0, RANGE: 0, NEWS: 0 };
   entries.forEach((e) => {
@@ -690,11 +702,15 @@ export default function DecisionLabPage() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to analyze decision');
+        const err = await res.json().catch(() => ({}));
+        const msg =
+          typeof err?.error === 'string'
+            ? err.error
+            : 'Nie udało się uruchomić oceny wstecznej AI.';
+        throw new Error(msg);
       }
 
-      const data = await res.json();
+      await res.json();
       await fetchEntries(); // Refresh entries
       setSuccess('Decyzja przeanalizowana przez AI!');
     } catch (err: any) {
@@ -1776,6 +1792,117 @@ export default function DecisionLabPage() {
                               </>
                             )}
                           </div>
+
+                          {/* Ocena wsteczna AI (po minimalnym czasie od zapisu) */}
+                          {entry.ai_analysis ? (
+                            <div className="mt-4 pt-4 border-t border-white/10">
+                              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                <span className="text-sm font-medium text-white/90 flex items-center gap-2">
+                                  <Sparkles className="h-4 w-4 text-amber-300 shrink-0" />
+                                  Ocena wsteczna AI
+                                </span>
+                                {entry.ai_analyzed_at && (
+                                  <span className="text-xs text-white/45">
+                                    {new Date(entry.ai_analyzed_at).toLocaleString('pl-PL', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                )}
+                              </div>
+                              {typeof entry.ai_analysis.score === 'number' && (
+                                <p className="text-xs text-white/60 mb-2">
+                                  Trafność (edukacyjnie): {entry.ai_analysis.score}/100
+                                </p>
+                              )}
+                              {expandedAiAnalysisId === entry.id ? (
+                                <div className="space-y-3 text-sm text-white/80">
+                                  {entry.ai_analysis.analysis && (
+                                    <p className="whitespace-pre-wrap">{entry.ai_analysis.analysis}</p>
+                                  )}
+                                  {entry.ai_analysis.market_context && (
+                                    <div>
+                                      <div className="text-xs font-semibold text-white/50 mb-1">Kontekst rynku</div>
+                                      <p className="whitespace-pre-wrap text-white/75">{entry.ai_analysis.market_context}</p>
+                                    </div>
+                                  )}
+                                  {entry.ai_analysis.what_went_well && entry.ai_analysis.what_went_well.length > 0 && (
+                                    <div>
+                                      <div className="text-xs font-semibold text-emerald-300/90 mb-1">Co poszło dobrze</div>
+                                      <ul className="list-disc list-inside space-y-1 text-white/75">
+                                        {entry.ai_analysis.what_went_well.map((line, i) => (
+                                          <li key={i}>{line}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  {entry.ai_analysis.what_could_be_better &&
+                                    entry.ai_analysis.what_could_be_better.length > 0 && (
+                                      <div>
+                                        <div className="text-xs font-semibold text-amber-300/90 mb-1">Co można poprawić</div>
+                                        <ul className="list-disc list-inside space-y-1 text-white/75">
+                                          {entry.ai_analysis.what_could_be_better.map((line, i) => (
+                                            <li key={i}>{line}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  {entry.ai_analysis.lessons_learned && entry.ai_analysis.lessons_learned.length > 0 && (
+                                    <div>
+                                      <div className="text-xs font-semibold text-blue-300/90 mb-1">Wnioski</div>
+                                      <ul className="list-disc list-inside space-y-1 text-white/75">
+                                        {entry.ai_analysis.lessons_learned.map((line, i) => (
+                                          <li key={i}>{line}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedAiAnalysisId(null)}
+                                    className="text-xs text-blue-400 hover:text-blue-300 underline"
+                                  >
+                                    Zwiń analizę
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedAiAnalysisId(entry.id)}
+                                  className="text-xs text-blue-400 hover:text-blue-300 underline"
+                                >
+                                  Pokaż analizę AI
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="mt-4 pt-4 border-t border-white/10">
+                              {(() => {
+                                const elig = getRetrospectiveAnalyzeEligibility(entry.created_at, entry.horizon);
+                                const waitLabel = formatRoughTimeUntilFromHoursRemaining(elig.hoursRemaining);
+                                return (
+                                  <>
+                                    <p className="text-xs text-white/50 mb-2">
+                                      {elig.canAnalyze
+                                        ? 'Możesz poprosić AI o krótką ocenę wsteczną (edukacyjnie, bez rekomendacji inwestycyjnych).'
+                                        : `Ocena wsteczna odblokuje się ${waitLabel} (min. ${elig.minHours} h od zapisu dla „${getHorizonLabel(entry.horizon)}”). Od ok. ${elig.canAnalyzeAfter.toLocaleString('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}.`}
+                                    </p>
+                                    <button
+                                      type="button"
+                                      disabled={!elig.canAnalyze || analyzingEntryId === entry.id}
+                                      onClick={() => handleAIAnalysis(entry.id)}
+                                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-medium px-4 py-2.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/10"
+                                    >
+                                      <Sparkles className="h-4 w-4 text-amber-300" />
+                                      {analyzingEntryId === entry.id ? 'Analizowanie…' : 'Oceń wstecz przez AI'}
+                                    </button>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          )}
                         </div>
                       );
                     })}

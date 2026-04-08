@@ -1,6 +1,6 @@
 // app/api/panel/playbooks/generate/route.ts
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { createOpenAIClient } from '@/lib/openaiSdkClient';
 import { PLAYBOOKS, type Playbook } from '@/lib/panel/playbooks';
 
 export const dynamic = 'force-dynamic';
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     if (!pb) return NextResponse.json({ error: 'Unknown playbook slug' }, { status: 404 });
     if (!tab) return NextResponse.json({ error: 'Missing tab' }, { status: 400 });
 
-    const openai = new OpenAI({ apiKey, organization: process.env.OPENAI_ORG_ID, project: process.env.OPENAI_PROJECT });
+    const openai = createOpenAIClient(apiKey);
 
     const user = [
       `Zadanie: wygeneruj zawartość dla zakładki "${tab}".`,

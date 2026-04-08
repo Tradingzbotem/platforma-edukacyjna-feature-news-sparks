@@ -387,10 +387,12 @@ function compareMorningItems(a: InternalItem, b: InternalItem, now: number, domi
 export async function loadLiveNewsContextItemsFromRss(): Promise<LiveNewsContextItem[]> {
   const now = Date.now();
   const merged: InternalItem[] = [];
+  let rawIngestCount = 0;
 
   await Promise.all(
     FEEDS.map(async (f) => {
       const rawItems = await fetchRssItems(f.url);
+      rawIngestCount += rawItems.length;
       for (const it of rawItems) {
         const title = stripHtml(textField(it.title)).trim();
         if (!title) continue;
@@ -422,7 +424,28 @@ export async function loadLiveNewsContextItemsFromRss(): Promise<LiveNewsContext
   const dominant = computeDominantKeywords(unique);
   unique.sort((a, b) => compareMorningItems(a, b, now, dominant));
 
+  const afterCap = Math.min(unique.length, MAX_ITEMS);
+  console.info("[narrative-debug] rss→filter", {
+    rawIngestCount,
+    afterDedup: unique.length,
+    afterCap,
+    feeds: FEEDS.map((f) => f.source),
+  });
+
   return unique.slice(0, MAX_ITEMS).map(internalToPublic);
+}
+
+/**
+ * Jedno źródło prawdy dla żywych nagłówków RSS — ta sama lista co w body `GET /api/news/context`.
+ * W kodzie serwera (Route Handlers, assemble) wołaj to zamiast `fetch` do własnego `/api/news/context`.
+ */
+export async function getLiveNewsContextItems(): Promise<LiveNewsContextItem[]> {
+  const items = await loadLiveNewsContextItemsFromRss();
+  console.info("[narrative-debug] live news context direct service", {
+    itemCountFromRssLoader: items.length,
+    path: "getLiveNewsContextItems→loadLiveNewsContextItemsFromRss",
+  });
+  return items;
 }
 
 export function resolveBriefingRequestBaseUrl(req: Request): string {
@@ -548,41 +571,17 @@ export function splitMorningLeadAndSecondaryNews(items: LiveNewsContextItem[]): 
   return { leadNews, secondaryNews };
 }
 
+/**
+ * Zachowana nazwa dla starszych wywołań. Nie wykonuje już HTTP do `/api/news/context` —
+ * deleguje do `getLiveNewsContextItems()` (bez hopa server→server).
+ * Parametry `req` i `opts.signal` są ignorowane (RSS loader nie przyjmuje AbortSignal).
+ */
 export async function fetchLiveNewsContextItems(
-  req: Request,
-  opts?: { signal?: AbortSignal },
+  _req: Request,
+  _opts?: { signal?: AbortSignal },
 ): Promise<LiveNewsContextItem[]> {
-  try {
-    const base = resolveBriefingRequestBaseUrl(req);
-    const r = await fetch(`${base}/api/news/context`, {
-      cache: "no-store",
-      signal: opts?.signal,
-    });
-    if (!r.ok) return [];
-    const j = (await r.json()) as { items?: unknown };
-    if (!Array.isArray(j?.items)) return [];
-    return j.items
-      .map((row: unknown) => {
-        const o = row as Record<string, unknown>;
-        const title = typeof o?.title === "string" ? o.title.trim() : "";
-        const summary = typeof o?.summary === "string" ? o.summary.trim() : "";
-        const source = typeof o?.source === "string" ? o.source.trim() : "RSS";
-        if (!title) return null;
-        const item: LiveNewsContextItem = {
-          title,
-          summary: summary || title,
-          source,
-        };
-        if (typeof o?.publishedAt === "string" && o.publishedAt.trim()) item.publishedAt = o.publishedAt.trim();
-        if (typeof o?.url === "string" && o.url.trim()) item.url = o.url.trim();
-        const parsedCats = parseCategoriesField(o?.categories);
-        if (parsedCats) item.categories = parsedCats;
-        return item;
-      })
-      .filter(Boolean) as LiveNewsContextItem[];
-  } catch {
-    return [];
-  }
+  console.info("[narrative-debug] fetchLiveNewsContextItems → direct service (no internal HTTP hop)");
+  return getLiveNewsContextItems();
 }
 
 function formatItemLine(it: LiveNewsContextItem, index: number): string {

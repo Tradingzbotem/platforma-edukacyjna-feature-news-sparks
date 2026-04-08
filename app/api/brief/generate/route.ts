@@ -1,10 +1,10 @@
 // app/api/brief/generate/route.ts
-import OpenAI from "openai";
+import { createOpenAIClient } from "@/lib/openaiSdkClient";
 import type { BriefingLanguage } from "@/lib/brief/morningInstitutionalBriefingTypes";
 import {
-  fetchLiveNewsContextItems,
   formatGenBriefLiveNewsBlock,
   genBriefSystemIntro,
+  getLiveNewsContextItems,
   systemRssNoteForGenBrief,
 } from "@/lib/brief/liveNewsContext";
 import { addBrief, type Brief as StoreBrief } from "../_store";
@@ -269,11 +269,11 @@ export async function POST(req: Request) {
     const briefType = (raw.type === 'DAILY' ? 'DAILY' : 'GEN') as 'GEN' | 'DAILY';
     const overrideTitle = typeof raw.title === 'string' && raw.title.trim().length > 0 ? raw.title.trim() : undefined;
 
-    const newsItems = await fetchLiveNewsContextItems(req);
+    const newsItems = await getLiveNewsContextItems();
     const liveBlock = formatGenBriefLiveNewsBlock(lang, newsItems);
     const augmentedUser = liveBlock ? `${liveBlock}\n\n---\n\n${userPrompt}` : userPrompt;
 
-    const openai = new OpenAI({ apiKey, organization: process.env.OPENAI_ORG_ID, project: process.env.OPENAI_PROJECT });
+    const openai = createOpenAIClient(apiKey);
 
     // Use Chat Completions to match existing usage in the repo
     const completion = await openai.chat.completions.create({

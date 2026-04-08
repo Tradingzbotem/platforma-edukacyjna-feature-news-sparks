@@ -1,8 +1,8 @@
 import type { NextRequest } from 'next/server';
 import type { LiveNewsContextItem } from '@/lib/brief/liveNewsContext';
 import {
-	fetchLiveNewsContextItems,
 	formatClusterGroundedNewsBlock,
+	getLiveNewsContextItems,
 	sortClusterNewsForBrief,
 } from '@/lib/brief/liveNewsContext';
 import {
@@ -33,6 +33,13 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 	]);
 }
 
+/** Statystyki auto-klastra: puste gdy `manual.active` (operator). */
+export type AutoClusterPipelineStats = {
+	feedItemCount: number;
+	clusterSize: number;
+	relatedNewsToModel: number;
+};
+
 export type AssembledMorningBriefClusterInputs = {
 	manual: ParsedManualPrimaryDriver;
 	canonicalAssetKeys: MorningBriefCanonicalKey[];
@@ -40,10 +47,11 @@ export type AssembledMorningBriefClusterInputs = {
 	clusterBlock: string;
 	inputKind: 'cluster' | 'operator';
 	themeSummaryLines: string[];
+	autoClusterStats: AutoClusterPipelineStats | null;
 };
 
 export async function assembleMorningBriefClusterInputs(
-	req: NextRequest,
+	_req: NextRequest,
 	body: Record<string, unknown>,
 ): Promise<AssembledMorningBriefClusterInputs> {
 	const rawLang = typeof body.language === 'string' ? body.language.toLowerCase() : 'pl';
@@ -56,12 +64,31 @@ export async function assembleMorningBriefClusterInputs(
 	let clusterBlock = '';
 	let inputKind: 'cluster' | 'operator' = 'cluster';
 	let themeSummaryLines: string[] = [];
+	let autoClusterStats: AutoClusterPipelineStats | null = null;
 
 	if (!manual.active) {
-		const newsItems = await withTimeout(fetchLiveNewsContextItems(req), NEWS_CONTEXT_FETCH_MS, []);
+		console.info('[narrative-debug] assemble morning brief: loading RSS via direct service (no /api/news/context fetch)');
+		const newsItems = await withTimeout(getLiveNewsContextItems(), NEWS_CONTEXT_FETCH_MS, []);
 		const primaryThemeSelection = selectPrimaryMarketTheme(newsItems);
 		const sortedCluster = sortClusterNewsForBrief(primaryThemeSelection.relatedNews);
 		narrowNews = sortedCluster.slice(0, MAX_RELATED_NEWS);
+
+		autoClusterStats = {
+			feedItemCount: newsItems.length,
+			clusterSize: primaryThemeSelection.clusterSize,
+			relatedNewsToModel: narrowNews.length,
+		};
+		console.info('[narrative-debug] clustering→AI', {
+			usedDirectRssServicePath: true,
+			itemCountFromLoader: newsItems.length,
+			clusterSize: primaryThemeSelection.clusterSize,
+			relatedNewsToModel: narrowNews.length,
+		});
+		if (primaryThemeSelection.clusterSize === 0) {
+			console.info('[narrative-debug] clusterSize still zero after direct RSS path', {
+				itemCountFromLoader: newsItems.length,
+			});
+		}
 
 		canonicalAssetKeys = pickMorningBriefCanonicalKeysForCluster(
 			{
@@ -99,6 +126,7 @@ export async function assembleMorningBriefClusterInputs(
 		});
 	} else {
 		inputKind = 'operator';
+		autoClusterStats = null;
 		canonicalAssetKeys = manual.assetKeys;
 		const opBlock = buildOperatorPrimaryDriverBlock(briefingLang, {
 			themeTitle: manual.themeTitle,
@@ -108,8 +136,14 @@ export async function assembleMorningBriefClusterInputs(
 		});
 
 		if (manual.mode === 'manual_plus_live_context') {
-			const newsItems = await withTimeout(fetchLiveNewsContextItems(req), NEWS_CONTEXT_FETCH_MS, []);
+			console.info('[narrative-debug] assemble manual+live: direct RSS service (no internal HTTP)');
+			const newsItems = await withTimeout(getLiveNewsContextItems(), NEWS_CONTEXT_FETCH_MS, []);
 			narrowNews = sortClusterNewsForBrief(newsItems).slice(0, MAX_RELATED_NEWS);
+			console.info('[narrative-debug] manual+live supporting headlines', {
+				usedDirectRssServicePath: true,
+				itemCountFromLoader: newsItems.length,
+				supportingToModel: narrowNews.length,
+			});
 			clusterBlock = `${opBlock}\n\n---\n\n${buildSupportingLiveHeadlinesBlock(briefingLang, narrowNews)}`;
 		} else {
 			narrowNews = [];
@@ -142,5 +176,6 @@ export async function assembleMorningBriefClusterInputs(
 		clusterBlock,
 		inputKind,
 		themeSummaryLines,
+		autoClusterStats,
 	};
 }

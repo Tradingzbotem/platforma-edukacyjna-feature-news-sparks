@@ -1,5 +1,5 @@
 // app/api/challenge/events/ai/route.ts
-import OpenAI from "openai";
+import { createOpenAIClient } from "@/lib/openaiSdkClient";
 import { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
@@ -23,8 +23,7 @@ function nextWeekRange(from = new Date()) {
 
 // ───────────── OpenAI setup ─────────────
 const apiKey = process.env.OPENAI_API_KEY || "";
-const project = process.env.OPENAI_PROJECT;
-const openai = new OpenAI({ apiKey, project });
+const openai = createOpenAIClient(apiKey);
 
 const SYSTEM_PROMPT = `
 Jesteś asystentem planującym EDU-wyzwania rynkowe (FX/CFD) na nadchodzący tydzień.

@@ -688,6 +688,8 @@ export default function AdminMorningBriefingPage() {
   const [briefing, setBriefing] = useState<MorningInstitutionalBriefing | null>(null);
   const [narrativeBriefing, setNarrativeBriefing] = useState<NarrativeBriefResponse | null>(null);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
+  /** API zwróciło `status: no_data` + statyczny fallback (brak RSS/klastra). */
+  const [noDataFallbackMessage, setNoDataFallbackMessage] = useState<string | null>(null);
 
   const [questionsPack, setQuestionsPack] = useState<MorningBriefingQuestionsPack | null>(null);
   const [questionsLoading, setQuestionsLoading] = useState(false);
@@ -730,6 +732,7 @@ export default function AdminMorningBriefingPage() {
     setBriefing(null);
     setNarrativeBriefing(null);
     setGeneratedAt(null);
+    setNoDataFallbackMessage(null);
     setQuestionsPack(null);
     setQuestionsGeneratedAt(null);
     setQuestionsError(null);
@@ -753,6 +756,7 @@ export default function AdminMorningBriefingPage() {
     }
     setLoading(true);
     setError(null);
+    setNoDataFallbackMessage(null);
     try {
       const r = await fetch('/api/brief/morning-institutional', {
         method: 'POST',
@@ -777,6 +781,10 @@ export default function AdminMorningBriefingPage() {
             : loc.errorRequestFailed(r.status);
         throw new Error(msg);
       }
+      const msgRaw = data.message;
+      const isNoDataFallback =
+        data.fallback === true && data.status === 'no_data' && typeof msgRaw === 'string';
+      setNoDataFallbackMessage(isNoDataFallback ? msgRaw.trim() : null);
       const rawBriefing = data.briefing;
       if (rawBriefing == null || typeof rawBriefing !== 'object') {
         throw new Error(loc.errorNoBriefingField);
@@ -1245,6 +1253,18 @@ export default function AdminMorningBriefingPage() {
 
         <div className="mb-6 space-y-3">
           {phaseBanner}
+          {noDataFallbackMessage ? (
+            <div
+              className="rounded-xl border border-amber-500/40 bg-amber-950/25 px-4 py-3 text-sm text-amber-50/95"
+              role="status"
+            >
+              {noDataFallbackMessage}{' '}
+              <span className="text-amber-200/80">
+                (Briefing statyczny — bez OpenAI; sprawdź logi{' '}
+                <code className="rounded bg-black/30 px-1 py-0.5 text-xs">[narrative-debug]</code> na Vercelu.)
+              </span>
+            </div>
+          ) : null}
           {narrativeBriefing ? (
             <div className="rounded-xl border border-white/12 bg-white/[0.03] px-4 py-3 text-sm text-white/55">
               {L.questionsDisabledNarrative}

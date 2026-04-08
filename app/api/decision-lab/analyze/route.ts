@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { getSession } from '@/lib/session';
 import { hasFeature } from '@/lib/features';
+import { minHoursBeforeRetrospectiveAnalyze } from '@/lib/decision-lab/retrospectiveAnalyzeEligibility';
 import OpenAI from 'openai';
 
 export const runtime = 'nodejs';
@@ -68,17 +69,11 @@ export async function POST(req: Request) {
     const hoursElapsed = Math.floor((now.getTime() - decisionDate.getTime()) / (1000 * 60 * 60));
     const daysElapsed = Math.floor(hoursElapsed / 24);
 
-    // Determine if enough time has passed based on horizon
-    const minHoursByHorizon: Record<string, number> = {
-      INTRADAY: 4, // Check after 4 hours
-      SWING: 24, // Check after 1 day
-      POSITION: 72, // Check after 3 days
-    };
-    const minHours = minHoursByHorizon[entry.horizon] || 24;
+    const minHours = minHoursBeforeRetrospectiveAnalyze(entry.horizon);
 
     if (hoursElapsed < minHours) {
       return NextResponse.json({
-        error: `Za wcześnie na analizę. Minimalny czas: ${minHours} godzin (horizon: ${entry.horizon})`,
+        error: `Za wcześnie na ocenę wsteczną. Min. ${minHours} h od zapisu (horyzont: ${entry.horizon}).`,
         can_analyze_after: new Date(decisionDate.getTime() + minHours * 60 * 60 * 1000).toISOString(),
       }, { status: 400 });
     }

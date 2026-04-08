@@ -1,6 +1,6 @@
 // POST /api/brief/morning-institutional/questions — pytania wyłącznie na podstawie przekazanego briefingu (JSON)
-import OpenAI from "openai";
 import { NextRequest, NextResponse } from "next/server";
+import { createOpenAIClient } from "@/lib/openaiSdkClient";
 import { extractJsonObject } from "@/lib/brief/extractJsonObject";
 
 export const runtime = "nodejs";
@@ -102,11 +102,7 @@ ${briefingJson}
 Produce the JSON object now.
 `.trim();
 
-		const client = new OpenAI({
-			apiKey,
-			organization: process.env.OPENAI_ORG_ID,
-			project: process.env.OPENAI_PROJECT,
-		});
+		const client = createOpenAIClient(apiKey);
 
 		const maxTokens = depth === "long" ? 8192 : 4096;
 
