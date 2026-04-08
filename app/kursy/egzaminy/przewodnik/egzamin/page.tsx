@@ -47,12 +47,12 @@ function getMeta(version?: string) {
   return { title, questions };
 }
 
-export default function Page({
+export default async function Page({
   searchParams,
 }: {
-  searchParams?: { v?: string };
+  searchParams: Promise<{ v?: string }>;
 }) {
-  const version = searchParams?.v;
+  const { v: version } = await searchParams;
   const meta = getMeta(version);
   if (!meta) return notFound();
 

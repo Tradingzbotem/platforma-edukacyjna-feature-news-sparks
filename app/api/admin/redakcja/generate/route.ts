@@ -1,808 +1,35 @@
 // app/api/admin/redakcja/generate/route.ts — Ręczne generowanie artykułu przez admina
 import { NextResponse } from 'next/server';
 import { getIsAdmin } from '@/lib/admin';
-import { slugify, articleInputSchema, parseTags } from '@/lib/redakcja/admin';
-import { injectCoverMeta } from '@/lib/redakcja/content-utils';
-import { getPrisma } from '@/lib/prisma';
-// Import db side-effects to normalize env (DATABASE_URL -> POSTGRES_URL)
 import '@/lib/db';
 import { isDatabaseConfigured } from '@/lib/db';
-import { ensureArticleTable, ensureMediaAssetTable, ensureMediaAssetBlobTable } from '@/lib/redakcja/ensureDb';
-import { createFallbackArticle } from '@/lib/redakcja/fallbackStore';
-import { listFallbackMediaAssets, createFallbackMediaAsset } from '@/lib/redakcja/mediaFallbackStore';
-import { revalidatePath } from 'next/cache';
-import { sql } from '@vercel/postgres';
-import OpenAI from 'openai';
-import fs from 'fs';
-import path from 'path';
+import {
+	generateEditorialArticleWithOpenAI,
+	generateLegacyRandomEditorialArticle,
+	type EditorialArticleOpenAIInput,
+} from '@/lib/redakcja/editorialArticleGeneration';
+import {
+	editorialImageDebugForApiResponse,
+	persistEditorialArticle,
+} from '@/lib/redakcja/editorialArticlePersistence';
+import { runEditorialGenerationFromNewsId } from '@/lib/redakcja/runEditorialGenerationFromNews';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Limit dla Pro plan (można zwiększyć do 300s w ustawieniach Vercel projektu)
 
-const SYSTEM_PROMPT = `
-Jesteś redaktorem tworzącym edukacyjne artykuły o rynkach finansowych i ekonomii.
-
-Zasady:
-- Materiał musi być CZYSTO EDUKACYJNY — zero rekomendacji inwestycyjnych, zero porad tradingowych, zero sygnałów kup/sprzedaj
-- Skup się na wyjaśnianiu konceptów, mechanizmów, procesów
-- Używaj przykładów historycznych i teoretycznych, nie konkretnych rekomendacji
-- Język: polski, profesjonalny ale przystępny
-- Długość: 800-1200 słów
-- Struktura: wprowadzenie, rozwinięcie (2-3 sekcje), podsumowanie
-
-Format odpowiedzi (JSON):
-{
-  "title": "Tytuł artykułu (maksymalnie 80 znaków)",
-  "content": "Treść w Markdown z nagłówkami ##, listami, akapitami.",
-  "tags": ["tag1", "tag2", "tag3"],
-  "readingTime": 5
-}
-`.trim();
-
-async function getRecentArticleTopics(limit: number = 10): Promise<string[]> {
-	const prisma = getPrisma();
-	const topics: string[] = [];
-
-	try {
-		if (prisma) {
-			const articles = await prisma.article.findMany({
-				take: limit,
-				orderBy: { createdAt: 'desc' },
-				select: { title: true, tags: true },
-			});
-			for (const art of articles) {
-				if (art.title) topics.push(art.title.toLowerCase());
-				if (Array.isArray(art.tags)) topics.push(...art.tags.map((t: string) => t.toLowerCase()));
-			}
-		} else if (isDatabaseConfigured()) {
-			const { rows } = await sql<{ title: string; tags: string[] }>`
-				SELECT title, tags FROM "Article" ORDER BY "createdAt" DESC LIMIT ${limit}
-			`;
-			for (const art of rows) {
-				if (art.title) topics.push(art.title.toLowerCase());
-				if (Array.isArray(art.tags)) topics.push(...art.tags.map((t: string) => t.toLowerCase()));
-			}
-		}
-	} catch (e) {
-		// Ignore errors
+function parseStringListField(v: unknown): string[] | undefined {
+	if (Array.isArray(v)) {
+		const out = v.map((x) => String(x).trim()).filter(Boolean);
+		return out.length ? out : undefined;
 	}
-
-	return topics;
-}
-
-function selectRandomTopic(recentTopics: string[], newsContext?: string): string {
-	// Szeroka lista różnych tematów edukacyjnych
-	const allTopics = [
-		// Makroekonomia i polityka monetarna
-		'stopy procentowe i ich wpływ na rynki',
-		'polityka monetarna banków centralnych',
-		'relacja między inflacją a bezrobociem (krzywa Phillipsa)',
-		'deficyt budżetowy i dług publiczny',
-		'wymiana walutowa i kursy walutowe',
-		
-		// Konkretne aktywa i instrumenty
-		'złoto jako aktywo bezpieczne (safe haven)',
-		'ropa naftowa i czynniki wpływające na jej cenę',
-		'obligacje skarbowe i rentowności',
-		'akcje technologiczne vs wartościowe',
-		'kryptowaluty i blockchain w kontekście finansów',
-		'EUR/USD - główne czynniki wpływające na parę',
-		'NASDAQ 100 - charakterystyka indeksu',
-		'S&P 500 - jak czytać indeks',
-		'DAX 40 - niemiecki indeks giełdowy',
-		
-		// Analiza techniczna
-		'poziomy wsparcia i oporu',
-		'średnie kroczące (MA) - zastosowanie',
-		'RSI - wskaźnik siły względnej',
-		'MACD - interpretacja sygnałów',
-		'formacje świecowe japońskie',
-		'wolumen i jego znaczenie w analizie',
-		'trendy i ich identyfikacja',
-		
-		// Psychologia i zarządzanie
-		'psychologia tradingu - emocje vs logika',
-		'zarządzanie ryzykiem w tradingu',
-		'pozycja sizing - jak dobrać wielkość pozycji',
-		'stop loss i take profit - strategie',
-		'dziennik tradingowy - jak prowadzić',
-		
-		// Wydarzenia makroekonomiczne
-		'NFP (Non-Farm Payrolls) - co to jest i jak wpływa',
-		'CPI (Consumer Price Index) - interpretacja danych',
-		'PCE - alternatywny wskaźnik inflacji',
-		'decyzje FOMC i ich wpływ na rynki',
-		'decyzje EBC (Europejski Bank Centralny)',
-		'GDP - produkt krajowy brutto',
-
-		// Wydarzenia giełdowe i corporate
-		'fuzje i przejęcia (M&A) - jak wpływają na wyceny',
-		'duże ruchy kursów akcji (gap up / gap down) - przyczyny i kontekst',
-		'wyniki kwartalne spółek - jak je czytać',
-		'ostrzeżenia o zyskach (profit warning) - co oznaczają',
-		'IPO i debiuty giełdowe - ryzyka i szanse',
-		'dywidendy i buybacki - wpływ na kurs akcji',
-		'zmiany w indeksach (awans/spadek spółek) - konsekwencje rynkowe',
-		'spółki wzrostowe vs wartościowe - różnice w cyklach',
-		'sektorowe rotacje kapitału na giełdzie',
-		
-		// Rynki i sektory
-		'sektor energetyczny - trendy i wyzwania',
-		'sektor technologiczny - cykle i trendy',
-		'sektor finansowy - bankowość i ubezpieczenia',
-		'rynki wschodzące vs rozwinięte',
-		'geopolityka a rynki finansowe',
-		
-		// Koncepcje zaawansowane
-		'carry trade - strategia na różnicach stóp',
-		'hedging - zabezpieczanie pozycji',
-		'arbitraż - wykorzystywanie różnic cenowych',
-		'lewarowanie - korzyści i ryzyka',
-		'korelacje między aktywami',
-	];
-
-	// Jeśli mamy kontekst z wiadomości, użyj go do wyboru tematu
-	if (newsContext) {
-		const contextLower = newsContext.toLowerCase();
-		
-		// Sprawdź czy kontekst zawiera wzmianki o konkretnych aktywach
-		const assetKeywords: Record<string, string[]> = {
-			'złoto': ['złoto', 'gold', 'xau'],
-			'ropa': ['ropa', 'oil', 'wti', 'brent'],
-			'eurusd': ['eurusd', 'euro', 'dolar'],
-			'nasdaq': ['nasdaq', 'nas100', 'tech'],
-			'sp500': ['sp500', 's&p', 's&p 500'],
-			'dax': ['dax', 'dax40', 'niemcy'],
-			'btc': ['bitcoin', 'btc', 'krypto'],
-		};
-
-		for (const [asset, keywords] of Object.entries(assetKeywords)) {
-			if (keywords.some(k => contextLower.includes(k))) {
-				const assetTopics = allTopics.filter(t => t.toLowerCase().includes(asset));
-				if (assetTopics.length > 0) {
-					const selected = assetTopics[Math.floor(Math.random() * assetTopics.length)];
-					// Sprawdź czy temat nie był ostatnio używany
-					if (!recentTopics.some(rt => selected.toLowerCase().includes(rt))) {
-						return selected;
-					}
-				}
-			}
-		}
-
-		// Jeśli kontekst zawiera wzmianki o wydarzeniach makro
-		if (contextLower.includes('nfp') || contextLower.includes('bezrobocie')) {
-			const topic = 'NFP (Non-Farm Payrolls) - co to jest i jak wpływa';
-			if (!recentTopics.some(rt => topic.toLowerCase().includes(rt))) {
-				return topic;
-			}
-		}
-		if (contextLower.includes('inflacja') || contextLower.includes('cpi')) {
-			const topic = 'CPI (Consumer Price Index) - interpretacja danych';
-			if (!recentTopics.some(rt => topic.toLowerCase().includes(rt))) {
-				return topic;
-			}
-		}
-		if (contextLower.includes('stop') && contextLower.includes('procent')) {
-			const topic = 'stopy procentowe i ich wpływ na rynki';
-			if (!recentTopics.some(rt => topic.toLowerCase().includes(rt))) {
-				return topic;
-			}
-		}
-
-		// Wydarzenia giełdowe
-		if (contextLower.includes('fuzj') || contextLower.includes('przeję')) {
-			const topic = 'fuzje i przejęcia (M&A) - jak wpływają na wyceny';
-			if (!recentTopics.some(rt => topic.toLowerCase().includes(rt))) {
-				return topic;
-			}
-		}
-		if (contextLower.includes('wyniki') || contextLower.includes('earnings')) {
-			const topic = 'wyniki kwartalne spółek - jak je czytać';
-			if (!recentTopics.some(rt => topic.toLowerCase().includes(rt))) {
-				return topic;
-			}
-		}
-		if (contextLower.includes('ipo') || contextLower.includes('debiut')) {
-			const topic = 'IPO i debiuty giełdowe - ryzyka i szanse';
-			if (!recentTopics.some(rt => topic.toLowerCase().includes(rt))) {
-				return topic;
-			}
-		}
-		if (contextLower.includes('dywidend') || contextLower.includes('buyback')) {
-			const topic = 'dywidendy i buybacki - wpływ na kurs akcji';
-			if (!recentTopics.some(rt => topic.toLowerCase().includes(rt))) {
-				return topic;
-			}
-		}
+	if (typeof v === 'string' && v.trim()) {
+		const out = v
+			.split(/[,;\n]/)
+			.map((s) => s.trim())
+			.filter(Boolean);
+		return out.length ? out : undefined;
 	}
-
-	// Filtruj tematy, które były ostatnio używane
-	const availableTopics = allTopics.filter(topic => {
-		const topicLower = topic.toLowerCase();
-		return !recentTopics.some(rt => topicLower.includes(rt) || rt.includes(topicLower));
-	});
-
-	// Jeśli wszystkie tematy były ostatnio używane, użyj losowego z całej listy
-	const topicsToChooseFrom = availableTopics.length > 0 ? availableTopics : allTopics;
-	
-	return topicsToChooseFrom[Math.floor(Math.random() * topicsToChooseFrom.length)];
-}
-
-type GenerateArticleData = {
-	title: string;
-	content: string;
-	tags: string[];
-	readingTime: number;
-};
-
-type GenerateArticleResult =
-	| { ok: true; data: GenerateArticleData }
-	| { ok: false; error: string; details?: unknown };
-
-function serializeError(err: unknown) {
-	const e = err as {
-		message?: string;
-		status?: number;
-		code?: string;
-		type?: string;
-		name?: string;
-		error?: unknown;
-		response?: { data?: unknown };
-	};
-	return {
-		message: e?.message,
-		status: e?.status,
-		code: e?.code,
-		type: e?.type,
-		name: e?.name,
-		error: e?.error,
-		responseData: e?.response?.data ?? null,
-	};
-}
-
-async function generateArticleWithAI(apiKey: string, context?: string): Promise<GenerateArticleResult> {
-	const openai = new OpenAI({ apiKey });
-
-	const today = new Date();
-	const dateStr = today.toLocaleDateString('pl-PL', { day: '2-digit', month: 'long', year: 'numeric' });
-
-	// Pobierz ostatnie tematy, aby uniknąć powtórzeń
-	const recentTopics = await getRecentArticleTopics(10);
-	
-	// Wybierz losowy temat, unikając ostatnio używanych
-	const selectedTopic = selectRandomTopic(recentTopics, context);
-
-	const userPrompt = context
-		? `Wygeneruj edukacyjny artykuł na dziś (${dateStr}) na temat: "${selectedTopic}".\n\nKontekst z aktualnych wydarzeń: ${context}\n\nPołącz temat z aktualną sytuacją na rynkach, jeśli to możliwe. Artykuł powinien być edukacyjny, bez rekomendacji inwestycyjnych. Wyjaśnij mechanizmy, koncepty i procesy związane z tym tematem. Jeśli temat dotyczy giełdy, możesz odnieść się do bieżących wydarzeń takich jak fuzje, przejęcia, wyniki spółek czy duże ruchy kursów — bez rekomendacji.`
-		: `Wygeneruj edukacyjny artykuł na dziś (${dateStr}) na temat: "${selectedTopic}".\n\nArtykuł powinien być edukacyjny, bez rekomendacji inwestycyjnych. Wyjaśnij mechanizmy, koncepty i procesy związane z tym tematem. Użyj przykładów historycznych i teoretycznych. Jeśli temat dotyczy giełdy, możesz opisać zjawiska takie jak fuzje, przejęcia, wyniki spółek czy duże ruchy kursów — bez rekomendacji.`;
-
-	try {
-		const completion = await openai.chat.completions.create({
-			model: 'gpt-4o-mini',
-			temperature: 0.9, // Zwiększona temperatura dla większej różnorodności
-			response_format: { type: 'json_object' },
-			messages: [
-				{ role: 'system', content: SYSTEM_PROMPT },
-				{ role: 'user', content: userPrompt },
-			],
-			max_tokens: 2000,
-		});
-
-		const content = completion.choices?.[0]?.message?.content;
-		if (!content) {
-			const details = {
-				finishReason: completion.choices?.[0]?.finish_reason ?? null,
-				completionId: completion.id ?? null,
-			};
-			console.error('OpenAI empty completion:', details);
-			return { ok: false, error: 'OPENAI_EMPTY_RESPONSE', details };
-		}
-
-		let parsed: Record<string, unknown>;
-		try {
-			parsed = JSON.parse(content) as Record<string, unknown>;
-		} catch (parseErr) {
-			const pe = serializeError(parseErr);
-			const contentPreview = content.slice(0, 400);
-			console.error('OpenAI JSON parse error:', pe, { contentPreview });
-			return {
-				ok: false,
-				error: 'OPENAI_JSON_PARSE_FAILED',
-				details: { parseError: pe, contentPreview },
-			};
-		}
-
-		return {
-			ok: true,
-			data: {
-				title: String(parsed.title || 'Artykuł edukacyjny').trim(),
-				content: String(parsed.content || '').trim(),
-				tags: Array.isArray(parsed.tags)
-					? parsed.tags.map((t: unknown) => String(t).trim()).filter(Boolean)
-					: ['edukacja'],
-				readingTime: typeof parsed.readingTime === 'number' ? parsed.readingTime : 5,
-			},
-		};
-	} catch (e: unknown) {
-		const details = serializeError(e);
-		console.error('OpenAI error:', details);
-		return { ok: false, error: 'OPENAI_GENERATION_FAILED', details };
-	}
-}
-
-async function generateImageWithDALLE(
-	apiKey: string,
-	title: string,
-	tags: string[]
-): Promise<{ url: string; alt: string; persisted: boolean } | null> {
-	const openai = new OpenAI({ apiKey });
-	
-	const tagStr = tags.slice(0, 2).join(', ');
-	const prompt = `Professional, modern illustration for an educational article about finance and economics. Title: "${title}". Theme: ${tagStr || 'finance education'}. Style: clean, minimalist, professional, suitable for a financial education platform. No text, no charts, just a conceptual illustration.`;
-	
-	try {
-		// Dodaj timeout dla generowania obrazu (30 sekund max, żeby zostawić czas na resztę procesu)
-		const timeoutId = setTimeout(() => {
-			console.warn('DALL-E generation taking too long, will timeout soon');
-		}, 25000);
-
-		let response: Awaited<ReturnType<typeof openai.images.generate>>;
-		try {
-			response = await Promise.race([
-				openai.images.generate({
-					model: 'dall-e-3',
-					prompt: prompt,
-					size: '1792x1024',
-					quality: 'standard',
-					n: 1,
-				}),
-				new Promise<never>((_, reject) => {
-					setTimeout(() => reject(new Error('DALL-E generation timeout after 30s')), 30000);
-				}),
-			]);
-			clearTimeout(timeoutId);
-		} catch (timeoutError: any) {
-			clearTimeout(timeoutId);
-			if (timeoutError?.message?.includes('timeout')) {
-				console.warn('DALL-E generation timeout after 30s, using fallback');
-				return null;
-			}
-			throw timeoutError;
-		}
-
-		const imageUrl = response.data?.[0]?.url;
-		if (!imageUrl) return null;
-
-		try {
-			// Timeout dla pobierania obrazu (8 sekund, żeby zmieścić się w limicie)
-			const fetchController = new AbortController();
-			const fetchTimeout = setTimeout(() => fetchController.abort(), 8000);
-
-			let imageResponse: Response;
-			try {
-				imageResponse = await fetch(imageUrl, { signal: fetchController.signal });
-				clearTimeout(fetchTimeout);
-			} catch (fetchError: any) {
-				clearTimeout(fetchTimeout);
-				if (fetchError.name === 'AbortError') {
-					console.error('Failed to fetch DALL-E image: timeout');
-					return { url: imageUrl, alt: title, persisted: false }; // Fallback do bezpośredniego URL z DALL-E
-				}
-				throw fetchError;
-			}
-			
-			if (!imageResponse.ok) {
-				console.error('Failed to fetch DALL-E image:', imageResponse.status);
-				return { url: imageUrl, alt: title, persisted: false }; // Fallback do bezpośredniego URL z DALL-E
-			}
-			
-			const imageBuffer = await imageResponse.arrayBuffer();
-			
-			// ZAWSZE zapisz do biblioteki mediów przed użyciem
-			const saved = await saveImageToMediaLibrary(imageBuffer, title, `AI-generated image for: ${title}`);
-			if (saved) {
-				console.log('DALL-E image saved to media library:', saved.url);
-				return { url: saved.url, alt: saved.alt || title, persisted: true };
-			} else {
-				console.error('Failed to save DALL-E image to media library');
-				return { url: imageUrl, alt: title, persisted: false }; // Fallback do bezpośredniego URL z DALL-E
-			}
-		} catch (e: any) {
-			console.error('Error saving DALL-E image to library:', e?.message);
-			return { url: imageUrl, alt: title, persisted: false }; // Fallback do bezpośredniego URL z DALL-E
-		}
-	} catch (e: any) {
-		console.error('DALL-E generation error:', e?.message);
-		return null;
-	}
-}
-
-async function saveImageToMediaLibrary(
-	imageBuffer: ArrayBuffer,
-	alt: string,
-	notes?: string
-): Promise<{ url: string; alt: string | null } | null> {
-	const prisma = getPrisma();
-	const buffer = Buffer.from(imageBuffer);
-	const size = buffer.byteLength;
-	const blobToken =
-		process.env.BLOB_READ_WRITE_TOKEN ||
-		(process.env as any).VERCEL_BLOB_RW_TOKEN ||
-		(process.env as any).BLOB_TOKEN ||
-		'';
-	const baseDir = path.join(process.cwd(), '.data', 'media');
-	
-	try {
-		// Prisma path - zawsze próbuj zapisać
-		if (prisma) {
-			try {
-				const genId = (globalThis as any).crypto?.randomUUID?.() ?? `m_${Date.now().toString(36)}`;
-				
-				if (blobToken) {
-					// Produkcja: użyj Vercel Blob Storage
-					const { put } = await import('@vercel/blob');
-					const created = await prisma.mediaAsset.create({
-						data: { url: '', alt, notes: notes || null, contentType: 'image/png', size, isArchived: false },
-					});
-					const filename = `${created.id}.png`;
-					const uploaded = await put(`redakcja/${filename}`, buffer, { access: 'public', token: blobToken });
-					await prisma.mediaAsset.update({
-						where: { id: created.id },
-						data: { url: uploaded.url },
-					});
-					console.log('Image saved to Vercel Blob:', uploaded.url);
-					return { url: uploaded.url, alt };
-				} else {
-					// Dev: lokalny storage (nie działa w produkcji serverless)
-					const created = await prisma.mediaAsset.create({
-						data: { url: '', alt, notes: notes || null, contentType: 'image/png', size, isArchived: false },
-					});
-					const filename = `${created.id}.png`;
-					const filePath = path.join(baseDir, filename);
-					fs.mkdirSync(baseDir, { recursive: true });
-					fs.writeFileSync(filePath, buffer);
-					const url = `/api/redakcja/media/file/${created.id}`;
-					await prisma.mediaAsset.update({
-						where: { id: created.id },
-						data: { url, pathname: filePath },
-					});
-					console.log('Image saved locally:', url);
-					return { url, alt };
-				}
-			} catch (e: any) {
-				console.error('Prisma save error:', e?.message);
-				// Fall through to SQL path
-			}
-		}
-
-		// Direct Neon SQL path
-		if (isDatabaseConfigured()) {
-			try {
-				await ensureMediaAssetTable();
-				await ensureMediaAssetBlobTable();
-				const genId = (globalThis as any).crypto?.randomUUID?.() ?? `m_${Date.now().toString(36)}`;
-				let url: string;
-				let pathname: string | null = null;
-				
-				if (blobToken) {
-					try {
-						// Produkcja: Vercel Blob Storage
-						const { put } = await import('@vercel/blob');
-						const filename = `${genId}.png`;
-						const uploaded = await put(`redakcja/${filename}`, buffer, { access: 'public', token: blobToken });
-						url = uploaded.url;
-						pathname = null;
-						console.log('Image saved to Vercel Blob (SQL path):', url);
-					} catch {
-						// Fall back to DB bytes if Vercel Blob fails (sql tag accepts primitives only)
-						const dataHex = buffer.toString('hex');
-						await sql`
-							INSERT INTO "MediaAssetBlob" (id, data, "createdAt", "updatedAt")
-							VALUES (${genId}, decode(${dataHex}, 'hex'), NOW(), NOW())
-							ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, "updatedAt" = NOW()
-						`;
-						url = `/api/redakcja/media/file/${genId}`;
-						pathname = null;
-						console.log('Image saved to DB blob (fallback from Vercel):', url);
-					}
-				} else {
-					// Dev: zapisz do MediaAssetBlob w Neon (sql tag accepts primitives only)
-					const dataHex = buffer.toString('hex');
-					await sql`
-						INSERT INTO "MediaAssetBlob" (id, data, "createdAt", "updatedAt")
-						VALUES (${genId}, decode(${dataHex}, 'hex'), NOW(), NOW())
-						ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, "updatedAt" = NOW()
-					`;
-					url = `/api/redakcja/media/file/${genId}`;
-					pathname = null;
-					console.log('Image saved to DB blob (SQL path):', url);
-				}
-
-				await sql`
-					INSERT INTO "MediaAsset" (id, url, pathname, "contentType", size, alt, notes, "isArchived", "createdAt", "updatedAt")
-					VALUES (
-						${genId},
-						${url},
-						${pathname},
-						'image/png',
-						${size},
-						${alt},
-						${notes || null},
-						FALSE,
-						NOW(),
-						NOW()
-					)
-				`;
-				return { url, alt };
-			} catch (e: any) {
-				console.error('SQL save error:', e?.message);
-				// Fall through to fallback
-			}
-		}
-
-		// Fallback: file store
-		try {
-			const genId = (globalThis as any).crypto?.randomUUID?.() ?? `m_${Date.now().toString(36)}`;
-			const filename = `${genId}.png`;
-			const filePath = path.join(baseDir, filename);
-			fs.mkdirSync(baseDir, { recursive: true });
-			fs.writeFileSync(filePath, buffer);
-			const url = `/api/redakcja/media/file/${genId}`;
-			await createFallbackMediaAsset({
-				id: genId,
-				url,
-				pathname: filePath,
-				contentType: 'image/png',
-				size,
-				alt,
-				notes: notes || null,
-				isArchived: false,
-			});
-			console.log('Image saved to fallback store:', url);
-			return { url, alt };
-		} catch (e: any) {
-			console.error('Fallback save error:', e?.message);
-		}
-	} catch (e: any) {
-		console.error('Save image error:', e?.message);
-	}
-
-	return null;
-}
-
-async function getRandomMediaImage(): Promise<{ url: string; alt: string | null } | null> {
-	const prisma = getPrisma();
-	try { await ensureMediaAssetTable(); } catch {}
-
-	if (prisma) {
-		try {
-			const count = await prisma.mediaAsset.count({
-				where: { isArchived: false },
-			});
-			if (count === 0) return null;
-			
-			const skip = Math.floor(Math.random() * count);
-			const item = await prisma.mediaAsset.findFirst({
-				where: { isArchived: false },
-				skip,
-				orderBy: { createdAt: 'desc' },
-			});
-			if (item) {
-				return { url: item.url, alt: item.alt };
-			}
-		} catch (e: any) {
-			const connectionErrors = new Set(['P1000', 'P1001', 'P1002', 'P1003', 'P1011', 'P1017']);
-			if (!connectionErrors.has(e?.code)) {
-				console.error('Prisma error fetching media:', e?.message);
-			}
-		}
-	}
-
-	if (isDatabaseConfigured()) {
-		try {
-			const { rows: countRows } = await sql<{ count: number }>`
-				SELECT COUNT(*)::int as count FROM "MediaAsset" WHERE "isArchived" = FALSE
-			`;
-			const count = countRows[0]?.count || 0;
-			if (count === 0) {
-				// Fall through to fallback store
-			} else {
-				const skip = Math.floor(Math.random() * count);
-				const { rows } = await sql<{
-					url: string;
-					alt: string | null;
-				}>`
-					SELECT url, alt
-					FROM "MediaAsset"
-					WHERE "isArchived" = FALSE
-					ORDER BY "createdAt" DESC
-					LIMIT 1
-					OFFSET ${skip}
-				`;
-				if (rows[0]) {
-					return { url: rows[0].url, alt: rows[0].alt };
-				}
-			}
-		} catch (e: any) {
-			console.error('SQL error fetching media:', e?.message);
-		}
-	}
-
-	try {
-		const items = await listFallbackMediaAssets({ isArchived: false, limit: 100 });
-		if (items.length > 0) {
-			const randomItem = items[Math.floor(Math.random() * items.length)];
-			return { url: randomItem.url, alt: randomItem.alt };
-		}
-	} catch (e: any) {
-		console.error('Fallback store error:', e?.message);
-	}
-
-	return null;
-}
-
-async function getUnsplashImage(query: string): Promise<string> {
-	const safeQuery = encodeURIComponent(query);
-	return `https://source.unsplash.com/1200x600/?${safeQuery}`;
-}
-
-function normalizeInput(data: any) {
-	const n: any = { ...(data || {}) };
-	n.readingTime = typeof n.readingTime === 'string' && n.readingTime.trim() === '' ? null : n.readingTime;
-	return n;
-}
-
-async function createArticleInternal(
-	articleData: {
-		title: string;
-		content: string;
-		tags: string[];
-		readingTime: number;
-	},
-	apiKey?: string
-): Promise<{ ok: boolean; article?: any; imagePersisted?: boolean; error?: string }> {
-	const prisma = getPrisma();
-	try { await ensureArticleTable(); } catch {}
-
-	let finalContent = articleData.content;
-	let imagePersisted = true;
-	if (!finalContent.includes('<!-- cover:')) {
-		// 1. Najpierw spróbuj wygenerować obraz przez DALL-E i zapisać do biblioteki mediów
-		const dalleImage = apiKey ? await generateImageWithDALLE(apiKey, articleData.title, articleData.tags) : null;
-		if (dalleImage && dalleImage.url) {
-			// Upewnij się, że URL jest z biblioteki mediów, nie bezpośredni z DALL-E
-			finalContent = injectCoverMeta(finalContent, {
-				url: dalleImage.url,
-				alt: dalleImage.alt,
-			});
-			imagePersisted = dalleImage.persisted;
-			console.log('Using DALL-E generated image from media library:', dalleImage.url);
-		} else {
-			// 2. Fallback: losowe zdjęcie z biblioteki mediów admina
-			const mediaImage = await getRandomMediaImage();
-			if (mediaImage && mediaImage.url) {
-				finalContent = injectCoverMeta(finalContent, {
-					url: mediaImage.url,
-					alt: mediaImage.alt || articleData.title,
-				});
-				imagePersisted = true;
-				console.log('Using random image from media library:', mediaImage.url);
-			} else {
-				// 3. Ostatni fallback: Unsplash (tylko jeśli brak innych opcji)
-				const imageQuery = articleData.tags[0] || 'finance';
-				const imageUrl = await getUnsplashImage(imageQuery);
-				finalContent = injectCoverMeta(finalContent, {
-					url: imageUrl,
-					alt: articleData.title,
-				});
-				imagePersisted = false;
-				console.log('Using Unsplash fallback:', imageUrl);
-			}
-		}
-	}
-
-	const data = normalizeInput({
-		title: articleData.title,
-		slug: slugify(articleData.title) + '-' + Date.now().toString().slice(-6),
-		content: finalContent,
-		tags: articleData.tags.join(', '),
-		readingTime: articleData.readingTime,
-	});
-
-	const parsed = articleInputSchema.parse({
-		...data,
-		slug: data?.slug ? String(data.slug) : slugify(String(data?.title || '')),
-	});
-	const tags = parseTags(parsed.tags);
-
-	if (prisma) {
-		try {
-			const created = await prisma.article.create({
-				data: {
-					title: parsed.title,
-					slug: parsed.slug,
-					content: parsed.content,
-					readingTime: parsed.readingTime ?? null,
-					tags,
-				},
-			});
-			console.log('Article created via Prisma:', created.id, created.slug);
-			revalidatePath('/redakcja');
-			revalidatePath(`/redakcja/${created.slug}`);
-			revalidatePath('/admin/redakcja');
-			return { ok: true, article: created, imagePersisted };
-		} catch (e: any) {
-			console.error('Prisma create error:', e?.code, e?.message);
-			if (e?.code === 'P2002') {
-				return { ok: false, error: 'SLUG_EXISTS' };
-			}
-			const connectionErrors = new Set(['P1000', 'P1001', 'P1002', 'P1003', 'P1011', 'P1017']);
-			if (!connectionErrors.has(e?.code)) {
-				return { ok: false, error: e?.message || 'Prisma error' };
-			}
-		}
-	}
-
-	if (isDatabaseConfigured()) {
-		try {
-			console.log('Attempting to create article via Neon SQL...');
-			const id = (globalThis as any).crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-			const tagsJson = JSON.stringify(tags ?? []);
-			const { rows } = await sql<{
-				id: string;
-				slug: string;
-				title: string;
-				content: string;
-				readingTime: number | null;
-				tags: string[];
-				createdAt: Date;
-				updatedAt: Date;
-			}>`
-          INSERT INTO "Article" (id, slug, title, content, "readingTime", tags, "createdAt", "updatedAt")
-          VALUES (
-            ${id},
-            ${parsed.slug},
-            ${parsed.title},
-            ${parsed.content},
-            ${parsed.readingTime ?? null},
-            ARRAY(SELECT json_array_elements_text(${tagsJson}::json)),
-            NOW(),
-            NOW()
-          )
-          RETURNING id, slug, title, content, "readingTime", tags, "createdAt", "updatedAt"
-        `;
-			const created = rows[0];
-			if (created) {
-				console.log('Article created via Neon SQL:', created.id, created.slug);
-				revalidatePath('/redakcja');
-				revalidatePath(`/redakcja/${created.slug}`);
-				revalidatePath('/admin/redakcja');
-				return { ok: true, article: created, imagePersisted };
-			} else {
-				console.warn('Neon SQL insert returned no rows');
-			}
-		} catch (e: any) {
-			const message = e?.message || 'Neon SQL insert failed';
-			const code = e?.code || e?.originalError?.code || 'SQL_ERROR';
-			console.error('Neon SQL create error:', code, message);
-			if (code === '23505' || /duplicate key value.*Article_slug_key/i.test(String(message))) {
-				return { ok: false, error: 'SLUG_EXISTS' };
-			}
-			return { ok: false, error: message };
-		}
-	} else {
-		console.warn('Database not configured, will use fallback store');
-	}
-
-	try {
-		const createdFallback = await createFallbackArticle({ ...parsed, tags });
-		revalidatePath('/redakcja');
-		revalidatePath(`/redakcja/${createdFallback.slug}`);
-		revalidatePath('/admin/redakcja');
-		return { ok: true, article: createdFallback, imagePersisted };
-	} catch (e: any) {
-		return { ok: false, error: e?.message || 'Failed to save article' };
-	}
+	return undefined;
 }
 
 export async function POST(request: Request) {
@@ -819,9 +46,129 @@ export async function POST(request: Request) {
 				{ status: 500 }
 			);
 		}
+
+		const ct = request.headers.get('content-type') || '';
+		let body: Record<string, unknown> = {};
+		if (ct.includes('application/json')) {
+			try {
+				const raw = await request.json();
+				if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+					body = raw as Record<string, unknown>;
+				}
+			} catch {
+				// ignore
+			}
+		}
+
+		const newsIdRaw = body.newsId;
+		const newsId = typeof newsIdRaw === 'string' && newsIdRaw.trim() ? newsIdRaw.trim() : undefined;
+
+		if (newsId) {
+			if (!isDatabaseConfigured()) {
+				return NextResponse.json(
+					{ ok: false, error: 'Database not configured — cannot load news' },
+					{ status: 503 }
+				);
+			}
+
+			const resultNews = await runEditorialGenerationFromNewsId(apiKey, newsId);
+			if (!resultNews.ok) {
+				if (resultNews.error === 'NEWS_NOT_FOUND') {
+					return NextResponse.json(
+						{ ok: false, error: 'NEWS_NOT_FOUND', message: 'Nie znaleziono newsa o podanym id' },
+						{ status: 404 }
+					);
+				}
+				return NextResponse.json(
+					{ ok: false, error: resultNews.error, details: resultNews.details },
+					{ status: 500 }
+				);
+			}
+
+			return NextResponse.json({
+				ok: true,
+				article: resultNews.article,
+				title: resultNews.title,
+				imagePersisted: resultNews.imagePersisted,
+				imageDebug: editorialImageDebugForApiResponse(resultNews.imageDebug),
+			});
+		}
+
+		const sourceType = typeof body.sourceType === 'string' ? body.sourceType.trim() : '';
+		if (sourceType === 'manual_topic') {
+			const title = String(body.topic ?? body.title ?? '').trim();
+			if (!title) {
+				return NextResponse.json(
+					{
+						ok: false,
+						error: 'MISSING_TITLE',
+						message: 'Podaj temat (pole title lub topic).',
+					},
+					{ status: 400 }
+				);
+			}
+			const manualInput: EditorialArticleOpenAIInput = {
+				sourceType: 'manual_topic',
+				title,
+				summary: typeof body.summary === 'string' ? body.summary.trim() || undefined : undefined,
+				instruments: parseStringListField(body.instruments ?? body.tickers),
+				impact: typeof body.impact === 'string' ? body.impact.trim() || undefined : undefined,
+				whyItMatters: typeof body.whyItMatters === 'string' ? body.whyItMatters.trim() || undefined : undefined,
+				possibleMarketImpact:
+					typeof body.possibleMarketImpact === 'string'
+						? body.possibleMarketImpact.trim() || undefined
+						: undefined,
+				context: typeof body.context === 'string' ? body.context.trim() || undefined : undefined,
+				manualHints: typeof body.manualHints === 'string' ? body.manualHints.trim() || undefined : undefined,
+				watch: parseStringListField(body.watch),
+			};
+			const genMan = await generateEditorialArticleWithOpenAI(apiKey, manualInput);
+			if (!genMan.ok) {
+				return NextResponse.json(
+					{ ok: false, error: genMan.error, details: genMan.details },
+					{ status: 500 }
+				);
+			}
+			const articleManual = genMan.data;
+			const resultMan = await persistEditorialArticle(
+				{
+					...articleManual,
+					...(manualInput.summary?.trim()
+						? { imagePromptContext: { summary: manualInput.summary.trim() } }
+						: {}),
+				},
+				apiKey,
+				{ articleOrigin: 'manual_topic' }
+			);
+			if (!resultMan.ok) {
+				return NextResponse.json(
+					{ ok: false, error: resultMan.error || 'Failed to create article' },
+					{ status: 500 }
+				);
+			}
+			return NextResponse.json({
+				ok: true,
+				article: resultMan.article,
+				title: articleManual.title,
+				imagePersisted: resultMan.imagePersisted,
+				imageDebug: editorialImageDebugForApiResponse(resultMan.imageDebug),
+			});
+		}
+
+		if (ct.includes('application/json') && Object.keys(body).length > 0) {
+			return NextResponse.json(
+				{
+					ok: false,
+					error: 'INVALID_BODY',
+					message: 'Użyj newsId (z newsa) albo sourceType: "manual_topic" z polem title/topic.',
+				},
+				{ status: 400 }
+			);
+		}
+
 		const origin = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '') ||
 			(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-		
+
 		let context: string | undefined;
 		try {
 			const newsRes = await fetch(`${origin}/api/news/articles?bucket=24h&lang=pl&limit=5`, {
@@ -831,14 +178,14 @@ export async function POST(request: Request) {
 				const newsData = await newsRes.json().catch(() => ({}));
 				const items = Array.isArray(newsData?.items) ? newsData.items : [];
 				if (items.length > 0) {
-					context = `Najnowsze wiadomości: ${items.slice(0, 3).map((i: any) => i.title).join('; ')}`;
+					context = `Najnowsze wiadomości: ${items.slice(0, 3).map((i: { title?: string }) => i.title).join('; ')}`;
 				}
 			}
 		} catch {
 			// Ignore news fetch errors
 		}
 
-		const genResult = await generateArticleWithAI(apiKey, context);
+		const genResult = await generateLegacyRandomEditorialArticle(apiKey, context);
 		if (!genResult.ok) {
 			return NextResponse.json(
 				{ ok: false, error: genResult.error, details: genResult.details },
@@ -847,7 +194,7 @@ export async function POST(request: Request) {
 		}
 		const articleData = genResult.data;
 
-		const result = await createArticleInternal(articleData, apiKey);
+		const result = await persistEditorialArticle(articleData, apiKey, { articleOrigin: 'legacy_random' });
 		if (!result.ok) {
 			return NextResponse.json(
 				{ ok: false, error: result.error || 'Failed to create article' },
@@ -860,11 +207,13 @@ export async function POST(request: Request) {
 			article: result.article,
 			title: articleData.title,
 			imagePersisted: result.imagePersisted,
+			imageDebug: editorialImageDebugForApiResponse(result.imageDebug),
 		});
-	} catch (e: any) {
+	} catch (e: unknown) {
+		const msg = e instanceof Error ? e.message : 'Unknown error';
 		console.error('Generate article error:', e);
 		return NextResponse.json(
-			{ ok: false, error: e?.message || 'Unknown error' },
+			{ ok: false, error: msg },
 			{ status: 500 }
 		);
 	}

@@ -1,5 +1,12 @@
 // app/api/brief/generate/route.ts
 import OpenAI from "openai";
+import type { BriefingLanguage } from "@/lib/brief/morningInstitutionalBriefingTypes";
+import {
+  fetchLiveNewsContextItems,
+  formatGenBriefLiveNewsBlock,
+  genBriefSystemIntro,
+  systemRssNoteForGenBrief,
+} from "@/lib/brief/liveNewsContext";
 import { addBrief, type Brief as StoreBrief } from "../_store";
 
 export const runtime = "nodejs";
@@ -97,11 +104,10 @@ async function synthesizeFromSpark(req: Request, briefType: 'GEN' | 'DAILY'): Pr
   }
 }
 
-type Lang = "pl" | "en";
 type RangeKey = "24h" | "48h" | "72h";
 
 type Body = {
-  lang?: Lang;
+  lang?: BriefingLanguage;
   range?: RangeKey;
   prompt?: string;
   type?: 'GEN' | 'DAILY';
@@ -135,6 +141,32 @@ function defaultPromptPL(): string {
     "- Sekcja \"CO TERAZ GRA NAJGŁOŚNIEJ\": 6–8 punktów (•), każdy 1–2 zdania.\n" +
     "- Krótka \"OPINIA AI (SKRÓT)\" – 1 zdanie o możliwej krótkoterminowej reakcji rynku.\n" +
     "- Jeśli możesz, podaj metryki techniczne: RSI(14), ADX (proxy), MACD, Volume, Dist do 200MA."
+  );
+}
+
+function defaultPromptEN(): string {
+  return (
+    "Write a concise market briefing in English. Cover key developments from recent days\n" +
+    "and possible implications for US markets. If relevant, mention US government shutdown themes.\n" +
+    "Educational tone, no investment recommendations.\n" +
+    "Structure:\n" +
+    "- Header: \"Quick briefing — GEN\"\n" +
+    "- Section \"WHAT'S LOUDEST NOW\": 6–8 bullets (•), each 1–2 sentences.\n" +
+    "- Short \"AI OPINION (SUMMARY)\" – 1 sentence on possible short-term market lean.\n" +
+    "- If you can, include technical metrics: RSI(14), ADX (proxy), MACD, Volume, distance to 200MA."
+  );
+}
+
+function defaultPromptCS(): string {
+  return (
+    "Napiš stručné tržní shrnutí v češtině. Uveď klíčové události posledních dnů\n" +
+    "a možné dopady na trhy v USA. Pokud je to relevantní, zmiň i témata výluky vlády USA.\n" +
+    "Vzdělávací tón, bez investičních doporučení.\n" +
+    "Struktura:\n" +
+    "- Nadpis: \"Rychlé shrnutí — GEN\"\n" +
+    "- Sekce \"CO TEĎ NEJHLAŠTĚJI\": 6–8 bodů (•), každý 1–2 věty.\n" +
+    "- Krátké \"NÁZOR AI (SHRNUTÍ)\" – 1 věta o možné krátkodobé reakci trhu.\n" +
+    "- Pokud můžeš, uveď technické metriky: RSI(14), ADX (proxy), MACD, objem, vzdálenost od 200MA."
   );
 }
 
@@ -227,11 +259,19 @@ export async function POST(req: Request) {
     }
 
     const raw = (await req.json().catch(() => ({}))) as Body;
-    const lang: Lang = raw.lang === "en" ? "en" : "pl";
+    const rawLang = typeof raw.lang === "string" ? raw.lang.toLowerCase() : "pl";
+    const lang: BriefingLanguage = rawLang === "en" ? "en" : rawLang === "cs" ? "cs" : "pl";
     const _range: RangeKey = raw.range ?? "24h";
-    const userPrompt = (raw.prompt || (lang === "pl" ? defaultPromptPL() : defaultPromptPL())).trim();
+    const userPrompt = (
+      raw.prompt ||
+      (lang === "pl" ? defaultPromptPL() : lang === "cs" ? defaultPromptCS() : defaultPromptEN())
+    ).trim();
     const briefType = (raw.type === 'DAILY' ? 'DAILY' : 'GEN') as 'GEN' | 'DAILY';
     const overrideTitle = typeof raw.title === 'string' && raw.title.trim().length > 0 ? raw.title.trim() : undefined;
+
+    const newsItems = await fetchLiveNewsContextItems(req);
+    const liveBlock = formatGenBriefLiveNewsBlock(lang, newsItems);
+    const augmentedUser = liveBlock ? `${liveBlock}\n\n---\n\n${userPrompt}` : userPrompt;
 
     const openai = new OpenAI({ apiKey, organization: process.env.OPENAI_ORG_ID, project: process.env.OPENAI_PROJECT });
 
@@ -242,10 +282,9 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content:
-            "Jesteś asystentem generującym krótki briefing rynkowy w języku polskim. Zwróć jasną listę punktów i krótką opinię.",
+          content: genBriefSystemIntro(lang) + systemRssNoteForGenBrief(lang),
         },
-        { role: "user", content: userPrompt },
+        { role: "user", content: augmentedUser },
       ],
       max_tokens: 600,
     });

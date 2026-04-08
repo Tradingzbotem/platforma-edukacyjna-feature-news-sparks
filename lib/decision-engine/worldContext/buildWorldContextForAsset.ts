@@ -7,7 +7,7 @@
 
 import { listNews } from '@/lib/news/store';
 import type { NewsItemEnriched } from '@/lib/news/types';
-import { normalizeDecisionAssetId } from '../assetAliases';
+import { canonicalToNewsInstrumentHints, newsTagToCanonicalKey } from '../newsInstrumentMatch';
 import type {
 	DecisionWorldContext,
 	WorldDirectionalPressure,
@@ -25,48 +25,6 @@ const ENERGY_RE =
 
 const CB_RE =
 	/\b(fed|ecb|boj|boe|rba|rbnz|snb|bank\s+central|stopy\s+procent|hawkish|dovish|posiedzenie\s+(fed|ecb)|fomc|głosowanie\s+mpc|lagarde|powell)\b/i;
-
-/** Tagi z newsów mapujemy na kanon (zgodnie z aliasami silnika). */
-function newsTagToCanonicalKey(tag: string): string | null {
-	const raw = String(tag || '')
-		.trim()
-		.toUpperCase()
-		.replace(/\s+/g, '');
-	if (!raw) return null;
-	const n = normalizeDecisionAssetId(raw);
-	return n;
-}
-
-/** Kanon → zestaw tagów jakie mogą wystąpić w polu `instruments` newsa. */
-function canonicalToNewsInstrumentHints(canonical: string): Set<string> {
-	const c = canonical.toUpperCase();
-	const hints = new Set<string>([c]);
-	if (c === 'US100') {
-		['NAS100', 'NASDAQ', 'NDX', 'NQ', 'US100'].forEach((x) => hints.add(x));
-	}
-	if (c === 'US500') {
-		['SPX', 'SP500', 'S&P', 'US500'].forEach((x) => hints.add(x));
-	}
-	if (c === 'US30') {
-		['DOW', 'DJI', 'US30'].forEach((x) => hints.add(x));
-	}
-	if (c === 'DE40') {
-		['DAX', 'GER40', 'DE40'].forEach((x) => hints.add(x));
-	}
-	if (c === 'XAUUSD') {
-		['XAU', 'XAUUSD', 'GOLD'].forEach((x) => hints.add(x));
-	}
-	if (c === 'WTI' || c === 'BRENT') {
-		hints.add('UKOIL');
-		hints.add('WTI');
-		hints.add('BRENT');
-		hints.add('OIL');
-	}
-	if (c === 'EURUSD') hints.add('EURUSD');
-	if (c === 'GBPUSD') hints.add('GBPUSD');
-	if (c === 'USDJPY') hints.add('USDJPY');
-	return hints;
-}
 
 function textBlob(item: NewsItemEnriched): string {
 	return `${item.title}\n${item.summaryShort || ''}\n${item.whyItMatters || ''}`.toLowerCase();
@@ -154,6 +112,17 @@ function itemToRelated(
 	const ageHours = Math.max(0, (now - pub) / 3600000);
 	const kinds = mergeKinds(k1, k2);
 
+	const wim = item.whyItMatters?.trim();
+	const sum = item.summaryShort?.trim();
+	const watchList = Array.isArray(item.watch) ? item.watch.map((x) => String(x).trim()).filter(Boolean) : [];
+	const impactRows =
+		item.impacts?.map((r) => ({
+			symbol: String(r.symbol || '').trim(),
+			direction: r.direction ?? null,
+			effect: String(r.effect || '').trim(),
+		})) ?? [];
+	const impactsPayload = impactRows.filter((r) => r.symbol && r.effect);
+
 	return {
 		id: item.id,
 		title: item.title,
@@ -166,6 +135,11 @@ function itemToRelated(
 		impact: item.impact,
 		timeEdge: item.timeEdge,
 		source: item.source,
+		url: item.url,
+		whyItMatters: wim ? wim : null,
+		summaryShort: sum ? sum : null,
+		watch: watchList.length ? watchList : undefined,
+		impacts: impactsPayload.length ? impactsPayload : undefined,
 	};
 }
 

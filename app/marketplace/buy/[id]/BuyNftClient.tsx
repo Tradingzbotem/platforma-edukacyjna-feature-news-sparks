@@ -282,6 +282,11 @@ function CopyRow({
 export default function BuyNftClient({ offer }: Props) {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [markedSent, setMarkedSent] = useState(false);
+  const [agreePurchaseTerms, setAgreePurchaseTerms] = useState(false);
+  const [agreeEarlyDigitalService, setAgreeEarlyDigitalService] = useState(false);
+  const [txidInput, setTxidInput] = useState('');
+
+  const bothConsentsGiven = agreePurchaseTerms && agreeEarlyDigitalService;
 
   const orderId = orderIdForOffer(offer.id);
   const edition = offerEditionToken(offer.name, offer.id);
@@ -341,9 +346,26 @@ export default function BuyNftClient({ offer }: Props) {
               </div>
 
               <p className="text-base sm:text-[17px] text-white/78 leading-relaxed max-w-2xl">
-                Kupujesz NFT z przypisanym lifetime access do FXEDULAB: Insighty z miesięcznym refill, analiza kontekstu rynku,
-                moduły edukacyjne i narzędzia panelu. Poniżej — na pełnej szerokości tej sekcji — znajdziesz dwa panele: korzyści
-                odblokowywane z czasem oraz rozdzielenie ceny tego listingu od referencyjnego modelu progu wejścia.
+                Kupujesz <strong>NFT</strong> jako nośnik <strong>licencji na dostęp cyfrowy</strong> do FXEDULAB (moduły panelu,
+                materiały EDU, narzędzia). To <strong>usługa cyfrowa</strong> w opisanym zakresie — nie jest to inwestycja, lokata,
+                instrument finansowy ani doradztwo inwestycyjne. Część opłaty może mieć charakter wsparcia projektu.
+              </p>
+              <ul className="mt-4 max-w-2xl space-y-2 text-sm text-white/70 list-disc pl-5 marker:text-emerald-400/50">
+                <li>
+                  <strong>Na jak długo:</strong> dostęp typu lifetime dla posiadacza NFT w rozumieniu opisu oferty (bez
+                  miesięcznego abonamentu za ten sam poziom) — szczegóły i ewentualne wyjątki w regulaminie NFT.
+                </li>
+                <li>
+                  <strong>Bonusy czasowe</strong> (np. refill Insightów, okresy promocyjne) wygasają po upływie terminu z opisu —
+                  nie są trwałym „zyskiem finansowym”.
+                </li>
+                <li>
+                  Treści i funkcje AI mają charakter <strong>edukacyjny</strong>; nie stanowią rekomendacji inwestycyjnych ani
+                  sygnałów.
+                </li>
+              </ul>
+              <p className="mt-4 text-xs text-white/50 max-w-2xl">
+                Poniżej: korzyści odblokowywane z czasem oraz porównanie ceny tego listingu z modelem progu wejścia.
               </p>
             </div>
 
@@ -395,7 +417,7 @@ export default function BuyNftClient({ offer }: Props) {
                 </li>
                 <li>Wyślij dokładnie kwotę z sekcji „Dane do płatności” na podany niżej adres portfela.</li>
                 <li>Zachowaj identyfikator transakcji (TXID) — ułatwi weryfikację wpłaty.</li>
-                <li>Po wysłaniu środków kliknij przycisk na dole strony: „Oznacz płatność jako wysłaną”.</li>
+                <li>Po wysłaniu środków kliknij przycisk na dole strony: „Zgłoś płatność do weryfikacji” (po zaakceptowaniu zgód).</li>
               </ol>
               <p className="mt-6 text-xs text-white/45">
                 <Link href="/kontakt?topic=platnosc-krypto" className="text-emerald-300/85 hover:text-emerald-200 underline-offset-2 hover:underline">
@@ -497,23 +519,116 @@ export default function BuyNftClient({ offer }: Props) {
           </div>
         </section>
 
+        <section aria-labelledby="buy-legal-ack-heading" className="max-w-2xl">
+          <div className={mutedSurface}>
+            <div className="relative z-10 space-y-4">
+              <h2 id="buy-legal-ack-heading" className="text-base font-bold text-white">
+                Dokumenty przed potwierdzeniem wpłaty
+              </h2>
+              <p className="text-sm text-white/65 leading-relaxed">
+                Przed zgłoszeniem płatności do weryfikacji zapoznaj się z dokumentami — tam są m.in. zasady aktywacji,
+                odstąpienia i reklamacji.
+              </p>
+              <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                <li>
+                  <Link href="/prawne/regulamin" className="text-emerald-300/90 hover:text-emerald-200 underline underline-offset-2">
+                    Regulamin serwisu
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/prawne/nft" className="text-emerald-300/90 hover:text-emerald-200 underline underline-offset-2">
+                    Regulamin NFT
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/prawne/polityka-prywatnosci"
+                    className="text-emerald-300/90 hover:text-emerald-200 underline underline-offset-2"
+                  >
+                    Polityka prywatności
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/prawne/zwroty-odstapienie"
+                    className="text-emerald-300/90 hover:text-emerald-200 underline underline-offset-2"
+                  >
+                    Zwroty i odstąpienie
+                  </Link>
+                </li>
+              </ul>
+              <label className="flex items-start gap-3 cursor-pointer text-sm text-white/75 leading-snug">
+                <input
+                  type="checkbox"
+                  className="mt-1 accent-emerald-500 shrink-0"
+                  checked={agreePurchaseTerms}
+                  onChange={(e) => setAgreePurchaseTerms(e.target.checked)}
+                />
+                <span>
+                  Potwierdzam zapoznanie się z Regulaminem serwisu, Regulaminem NFT, Polityką prywatności oraz zasadami
+                  Zwrotów i odstąpienia i akceptuję warunki zakupu.
+                </span>
+              </label>
+              <label className="flex items-start gap-3 cursor-pointer text-sm text-white/75 leading-snug">
+                <input
+                  type="checkbox"
+                  className="mt-1 accent-emerald-500 shrink-0"
+                  checked={agreeEarlyDigitalService}
+                  onChange={(e) => setAgreeEarlyDigitalService(e.target.checked)}
+                />
+                <span>
+                  Żądam rozpoczęcia świadczenia usługi cyfrowej przed upływem 14 dni od zawarcia umowy i przyjmuję do
+                  wiadomości, że po pełnym wykonaniu usługi lub rozpoczęciu dostarczania treści cyfrowych w przypadkach
+                  przewidzianych prawem moje prawo odstąpienia może ulec ograniczeniu lub wygasnąć zgodnie z zasadami
+                  opisanymi w dokumentach.
+                </span>
+              </label>
+              <p className="text-xs text-white/50 leading-relaxed pt-1">
+                Aktywacja dostępu następuje po weryfikacji wpłaty. Szczegóły dotyczące rozpoczęcia świadczenia,
+                reklamacji oraz odstąpienia opisano w dokumentach powyżej.
+              </p>
+            </div>
+          </div>
+        </section>
+
         <div className="pt-2 space-y-4 max-w-2xl">
+          <div className="space-y-2">
+            <label htmlFor="checkout-txid" className="block text-[11px] font-semibold uppercase tracking-wide text-white/50">
+              TXID / hash transakcji (opcjonalnie, ale zalecane)
+            </label>
+            <input
+              id="checkout-txid"
+              type="text"
+              value={txidInput}
+              onChange={(e) => setTxidInput(e.target.value)}
+              placeholder="Wklej identyfikator transakcji"
+              autoComplete="off"
+              disabled={markedSent}
+              className="w-full rounded-2xl border border-white/12 bg-white/[0.05] px-5 py-3 text-sm text-white placeholder:text-white/35 outline-none focus:border-emerald-400/35 focus:ring-2 focus:ring-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
           <button
             type="button"
-            disabled={markedSent}
+            disabled={markedSent || !bothConsentsGiven}
             onClick={() => setMarkedSent(true)}
             className="w-full rounded-xl bg-white py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 disabled:cursor-not-allowed disabled:opacity-45"
           >
-            {markedSent ? 'Płatność oznaczona' : 'Oznacz płatność jako wysłaną'}
+            {markedSent ? 'Zgłoszono do weryfikacji' : 'Zgłoś płatność do weryfikacji'}
           </button>
+          {!bothConsentsGiven && !markedSent ? (
+            <p className="text-xs text-white/55 leading-relaxed">
+              Aby zgłosić płatność, zaakceptuj warunki zakupu i potwierdź zgodę dotyczącą rozpoczęcia świadczenia usługi
+              cyfrowej.
+            </p>
+          ) : null}
           {markedSent ? (
             <div
               className="rounded-xl border border-emerald-400/30 bg-emerald-500/[0.12] px-4 py-3 text-sm text-emerald-50/95 leading-relaxed"
               role="status"
               aria-live="polite"
             >
-              Płatność została oznaczona do weryfikacji. Po potwierdzeniu transakcji przez zespół FXEDULAB dostęp zostanie
-              aktywowany.
+              Płatność została zgłoszona do weryfikacji. Po potwierdzeniu transakcji przez zespół FXEDULAB dostęp zostanie
+              aktywowany zgodnie z warunkami oferty.
             </div>
           ) : null}
         </div>

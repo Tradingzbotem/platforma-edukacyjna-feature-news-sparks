@@ -1,56 +1,9 @@
-import Link from "next/link";
-import type { ReactNode } from "react";
-
-function LessonLayout({
-  coursePath, courseTitle, lessonNumber, title, minutes, children, prevSlug, nextSlug,
-}: {
-  coursePath: "regulacje";
-  courseTitle: string;
-  lessonNumber: number;
-  title: string;
-  minutes: number;
-  children: ReactNode;
-  prevSlug?: string;
-  nextSlug?: string;
-}) {
-  return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-4xl p-6 md:p-8 space-y-6 animate-fade-in">
-        <Link href={`/kursy/${coursePath}`} className="inline-flex items-center gap-2 text-sm underline hover:text-white transition-colors duration-150">← Wróć do spisu</Link>
-
-        <header className="space-y-1">
-          <p className="text-slate-400 text-sm">
-            <span>{courseTitle}</span>
-            <span> — </span>
-            <span>Lekcja</span> <span>{lessonNumber}</span>
-            <span> • ⏱ </span>
-            <span>{minutes}</span> <span>min</span>
-          </p>
-          <h1 className="text-3xl font-semibold text-white">{title}</h1>
-        </header>
-
-        <article className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0b1220] to-[#0a0f1a] backdrop-blur-sm p-6 space-y-8 shadow-lg">
-          {children}
-        </article>
-
-        <nav className="flex items-center justify-between pt-4 border-t border-white/10">
-          {prevSlug ? (
-            <Link className="underline hover:text-white transition-colors duration-150" href={`/kursy/${coursePath}/${prevSlug}`}>← Poprzednia lekcja</Link>
-          ) : <span />}
-          {nextSlug ? (
-            <Link className="underline hover:text-white transition-colors duration-150" href={`/kursy/${coursePath}/${nextSlug}`}>Następna lekcja →</Link>
-          ) : <span />}
-        </nav>
-      </div>
-    </main>
-  );
-}
+import RegulacjeLessonLayout from "@/components/kursy/RegulacjeLessonLayout";
 
 export default function Page() {
   return (
-    <LessonLayout
-      coursePath="regulacje"
-      courseTitle="Regulacje i egzaminy"
+    <RegulacjeLessonLayout
+      lessonSlug="lekcja-4"
       lessonNumber={4}
       minutes={10}
       title="Ochrona klienta: limity dźwigni i negative balance"
@@ -203,6 +156,6 @@ export default function Page() {
           <li>Wiem, że opt-up jest procesem jednokierunkowym i wymaga świadomej zgody.</li>
         </ul>
       </section>
-    </LessonLayout>
+    </RegulacjeLessonLayout>
   );
 }

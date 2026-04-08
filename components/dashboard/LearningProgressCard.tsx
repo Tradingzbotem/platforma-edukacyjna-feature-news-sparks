@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLessonProgressSession } from '@/app/contexts/LessonProgressSessionContext';
 import { COURSES_LIST } from '@/data/courses';
+import { lessonPathForCourse } from '@/lib/kursyLessonPaths';
+import {
+  LESSON_PROGRESS_DONE,
+  readLessonProgressValue,
+  readPodstawyDoneSlugSet,
+} from '@/lib/lessonProgressStorage';
 
 type CourseProgress = {
   courseSlug: string;
@@ -21,14 +28,19 @@ type CourseProgress = {
   upcomingTitles?: string[];
 };
 
-function readDoneForCourse(courseSlug: string, lessonIds: string[]): Set<string> {
+function readDoneForCourse(courseSlug: string, lessonIds: string[], userId: string | null): Set<string> {
   const set = new Set<string>();
   if (typeof window === 'undefined') return set;
   try {
     for (const id of lessonIds) {
-      const k = `progress:${courseSlug}:${id}`;
-      const v = localStorage.getItem(k);
-      if (v === '1') set.add(id);
+      const v = readLessonProgressValue(localStorage, courseSlug, id, userId);
+      if (v === LESSON_PROGRESS_DONE) set.add(id);
+    }
+    if (courseSlug === 'podstawy') {
+      const pod = readPodstawyDoneSlugSet(localStorage, userId);
+      for (const id of lessonIds) {
+        if (pod.has(id)) set.add(id);
+      }
     }
   } catch {}
   return set;
@@ -50,10 +62,10 @@ function parseDurationToMinutes(duration?: string): number {
   return 0;
 }
 
-function computeProgress(): CourseProgress[] {
+function computeProgress(userId: string | null): CourseProgress[] {
   return COURSES_LIST.map((c) => {
     const ids = c.lessons.map((l) => l.id);
-    const doneSet = readDoneForCourse(c.slug, ids);
+    const doneSet = readDoneForCourse(c.slug, ids, userId);
     const done = ids.filter((id) => doneSet.has(id)).length;
     const total = ids.length || 1;
     const firstLessonId = ids[0];
@@ -101,12 +113,14 @@ function computeProgress(): CourseProgress[] {
 }
 
 export default function LearningProgressCard() {
+  const { userId, sessionReady } = useLessonProgressSession();
   const [stamp, setStamp] = useState(0);
-  const [list, setList] = useState<CourseProgress[]>(() => computeProgress());
+  const [list, setList] = useState<CourseProgress[]>([]);
 
   useEffect(() => {
-    setList(computeProgress());
-  }, [stamp]);
+    if (!sessionReady) return;
+    setList(computeProgress(userId));
+  }, [stamp, userId, sessionReady]);
 
   // Simple refresh when window regains focus (progress may change on other pages)
   useEffect(() => {
@@ -124,14 +138,14 @@ export default function LearningProgressCard() {
 
   const width = `${Math.max(0, Math.min(100, target.percent))}%`;
   const nextHref = target.nextLessonId
-    ? `/kursy/${target.courseSlug}/lekcje/${target.nextLessonId}`
+    ? lessonPathForCourse(target.courseSlug, target.nextLessonId)
     : `/kursy/${target.courseSlug}`;
   const overviewHref = `/kursy/${target.courseSlug}`;
   const restartHref = target.firstLessonId
-    ? `/kursy/${target.courseSlug}/lekcje/${target.firstLessonId}`
+    ? lessonPathForCourse(target.courseSlug, target.firstLessonId)
     : overviewHref;
   const repeatHref = target.lastCompletedId
-    ? `/kursy/${target.courseSlug}/lekcje/${target.lastCompletedId}`
+    ? lessonPathForCourse(target.courseSlug, target.lastCompletedId)
     : overviewHref;
   const remainingLabel =
     typeof target.remainingMinutes === 'number' && target.remainingMinutes > 0

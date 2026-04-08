@@ -5,7 +5,9 @@ import { getArticleBySlug, getAllSlugs } from "@/lib/redakcja/mockArticles";
 import { getPublishedArticleBySlug } from "@/lib/redakcja/repo";
 import { isDatabaseConfigured } from "@/lib/db";
 import Markdown from "@/components/redakcja/Markdown";
+import NewsEventFactsCard from "@/components/redakcja/NewsEventFactsCard";
 import Disclaimer from "@/components/redakcja/Disclaimer";
+import { splitNewsFactsAppendix } from "@/lib/redakcja/splitNewsFactsAppendix";
 import { getFallbackArticleBySlug, listFallbackArticles } from "@/lib/redakcja/fallbackStore";
 import { extractCoverFromContent } from "@/lib/redakcja/content-utils";
 
@@ -95,6 +97,7 @@ export default async function ArticlePage({ params }: Params) {
 	const derived = extractCoverFromContent(article.content);
 	const coverUrl = derived.cover.url ?? article.coverImageUrl;
 	const contentBody = derived.contentWithoutCover;
+	const { body: articleBody, factsMarkdown } = splitNewsFactsAppendix(contentBody);
 	const formattedDate = new Date(article.date).toLocaleDateString("pl-PL", {
 		year: "numeric",
 		month: "2-digit",
@@ -134,7 +137,8 @@ export default async function ArticlePage({ params }: Params) {
 				/>
 			</div>
 
-			<Markdown content={contentBody} />
+			<Markdown content={articleBody} />
+			{factsMarkdown ? <NewsEventFactsCard factsMarkdown={factsMarkdown} /> : null}
 
 			<Disclaimer />
 		</div>

@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { DecisionBlockV1 } from "@/lib/decision-engine/types";
+import type { RedakcjaNewsContextDto } from "@/lib/redakcja/redakcjaNewsContextTypes";
 import type { DecisionHorizonApiParams } from "./decisionHorizon";
 
 export type DecisionBlockFetchStatus = "idle" | "loading" | "success" | "error" | "empty";
 
 export type DecisionBlockFetchState =
 	| { status: "idle" | "loading" }
-	| { status: "success"; block: DecisionBlockV1 }
+	| { status: "success"; block: DecisionBlockV1; redakcjaNewsContext: RedakcjaNewsContextDto | null }
 	| { status: "error"; message: string }
 	| { status: "empty"; message: string };
 
@@ -58,6 +59,7 @@ export function useDecisionBlock(
 					ok?: boolean;
 					error?: string;
 					block?: DecisionBlockV1;
+					redakcjaNewsContext?: RedakcjaNewsContextDto | null;
 				};
 
 				if (cancelled) return;
@@ -76,7 +78,8 @@ export function useDecisionBlock(
 					return;
 				}
 
-				setState({ status: "success", block });
+				const ctx = json.redakcjaNewsContext ?? null;
+				setState({ status: "success", block, redakcjaNewsContext: ctx });
 			} catch (e: unknown) {
 				if (cancelled) return;
 				if (e instanceof DOMException && e.name === "AbortError") return;

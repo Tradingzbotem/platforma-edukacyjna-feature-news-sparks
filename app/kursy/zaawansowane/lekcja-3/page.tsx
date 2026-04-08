@@ -1,92 +1,138 @@
-import Link from "next/link";
-import type { ReactNode } from "react";
-
-function LessonLayout({
-  coursePath, courseTitle, lessonNumber, title, minutes, children, prevSlug, nextSlug,
-}: {
-  coursePath: "zaawansowane" | "forex" | "cfd";
-  courseTitle: string;
-  lessonNumber: number;
-  title: string;
-  minutes: number;
-  children: ReactNode;
-  prevSlug?: string;
-  nextSlug?: string;
-}) {
-  return (
-    <main className="mx-auto max-w-4xl p-6 md:p-8 space-y-6">
-      <Link href={`/kursy/${coursePath}`} className="text-sm underline">← Wróć do spisu</Link>
-      <header className="space-y-1">
-        <p className="text-slate-400 text-sm">
-          <span>{courseTitle}</span>
-          <span> — </span>
-          <span>Lekcja</span> <span>{lessonNumber}</span>
-          <span> • ⏱ </span>
-          <span>{minutes}</span> <span>min</span>
-        </p>
-        <h1 className="text-3xl font-semibold">{title}</h1>
-      </header>
-      <article className="rounded-2xl bg-[#0b1220] border border-white/10 p-6 space-y-8">{children}</article>
-      <nav className="flex items-center justify-between">
-        <Link className="underline" href={`/kursy/${coursePath}/${prevSlug ?? ""}`}>← Poprzednia lekcja</Link>
-        <Link className="underline" href={`/kursy/${coursePath}/${nextSlug ?? ""}`}>Następna lekcja →</Link>
-      </nav>
-    </main>
-  );
-}
+import LessonSectionPanel, { LessonInlineCallout } from "@/components/LessonSectionPanel";
+import ZaawansowaneLessonShell from "@/components/ZaawansowaneLessonShell";
 
 export default function Page() {
   return (
-    <LessonLayout
-      coursePath="zaawansowane"
-      courseTitle="Zaawansowane"
+    <ZaawansowaneLessonShell
       lessonNumber={3}
+      lessonSlug="lekcja-3"
       title="Statystyka wyników: rozkłady, drawdown, risk of ruin, Monte Carlo"
-      minutes={15}
+      minutes={22}
       prevSlug="lekcja-2"
       nextSlug="lekcja-4"
     >
-      <section>
-        <h2 className="text-xl font-semibold">Rozkład wyników ≠ normalny</h2>
-        <p className="mt-2 text-slate-300">
-          Wyniki w R często mają „grube ogony”. Oceniaj medianę, kwartyle i 5–10 percentyl, a nie tylko średnią.
-          Zwracaj uwagę na asymetrię (np. rzadkie duże zyski vs częstsze małe straty).
+      <LessonSectionPanel variant="content" title="Dlaczego „średnia wygrana” nie mówi Ci, jak się poczujesz jutro">
+        <p>
+          Wyniki w <em>R</em> rzadko układają się w ładny dzwonek. Bywa masa małych ruchów i rzadki grubas — albo odwrotnie.
         </p>
-      </section>
+        <p>
+          W praktyce wygląda to tak: średnia mówi „ogólnie jest OK”, a Ty w tym samym miesiącu przeżywasz serię, która wygląda jak koniec świata.
+        </p>
+        <p>
+          Jeśli patrzysz tylko na średnią, <strong>nie widzisz ogonów</strong>. A ogon to często moment, w którym łamiesz plan — nie strategię.
+        </p>
+        <p>
+          Dla tradera oznacza to: dokładasz medianę, kwartyle, percentyle. Nie tylko „średnio X”, ale „w połowie przypadków było gorzej niż Y”.
+        </p>
+      </LessonSectionPanel>
 
-      <section>
-        <h2 className="text-xl font-semibold">Drawdown (DD)</h2>
-        <ul className="mt-2 list-disc pl-6">
-          <li><strong>Max DD</strong> — największy spadek kapitału od szczytu (w R lub %).</li>
-          <li><strong>Time to Recover</strong> — jak długo trwa powrót do ATH.</li>
-          <li>Dobierz 1R tak, by typowy DD nie łamał Twojej psychiki (i planu).</li>
+      <LessonSectionPanel variant="content" title="Drawdown — nie tylko liczba na wykresie">
+        <p>
+          <strong>Drawdown (DD)</strong> — prostym językiem: spadek od ostatniego szczytu kapitału do dołka, zanim wrócisz wyżej.
+        </p>
+        <p>
+          <strong>Max DD</strong> to najgłębsza taka dziura w okresie. <strong>Time to recover</strong> — ile trwa droga z powrotem na szczyt.
+        </p>
+        <p>
+          To nie znaczy, że płytki dołek jest łatwy.
+        </p>
+        <p>
+          Długi, płytki spadek też męczy: presja, grzebanie przy planie, konflikt z życiem poza platformą.
+        </p>
+        <p>
+          Operacyjnie DD znaczy jedno pytanie: przy tym spadku <strong>nadal grasz ten sam rozmiar i te same reguły</strong>, czy już zaczynasz kombinować?
+        </p>
+        <p>
+          Najczęstszy błąd jest taki: 1R jest tak duży, że „normalny” DD z historii u Ciebie wygląda jak katastrofa. Matematyka się zgadza, Ty nie jesteś gotowy na tę ścieżkę.
+        </p>
+      </LessonSectionPanel>
+
+      <LessonSectionPanel variant="insight" title="Dobra strategia może mieć serię strat. To nie jest błąd — to jest cena wejścia">
+        <p>
+          Kilka strat z rzędu <strong>nie znaczy automatycznie</strong>, że edge zniknął. Przy niższym win-rate los często tak układa wyniki.
+        </p>
+        <p>
+          Decyzja: <strong>łamałem plan, czy nie?</strong>
+        </p>
+        <p>
+          Tak — to nie test strategii, tylko wykonanie. Nie — sprawdzasz, czy rynek nie rozszedł się z założeniami testu.
+        </p>
+        <LessonInlineCallout title="Prosty scenariusz">
+          <p>
+            Strategia z dodatnim EV może przez tydzień wyglądać jak porażka.
+          </p>
+          <p className="mt-3">
+            Pytanie: czy ból mieści się w założeniach planu i czy dane do decyzji są aktualne?
+          </p>
+        </LessonInlineCallout>
+        <LessonInlineCallout title="Seria strat — źle vs dobrze">
+          <p>
+            <strong>Źle:</strong> po czterech stopach wchodzisz „na pełnej pewności” w piąty, bo „rynek musi się odwrócić”. Rozmiar rośnie, filtry znikają — to już nie jest Twój backtest.
+          </p>
+          <p className="mt-3">
+            <strong>Dobrze:</strong> po czterech stratach sprawdzasz checklistę: czy to były trade’y z planu, ten sam kontekst (sesja, spread, news), ten sam rozmiar? Jeśli tak — robisz przerwę albo obniżasz ryzyko <em>bez</em> zmiany reguł na kolanie.
+          </p>
+          <p className="mt-3">
+            Dopiero potem decydujesz: kontynuacja z tym samym procesem, albo świadome „zamrażam handel do przeglądu weekendowego”. To nie panika — to zarządzanie procesem.
+          </p>
+        </LessonInlineCallout>
+      </LessonSectionPanel>
+
+      <LessonSectionPanel variant="content" title="Risk of ruin — po ludzku: jak duże jest ryzyko gry w ruletkę z podkręconym stawianiem">
+        <p>
+          <strong>Risk of ruin (RoR)</strong> uprośćmy do jednego zdania: <strong>jak duże jest ryzyko, że odpadniesz z gry</strong> — bo kapitał, głowa albo zaufanie do planu się nie domkną.
+        </p>
+        <p>
+          To nie jest wzór do wyśpiewania na pamięć. To trzy śruby: czy średnio zarabiasz na ryzyko, jak bardzo wyniki skaczą, i jak dużo ryzykujesz na jeden trade względem całości.
+        </p>
+        <p>
+          W praktyce wygląda to tak: ta sama „przewaga”, ale dwa razy większy lot — nie tylko dwa razy szybszy wzrost w dobrym scenariuszu, ale też <strong>dużo ostrzejsze DD</strong> i częstsza pokusa łamania planu.
+        </p>
+        <p>
+          Najczęstszy błąd jest taki: szukasz „lepszego sygnału”, zamiast zmniejszyć stawkę. Z 1% na trade na 0,5% często obcinasz RoR bardziej niż kosmetyka edge’u.
+        </p>
+        <p>
+          Dla tradera oznacza to jedną decyzję: jeśli symulacje i historia mówią, że przy obecnym rozmiarze nie wytrzymasz — <strong>najpierw rozmiar</strong>, potem reszta.
+        </p>
+      </LessonSectionPanel>
+
+      <LessonSectionPanel variant="content" title="Monte Carlo — po co, skoro backtest już ładnie wygląda?">
+        <p>
+          Backtest to <em>jedna</em> kolejność wyników — taka, jaka naprawdę padła w próbie. Życie nie musi ułożyć strat i wygranych w tej samej kolejności.
+        </p>
+        <p>
+          <strong>Monte Carlo</strong> w wersji „na chłopski rozum”: bierzesz te same wyniki w R i <strong>tasujesz kolejność</strong> (albo losujesz z powtórzeniami) wiele razy. Patrzysz, jak wyglądałoby konto przy innych „układach pecha”.
+        </p>
+        <p>
+          To nie przewidywanie jutra.
+        </p>
+        <p>
+          Pytanie brzmi: jeśli pech ułoży te same trade’y inaczej — czy nadal trzymasz plan, czy już łamiesz?
+        </p>
+        <p>
+          Odpalasz np. 1000 tasowań, dla każdego liczysz najgorszy DD. Patrzysz na <strong>dolny percentyl</strong> (np. 10% najgorszych ścieżek) — to „realny róg”, nie jedna ładna krzywa z backtestu.
+        </p>
+        <ul className="list-disc pl-6">
+          <li>
+            Jeśli 10. percentyl DD jest poza Twoją tolerancją — decyzja brzmi: mniejsze ryzyko na trade, mniej linii naraz, albo przerwa w module, dopóki nie przeprojektujesz procesu.
+          </li>
+          <li>
+            Porównaj dwa rozmiary ryzyka: często jeden krok więcej agresji robi z DD coś, czego nie przeżyjesz operacyjnie — mimo że średnia z backtestu nadal ładna.
+          </li>
         </ul>
-      </section>
+      </LessonSectionPanel>
 
-      <section>
-        <h2 className="text-xl font-semibold">Risk of Ruin</h2>
-        <p className="mt-2 text-slate-300">
-          Przybliżenia RoR opierają się na EV, wariancji i kapitale. Z doświadczenia — zmniejszenie ryzyka/trade z 1% do 0.5%
-          często obcina RoR kilkukrotnie bez dużej utraty tempa wzrostu.
+      <LessonSectionPanel variant="closing" title="Zadanie">
+        <p>
+          100 ostatnich wyników w R (z planu). 1000 prostych permutacji kolejności.
         </p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold">Monte Carlo</h2>
-        <ul className="mt-2 list-disc pl-6">
-          <li>Losuj kolejność zagrań (lub bootstrapuj wyniki), aby poznać spektrum ścieżek kapitału.</li>
-          <li>Patrz na 5–10 percentyl <em>najgorszych</em> DD — to Twoja „poduszka bezpieczeństwa”.</li>
-          <li>Testuj różne ryzyko/trade i zobacz, gdzie DD staje się nieakceptowalny.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold">Zadanie</h2>
-        <p className="mt-2 text-slate-300">
-          Weź 100 ostatnich wyników w R, wykonaj 1000 permutacji Monte Carlo. Zanotuj medianę EV, 10-percentyl Max DD
-          i dobierz ryzyko/trade tak, aby 10-percentyl mieścił się w Twojej tolerancji.
+        <p>
+          Zanotuj medianę EV i <strong>10. percentyl najgorszego DD</strong>. Decyzja: czy przy tym rogu nadal handlujesz tym samym rozmiarem — tak/nie i dlaczego jednym zdaniem.
         </p>
-      </section>
-    </LessonLayout>
+        <p>
+          Jeśli nie — zapisz konkretnie: co zmieniasz jutro w operacji (np. −0,2% ryzyka na R, lub −1 linia, lub przerwa do piątku), nie „poprawię mindset”.
+        </p>
+      </LessonSectionPanel>
+    </ZaawansowaneLessonShell>
   );
 }

@@ -1,36 +1,7 @@
 'use client';
 
-import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-
-/* ─────────────────── wspólny layout (jak w poprzednich lekcjach) ─────────────────── */
-function LessonLayout({
-  coursePath, courseTitle, lessonNumber, title, minutes, children, prevSlug, nextSlug,
-}: {
-  coursePath: "cfd"; courseTitle: string; lessonNumber: number; title: string; minutes: number;
-  children: ReactNode; prevSlug?: string; nextSlug?: string;
-}) {
-  return (
-    <main className="mx-auto max-w-4xl p-6 md:p-8 space-y-6">
-      <Link href={`/kursy/${coursePath}`} className="text-sm underline">← Wróć do spisu</Link>
-      <header className="space-y-1">
-        <p className="text-slate-400 text-sm">
-          <span>{courseTitle}</span>
-          <span> — </span>
-          <span>Lekcja</span> <span>{lessonNumber}</span>
-          <span> • ⏱ </span>
-          <span>{minutes}</span> <span>min</span>
-        </p>
-        <h1 className="text-3xl font-semibold">{title}</h1>
-      </header>
-      <article className="rounded-2xl border border-white/10 bg-[#0b1220] p-6 space-y-8">{children}</article>
-      <nav className="flex items-center justify-between">
-        <Link className="underline" href={`/kursy/${coursePath}/${prevSlug ?? ""}`}>← Poprzednia lekcja</Link>
-        <Link className="underline" href={`/kursy/${coursePath}/${nextSlug ?? ""}`}>Następna lekcja →</Link>
-      </nav>
-    </main>
-  );
-}
+import ForexCfdLessonLayout from "@/components/kursy/ForexCfdLessonLayout";
 
 /* ─────────────────── drobne komponenty ─────────────────── */
 function Callout({ type = "info", title, children }: { type?: "info"|"tip"|"warn"; title: string; children: ReactNode }) {
@@ -327,10 +298,15 @@ function MiniQuiz() {
 /* ─────────────────── STRONA LEKCJI ─────────────────── */
 export default function Page() {
   return (
-    <LessonLayout
-      coursePath="cfd" courseTitle="CFD" lessonNumber={3} minutes={18}
+    <ForexCfdLessonLayout
+      coursePath="cfd"
+      courseTitle="CFD"
+      lessonSlug="lekcja-3"
+      lessonNumber={3}
+      minutes={18}
       title="Indeksy i surowce — godziny, tick, raporty, praktyka"
-      prevSlug="lekcja-2" nextSlug="lekcja-4"
+      prevSlug="lekcja-2"
+      nextSlug="lekcja-4"
     >
       <section>
         <h2 className="text-xl font-semibold">Godziny handlu (orientacyjnie)</h2>
@@ -425,6 +401,6 @@ export default function Page() {
         <h2 className="text-xl font-semibold">Mini-quiz</h2>
         <MiniQuiz />
       </section>
-    </LessonLayout>
+    </ForexCfdLessonLayout>
   );
 }

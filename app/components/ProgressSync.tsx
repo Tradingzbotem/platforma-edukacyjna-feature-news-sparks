@@ -1,11 +1,18 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import {
+  syncPodstawyDoneSlugsToServer,
+  syncScopedLessonProgressDoneToServer,
+} from '@/lib/client/syncScopedLessonProgressDoneToServer';
 
 /**
  * ProgressSync
  * Minimal client-side synchronizer: reads localStorage progress and exam results,
  * and pushes them to server APIs for the logged-in user. Silent best-effort.
+ *
+ * Ważne: synchronizujemy klucze `progress:u:{userId}:…` oraz zbiór slugów Podstawy jak na spisie
+ * (`readPodstawyDoneSlugSet`: klucz per użytkownik ∪ legacy), żeby nie mieszać kont na tym samym urządzeniu.
  */
 export default function ProgressSync() {
   const ranRef = useRef(false);
@@ -17,40 +24,25 @@ export default function ProgressSync() {
     async function sync() {
       if (typeof window === 'undefined') return;
       // 1) Probe session
+      let userId: string | null = null;
       try {
-        const s = await fetch('/api/auth/session', { cache: 'no-store' }).then(r => r.json()).catch(() => null);
-        if (!s || !s.isLoggedIn) return; // only sync for logged-in users
+        const s = await fetch('/api/auth/session', { cache: 'no-store', credentials: 'same-origin' })
+          .then((r) => r.json())
+          .catch(() => null);
+        if (!s || !s.isLoggedIn || typeof s.userId !== 'string' || !s.userId) return;
+        userId = s.userId;
       } catch {
         return;
       }
 
-      // 2) Sync lesson progress: keys like progress:course:id => '1'
-      try {
-        const entries: Array<{ course: string; lessonId: string; done: boolean }> = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i)!;
-          if (!k.startsWith('progress:')) continue;
-          const parts = k.split(':');
-          if (parts.length < 3) continue;
-          const course = parts[1];
-          const lessonId = parts.slice(2).join(':');
-          const v = localStorage.getItem(k);
-          const done = v === '1';
-          if (course && lessonId) entries.push({ course, lessonId, done });
-        }
-        if (entries.length) {
-          // fire-and-forget POSTs (no batching for simplicity)
-          await Promise.all(
-            entries.map(e =>
-              fetch('/api/progress/lesson', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(e),
-              }).catch(() => undefined)
-            )
-          );
-        }
-      } catch {}
+      const uid = userId;
+      if (!uid) return;
+
+      // 2) Sync lesson progress: tylko ukończenia (`1`). Wizyty (`0`) wysyła LessonVisitTracker — unikamy nadpisania true→false przy starym LS.
+      await syncScopedLessonProgressDoneToServer(uid);
+
+      // 2b) Podstawy: ta sama merged lista co na /kursy/podstawy → lesson_progress
+      await syncPodstawyDoneSlugsToServer(uid);
 
       // 3) Sync exam results: keys like exam:<slug>:latest => {at, score, total}
       try {

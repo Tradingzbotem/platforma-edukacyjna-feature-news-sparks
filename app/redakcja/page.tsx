@@ -14,18 +14,18 @@ export default async function RedakcjaPage() {
 		"Dodaliśmy przegląd breadth dla S&P 500 — sprawdź sekcję najnowszych publikacji",
 	];
 	return (
-		<div className="mx-auto max-w-6xl px-4 py-8">
-			<header className="relative mb-8">
-				<div className="mb-6 text-center">
-					<div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 mb-4">
+		<div className="mx-auto max-w-6xl px-4 pt-5 pb-8">
+			<header className="relative mb-5 border-b border-white/10 pb-5">
+				<div className="mb-3.5 text-center">
+					<div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 mb-2.5">
 						<span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-300" />
 						<span className="tracking-wide">REDAKCJA</span>
 					</div>
-					<h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-6">
+					<h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-4">
 						Redakcja FX-EDU
 					</h1>
-					<div className="rounded-2xl border border-white/10 bg-white/5 p-5 md:p-6 shadow-sm mx-auto max-w-4xl">
-						<div className="text-lg md:text-xl text-white/80 leading-relaxed space-y-4 text-center">
+					<div className="rounded-2xl border border-white/10 bg-white/5 p-3.5 md:p-4 shadow-sm mx-auto max-w-4xl">
+						<div className="text-lg md:text-xl text-white/80 leading-snug space-y-3 text-center">
 							<p>Bieżące wydarzenia ze świata rynków finansowych — z kontekstem, bez szumu informacyjnego.</p>
 							<p>
 								Publikujemy komentarze i analizy dotyczące tego, co aktualnie dzieje się na rynkach: makroekonomii, giełd, Forexu, surowców i spółek. Skupiamy się na informacjach, które realnie wpływają na zmienność i warunki rynkowe.
@@ -35,7 +35,7 @@ export default async function RedakcjaPage() {
 							</p>
 						</div>
 					</div>
-					<div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-4 mx-auto max-w-4xl">
+					<div className="mt-3 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 mx-auto max-w-4xl">
 						<p className="text-sm text-amber-200 text-center">
 							Treści mają charakter informacyjno-edukacyjny i nie stanowią porady inwestycyjnej. Inwestowanie na rynkach finansowych, w tym Forex i CFD, wiąże się z ryzykiem utraty kapitału.
 						</p>
@@ -50,7 +50,7 @@ export default async function RedakcjaPage() {
 			)}
 
 			<div className="grid grid-cols-12 gap-6">
-				<main className="col-span-12 lg:col-span-8">
+				<main className="col-span-12 min-w-0 lg:col-span-8">
 					<h2 className="mb-3 text-sm font-semibold text-zinc-200">Najnowsze publikacje</h2>
 					<ArticlesFeedClientV2 />
 				</main>

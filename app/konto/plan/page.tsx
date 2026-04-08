@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getSession } from "@/lib/session";
 import { resolveTierFromCookiesAndSession, hasFullPanelAccess, type Tier } from "@/lib/panel/access";
 import { getFoundersAccess } from "@/lib/founders-token/access";
+import { isFoundersMarketplaceSalesPaused } from "@/lib/marketplace/offers";
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +64,7 @@ export default async function Page() {
   const paid = hasFullPanelAccess(tier);
   const foundersSummary = await getFoundersAccess(session.userId);
   const foundersUi = foundersStatusDescription(foundersSummary);
+  const salesPaused = isFoundersMarketplaceSalesPaused();
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -78,7 +80,8 @@ export default async function Page() {
             <div>
               <h1 className="text-2xl font-bold">Mój dostęp</h1>
               <p className="mt-1 text-white/70">
-                Jedna oferta: pełny panel EDU po Founders NFT. Poniżej moduły dostępne przy aktywnym dostępie.
+                Jedna oferta: pełny panel EDU po Founders NFT (dostęp cyfrowy do funkcji Serwisu — materiały edukacyjne i
+                narzędzia, bez doradztwa inwestycyjnego). Poniżej moduły przy aktywnym dostępie.
               </p>
             </div>
             <PlanBadge tier={tier} />
@@ -152,15 +155,28 @@ export default async function Page() {
                 </>
               ) : (
                 <li className="text-white/70 sm:col-span-2">
-                  Brak pełnego dostępu — zobacz{" "}
-                  <Link href="/marketplace" className="underline">
-                    marketplace NFT
-                  </Link>{" "}
-                  lub{" "}
-                  <Link href="/cennik" className="underline">
-                    cennik
-                  </Link>
-                  .
+                  Brak pełnego dostępu —{" "}
+                  {salesPaused ? (
+                    <>
+                      <span className="text-amber-200/85 font-medium">brak miejsc</span> na pierwotny zakup; możesz zerknąć w{" "}
+                      <Link href="/cennik" className="underline">
+                        cennik
+                      </Link>{" "}
+                      (informacyjnie) lub napisać przez kontakt.
+                    </>
+                  ) : (
+                    <>
+                      zobacz{" "}
+                      <Link href="/marketplace" className="underline">
+                        marketplace NFT
+                      </Link>{" "}
+                      lub{" "}
+                      <Link href="/cennik" className="underline">
+                        cennik
+                      </Link>
+                      .
+                    </>
+                  )}
                 </li>
               )}
             </ul>
@@ -197,12 +213,21 @@ export default async function Page() {
           <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
             <div className="font-semibold">Zakup dostępu</div>
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Link
-                href="/marketplace"
-                className="px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90"
-              >
-                Founders NFT — marketplace
-              </Link>
+              {salesPaused ? (
+                <span
+                  className="px-4 py-2 rounded-lg border border-white/15 bg-white/[0.06] text-sm font-semibold text-white/45 cursor-not-allowed"
+                  aria-disabled
+                >
+                  Brak miejsc — zakup wstrzymany
+                </span>
+              ) : (
+                <Link
+                  href="/marketplace"
+                  className="px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90"
+                >
+                  Founders NFT — marketplace
+                </Link>
+              )}
               <Link href="/cennik" className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">
                 Cennik
               </Link>

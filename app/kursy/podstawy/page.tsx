@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useLessonProgressSession } from "@/app/contexts/LessonProgressSessionContext";
+import { readPodstawyDoneSlugSet } from "@/lib/lessonProgressStorage";
 
 type Lesson = { slug: string; title: string; time: string; desc: string };
 
@@ -13,17 +15,16 @@ const LESSONS: Lesson[] = [
   { slug: "lekcja-5", title: "Czytanie świec", time: "10 min", desc: "Ceny OHLC, interwały i podstawowe formacje." },
 ];
 
-const KEY = "course:podstawy:done"; // localStorage
-
 export default function Page() {
+  const { userId, sessionReady } = useLessonProgressSession();
   const [done, setDone] = useState<string[]>([]);
 
   useEffect(() => {
+    if (!sessionReady) return;
     try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setDone(JSON.parse(raw));
+      setDone(Array.from(readPodstawyDoneSlugSet(localStorage, userId)));
     } catch {}
-  }, []);
+  }, [userId, sessionReady]);
 
   const doneCount = LESSONS.filter(l => done.includes(l.slug)).length;
   const percent = Math.round((doneCount / LESSONS.length) * 100);

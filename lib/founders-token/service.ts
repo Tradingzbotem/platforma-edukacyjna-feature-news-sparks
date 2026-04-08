@@ -1,6 +1,7 @@
 import 'server-only';
 
-import type { FoundersToken, FoundersTokenStatus, Prisma } from '@prisma/client';
+import type { FoundersToken, FoundersTokenStatus } from '@prisma/client';
+import type { InputJsonValue } from '@prisma/client/runtime/client';
 import { getPrisma } from '@/lib/prisma';
 import { findUserByEmail, findUserById } from '@/lib/db';
 
@@ -265,7 +266,7 @@ export type AssignFoundersTokenInput = {
   adminNotes?: string | null;
   /** Ręczna zmiana statusu członkostwa (bez blockchain). */
   status?: Extract<FoundersTokenStatus, 'active' | 'pending' | 'revoked' | 'inactive'>;
-  benefitsJson?: Prisma.InputJsonValue | null;
+  benefitsJson?: InputJsonValue | null;
   assignToEmail?: string;
   assignToUserId?: string;
   grantedByAdminId?: string | null;

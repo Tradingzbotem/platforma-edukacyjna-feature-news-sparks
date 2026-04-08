@@ -59,11 +59,12 @@ export async function POST(req: NextRequest) {
     const password_hash = await hashPassword(data.password);
     await insertUser({ id, email: data.email, password_hash, name: data.name ?? null, phone: data.phone, plan: data.plan ?? 'free', marketing_consent: data.marketing_consent ?? false });
 
-    // start sesji
+    // start sesji (bez resztek poprzedniej sesji — courseProgress mógłby scalać się z DB innego kontekstu)
     const session = await getSession();
     session.userId = id;
     session.email = data.email;
     session.plan = data.plan ?? 'free';
+    session.courseProgress = undefined;
     await session.save();
 
     // form → redirect do /client; JSON → {ok:true}

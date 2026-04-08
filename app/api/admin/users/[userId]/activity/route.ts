@@ -46,7 +46,7 @@ export async function GET(
         FROM lesson_progress
         WHERE user_id = ${userId}
         ORDER BY updated_at DESC
-        LIMIT 100
+        LIMIT 2000
       `;
       lessons = lessonsResult.rows.map((r) => ({
         course: r.course,
@@ -80,7 +80,7 @@ export async function GET(
         FROM quiz_results
         WHERE user_id = ${userId}
         ORDER BY at DESC
-        LIMIT 100
+        LIMIT 2000
       `;
       quizzes = quizzesResult.rows.map((r) => ({
         slug: r.slug,
@@ -114,7 +114,7 @@ export async function GET(
         FROM checklist_history
         WHERE user_id = ${userId}
         ORDER BY created_at DESC
-        LIMIT 100
+        LIMIT 2000
       `;
       checklists = checklistsResult.rows.map((r) => ({
         id: r.id,

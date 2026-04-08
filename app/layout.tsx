@@ -8,6 +8,7 @@ import ClientRoot from "./ClientRoot";
 import { t } from "@/lib/i18n";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import DevBanner from "@/components/ui/DevBanner";
 import { getSession } from "@/lib/session";
 import Script from "next/script";
 import { getIsAdmin } from "@/lib/admin";
@@ -87,6 +88,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         >
           {t(htmlLang, 'skip_to_content')}
         </a>
+
+        <DevBanner />
 
         {/* Globalny topbar */}
         <SiteHeader initialIsLoggedIn={initialIsLoggedIn} initialIsAdmin={initialIsAdmin} />

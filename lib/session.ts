@@ -10,6 +10,8 @@ export type SessionData = {
   userId?: string;
   email?: string;
   plan?: 'free' | 'starter' | 'pro' | 'elite';
+  /** Postęp lekcji: courseId → lessonSlug → ukończono */
+  courseProgress?: Record<string, Record<string, boolean>>;
 };
 
 const sessionOptions: SessionOptions = {
@@ -63,6 +65,7 @@ export async function getSession() {
         session.userId = undefined;
         session.email = undefined;
         session.plan = undefined;
+        session.courseProgress = undefined;
         await session.save();
       } else {
         const dbPlan =

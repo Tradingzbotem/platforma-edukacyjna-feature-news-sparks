@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getIsAdmin } from '@/lib/admin';
 import { sql } from '@vercel/postgres';
 import { isDatabaseConfigured } from '@/lib/db';
+import { runNewsEnrichJob } from '@/lib/news/runNewsEnrichJob';
 
 export const runtime = 'nodejs';
 
@@ -131,16 +132,16 @@ export async function POST(request: Request) {
 
   const action = String(body?.action || '');
 
+  const origin = new URL(request.url).origin;
+  const cronSecret = process.env.CRON_SECRET;
+  const cronHeaders = cronSecret ? { 'x-cron-secret': cronSecret } : undefined;
+
   // Manual pipeline refresh: ingest + enrich + (optional) brief generation
   if (action === 'refresh') {
-    const origin = new URL(request.url).origin;
-    const cronSecret = process.env.CRON_SECRET;
-    const headers = cronSecret ? { 'x-cron-secret': cronSecret } : undefined;
-
     const res = await fetch(`${origin}/api/jobs/news/refresh`, {
       method: 'GET',
       cache: 'no-store',
-      headers,
+      headers: cronHeaders,
     }).catch(() => null);
 
     if (!res || !res.ok) {
@@ -148,6 +149,27 @@ export async function POST(request: Request) {
     }
     const data = await res.json().catch(() => null);
     return NextResponse.json({ ok: true, result: data });
+  }
+
+  // AI enrichment only — bez zagnieżdżonego HTTP (unika blokad i timeoutów); mniejsza partia niż cron
+  if (action === 'enrich') {
+    const batchRaw = Number(process.env.NEWS_ENRICH_ADMIN_BATCH || '15');
+    const maxItems = Math.min(50, Math.max(1, Number.isFinite(batchRaw) ? batchRaw : 15));
+    const result = await runNewsEnrichJob({ maxItems });
+    if (result.skippedMissingKey) {
+      return NextResponse.json(
+        { ok: false, error: 'Brak OPENAI_API_KEY w środowisku serwera' },
+        { status: 500 }
+      );
+    }
+    return NextResponse.json({
+      ok: true,
+      result: {
+        enriched: result.enriched,
+        pending: result.pending,
+        failures: result.failures,
+      },
+    });
   }
 
   // Bulk delete (ids[])

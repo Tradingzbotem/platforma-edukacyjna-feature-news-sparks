@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { isFoundersMarketplaceSalesPaused } from '@/lib/marketplace/offers';
 
 /* ──────────────────────────────
    Małe klocki UI (lokalne)
@@ -89,8 +90,8 @@ function PasswordMeter({ value }: { value: string }) {
    Strona: rejestracja / konto
    ────────────────────────────── */
 export default function Page() {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const salesPaused = isFoundersMarketplaceSalesPaused();
 
   const [name, setName] = useState('');
   const [mail, setMail] = useState('');
@@ -166,7 +167,9 @@ export default function Page() {
     }
     if (!agree) {
       e.preventDefault();
-      return setErr('Zaznacz zgodę na regulamin.');
+      return setErr(
+        'Aby utworzyć konto, zaakceptuj regulamin, politykę prywatności oraz potwierdź zapoznanie z zasadami zwrotów i odstąpienia.',
+      );
     }
 
     // OK – pozwalamy na domyślne zachowanie przeglądarki:
@@ -213,9 +216,13 @@ export default function Page() {
                     Cennik
                   </Link>
                   {' · '}
-                  <Link href="/marketplace" className="underline hover:no-underline text-slate-300">
-                    Marketplace
-                  </Link>
+                  {salesPaused ? (
+                    <span className="text-slate-500">Marketplace (brak miejsc)</span>
+                  ) : (
+                    <Link href="/marketplace" className="underline hover:no-underline text-slate-300">
+                      Marketplace
+                    </Link>
+                  )}
                   {' · '}
                   <Link href="/prawne/nft" className="underline hover:no-underline text-slate-300">
                     Regulamin NFT
@@ -369,13 +376,17 @@ export default function Page() {
                 />
                 <span>
                   Akceptuję{' '}
-                  <a className="underline hover:no-underline" href="/regulamin">
-                    regulamin
-                  </a>{' '}
-                  i{' '}
-                  <a className="underline hover:no-underline" href="/polityka-prywatnosci">
+                  <Link className="underline hover:no-underline" href="/prawne/regulamin">
+                    regulamin serwisu
+                  </Link>
+                  ,{' '}
+                  <Link className="underline hover:no-underline" href="/prawne/polityka-prywatnosci">
                     politykę prywatności
-                  </a>
+                  </Link>{' '}
+                  oraz potwierdzam zapoznanie z{' '}
+                  <Link className="underline hover:no-underline" href="/prawne/zwroty-odstapienie">
+                    zasadami zwrotów i odstąpienia
+                  </Link>
                   .
                 </span>
               </label>

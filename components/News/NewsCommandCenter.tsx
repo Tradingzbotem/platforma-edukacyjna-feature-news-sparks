@@ -3,11 +3,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import type { NewsItemEnriched } from '@/lib/news/types';
 import NewsTicker from './NewsTicker';
-import NewsFilters, { type Filters } from './NewsFilters';
-import NewsFeed from './NewsFeed';
-import BriefingPanel from './BriefingPanel';
+import { type Filters } from './NewsFilters';
 import ImpactedInstruments from './ImpactedInstruments';
 import EducationCards from './EducationCards';
+import DecisionTable from '@/app/news/components/DecisionTable';
+import NewsTopThreeNow from './NewsTopThreeNow';
 
 export default function NewsCommandCenter() {
   const router = useRouter();
@@ -15,7 +15,6 @@ export default function NewsCommandCenter() {
   const searchParams = useSearchParams();
   const [range, setRange] = useState<24 | 48 | 72>(72);
   const [live, setLive] = useState(true);
-  const [showMiniCharts, setShowMiniCharts] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     q: '',
     categories: [],
@@ -28,7 +27,7 @@ export default function NewsCommandCenter() {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [newToday, setNewToday] = useState<number>(0);
 
-  const watchlistParam = ''; // reserved for future: read from user state
+  const watchlistParam = '';
 
   async function load() {
     setIsLoading(true);
@@ -48,10 +47,15 @@ export default function NewsCommandCenter() {
     setIsLoading(false);
   }
 
-  useEffect(() => { load(); }, [range, JSON.stringify(filters)]);
+  useEffect(() => {
+    load();
+  }, [range, JSON.stringify(filters)]);
+
   useEffect(() => {
     if (!live) return;
-    const id = setInterval(() => { load(); }, 120_000);
+    const id = setInterval(() => {
+      load();
+    }, 120_000);
     return () => clearInterval(id);
   }, [live, range, JSON.stringify(filters)]);
 
@@ -61,31 +65,27 @@ export default function NewsCommandCenter() {
     return Math.max(0, Math.floor(diff / 60000));
   }, [lastUpdated]);
 
-  // Handle refresh=now URL parameter - trigger immediate refresh
   const didManualRefresh = useRef(false);
   useEffect(() => {
     const refreshParam = searchParams?.get('refresh');
     if (refreshParam === 'now' && !didManualRefresh.current) {
       didManualRefresh.current = true;
-      // Remove refresh parameter from URL
       const params = new URLSearchParams(searchParams?.toString());
       params.delete('refresh');
       router.replace(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`);
-      
-      // Trigger refresh immediately
+
       (async () => {
         try {
           await fetch('/api/jobs/news/refresh', { cache: 'no-store' });
         } catch {}
-        // Re-load after backend refresh attempt
         load();
       })();
-      // Reset flag after 5 minutes to allow future auto-refresh if needed
-      setTimeout(() => { didManualRefresh.current = false; }, 5 * 60 * 1000);
+      setTimeout(() => {
+        didManualRefresh.current = false;
+      }, 5 * 60 * 1000);
     }
   }, [searchParams, pathname, router]);
 
-  // Auto-trigger backend refresh when data looks stale (no new today or last update very old)
   const didAutoRefresh = useRef(false);
   useEffect(() => {
     const shouldAutoRefresh =
@@ -102,100 +102,131 @@ export default function NewsCommandCenter() {
       try {
         await fetch('/api/jobs/news/refresh', { cache: 'no-store' });
       } catch {}
-      // Re-load after backend refresh attempt
       load();
-      // allow a future auto refresh after some time if still stale
-      setTimeout(() => { didAutoRefresh.current = false; }, 10 * 60 * 1000);
+      setTimeout(() => {
+        didAutoRefresh.current = false;
+      }, 10 * 60 * 1000);
     })();
   }, [live, isLoading, minutesAgo, newToday]);
 
   return (
     <main id="content" className="relative min-h-screen bg-slate-950 text-white">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 lg:py-20 animate-fade-in">
-        {/* HERO */}
-        <header className="mb-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm px-3 py-1 text-xs text-white/80 mb-4 shadow-sm hover:shadow-md transition-all duration-200">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-sm shadow-emerald-300/50 animate-pulse-glow" />
-            <span className="tracking-wide">INFORMACJE NA CZAS</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight mb-6">
-            Informacje na czas
-          </h1>
-          <p className="text-lg md:text-xl text-white/80 leading-relaxed mb-6 max-w-2xl">
-            Szybkie fakty, wpływ na instrumenty i możliwe reakcje rynku (AI). Monitoruj najważniejsze wydarzenia rynkowe w czasie rzeczywistym.
-          </p>
-          <div className="flex flex-wrap items-center gap-3 mb-6 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-sm">
-            <div className="flex items-center gap-2 text-xs text-white/70">
-              <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Impact pokazuje potencjalny wpływ na rynek (1-5)</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-white/70">
-              <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>TimeEdge oznacza świeżość informacji (0-10)</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-white/70">
-              <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-              </svg>
-              <span>Najedź na metryki, aby zobaczyć wyjaśnienia</span>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-white/70 mb-6">
-            <div className="rounded-full border border-white/10 bg-white/5 backdrop-blur-sm px-3 py-1 shadow-sm">Ostatnia aktualizacja: {minutesAgo === null ? '—' : `${minutesAgo} min temu`}</div>
-            <div className="rounded-full border border-white/10 bg-white/5 backdrop-blur-sm px-3 py-1 shadow-sm">Nowe dziś: {newToday}</div>
-            <div className="ml-auto flex items-center gap-2">
-              <div className="flex rounded-full overflow-hidden border border-white/10 shadow-sm">
-                {[24,48,72].map(h => (
-                  <button key={h} onClick={() => setRange(h as 24|48|72)} className={`px-3 py-1 text-xs transition-all duration-150 ${range===h ? 'bg-white text-slate-900 shadow-sm' : 'text-white/80 bg-transparent hover:bg-white/10'}`}>{h}h</button>
-                ))}
+        {/* Hero — jeden panel startowy */}
+        <div className="relative mb-12 overflow-hidden rounded-2xl border border-white/[0.09] bg-gradient-to-br from-slate-900/90 via-slate-950 to-slate-950 shadow-[0_0_0_1px_rgba(255,255,255,0.03),0_28px_90px_-28px_rgba(16,185,129,0.18)] ring-1 ring-emerald-500/10">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.14),transparent)]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/35 to-transparent"
+            aria-hidden
+          />
+
+          <div className="relative px-5 py-8 sm:px-8 sm:py-9 md:px-10 md:py-10">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex justify-center w-full mb-6">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] backdrop-blur-sm px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200/90">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.65)] animate-pulse-glow" />
+                  Na żywo
+                </div>
               </div>
-              <button onClick={() => setLive(v => !v)} className={`rounded-full px-3 py-1 text-xs border transition-all duration-150 shadow-sm hover:shadow-md ${live ? 'border-emerald-400 text-emerald-300 bg-emerald-400/10 hover:bg-emerald-400/15' : 'border-white/20 text-white/70 hover:bg-white/10'}`}>
-                {live ? 'LIVE' : 'Pauza'}
-              </button>
-              <label className="ml-2 flex items-center gap-2 text-white/70">
-                <input type="checkbox" className="accent-emerald-400" checked={showMiniCharts} onChange={e => setShowMiniCharts(e.target.checked)} />
-                Mini wykresy
-              </label>
+
+              <h1 className="text-[1.85rem] sm:text-4xl md:text-[2.65rem] font-semibold leading-[1.06] tracking-[-0.025em] text-white mb-4 max-w-4xl">
+                Rynek w czasie rzeczywistym
+              </h1>
+              <p className="text-base sm:text-lg text-white/60 leading-relaxed max-w-xl sm:max-w-2xl mx-auto mb-8">
+                Najważniejsze wydarzenia, instrumenty pod wpływem i szybki kontekst rynkowy — uporządkowane tak, by szybciej
+                ocenić sytuację.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-8 max-w-4xl mx-auto w-full">
+              <div className="flex gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3">
+                <svg className="w-5 h-5 text-emerald-400/90 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-white/45 mb-0.5">Wpływ (impact)</div>
+                  <p className="text-sm text-white/75 leading-snug">Skala siły wydarzenia od 1 do 5.</p>
+                </div>
+              </div>
+              <div className="flex gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3">
+                <svg className="w-5 h-5 text-emerald-400/90 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-white/45 mb-0.5">TimeEdge</div>
+                  <p className="text-sm text-white/75 leading-snug">Świeżość przewagi informacyjnej 0–10.</p>
+                </div>
+              </div>
+              <div className="flex gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-3 sm:col-span-2 lg:col-span-1">
+                <svg className="w-5 h-5 text-sky-400/90 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                </svg>
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-white/45 mb-0.5">Tabela</div>
+                  <p className="text-sm text-white/75 leading-snug">Kliknij wiersz, by rozwinąć kontekst i przejść do źródła.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between pt-2 border-t border-white/[0.07]">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="rounded-full border border-white/10 bg-black/25 px-3.5 py-1.5 text-xs text-white/70">
+                  Ostatnia aktualizacja:{' '}
+                  <span className="font-medium text-white/90 tabular-nums">
+                    {minutesAgo === null ? '—' : `${minutesAgo} min temu`}
+                  </span>
+                </div>
+                <div className="rounded-full border border-white/10 bg-black/25 px-3.5 py-1.5 text-xs text-white/70">
+                  Nowe dziś: <span className="font-medium text-white/90 tabular-nums">{newToday}</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] uppercase tracking-wide text-white/40 mr-1 hidden sm:inline">Zakres</span>
+                <div className="flex rounded-full overflow-hidden border border-white/15 bg-black/20">
+                  {[24, 48, 72].map((h) => (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => setRange(h as 24 | 48 | 72)}
+                      className={`px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                        range === h ? 'bg-white text-slate-900' : 'text-white/75 hover:bg-white/10'
+                      }`}
+                    >
+                      {h}h
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLive((v) => !v)}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-colors ${
+                    live
+                      ? 'border-emerald-400/45 text-emerald-200 bg-emerald-500/15 hover:bg-emerald-500/20 shadow-[0_0_20px_-4px_rgba(16,185,129,0.35)]'
+                      : 'border-white/20 text-white/65 hover:bg-white/10'
+                  }`}
+                >
+                  {live ? 'LIVE' : 'Pauza'}
+                </button>
+              </div>
             </div>
           </div>
-        </header>
 
-      {/* TICKER */}
-      <NewsTicker hours={range} live={live} />
-
-      {/* EDU content */}
-      <EducationCards />
-
-        {/* LAYOUT */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-[260px,1fr,320px]">
-          {/* Left */}
-          <NewsFilters value={filters} onChange={setFilters} />
-
-          {/* Center feed */}
-          <div>
-            {isLoading && (
-              <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/50 to-slate-950/50 backdrop-blur-md p-12 text-center shadow-lg">
-                <div className="inline-block w-12 h-12 border-3 border-white/20 border-t-emerald-400 rounded-full animate-spin mb-4 shadow-sm" />
-                <div className="text-white/70 font-medium">Ładowanie wiadomości...</div>
-                <div className="text-sm text-white/50 mt-2">To może chwilę potrwać</div>
-              </div>
-            )}
-            {!isLoading && <NewsFeed items={items} showMiniCharts={showMiniCharts} />}
-          </div>
-
-          {/* Right */}
-          <div className="space-y-4">
-            <ImpactedInstruments items={items} />
-            <BriefingPanel window={range === 24 ? '24h' : range === 48 ? '48h' : '72h'} />
-          </div>
+          <NewsTicker hours={range} live={live} embedded />
         </div>
+
+        <NewsTopThreeNow items={items} />
+
+        <DecisionTable items={items} isLoading={isLoading} filters={filters} onFiltersChange={setFilters} />
+
+        <div className="mb-8">
+          <ImpactedInstruments items={items} variant="featured" />
+        </div>
+
+        <EducationCards />
       </div>
     </main>
   );
 }
-
-

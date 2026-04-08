@@ -1,15 +1,27 @@
 'use client';
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import LessonVisitTracker from "@/components/LessonVisitTracker";
+import {
+  PodstawyCallout,
+  PodstawyChecklist,
+  PodstawySection,
+} from "@/components/podstawy/content";
+import PodstawyLessonShell, {
+  PodstawyLessonHeaderActions,
+} from "@/components/podstawy/PodstawyLessonShell";
+import { useLessonProgressSession } from "@/app/contexts/LessonProgressSessionContext";
+import { readPodstawyDoneSlugSet, writePodstawyDoneSlugArray } from "@/lib/lessonProgressStorage";
+import { pushPodstawyLessonProgress } from "@/lib/podstawyLessonProgressSync";
 
-const KEY = "course:podstawy:done";
 const SLUG = "lekcja-4";
 
 /* ───────────────── UI helpers ───────────────── */
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl bg-[#0b1220] border border-white/10 p-5 sm:p-6">{children}</div>
+    <div className="rounded-2xl border border-white/10 bg-[#0d1524]/90 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-sm sm:p-6">
+      {children}
+    </div>
   );
 }
 function Field({
@@ -76,6 +88,7 @@ function useRiskSizing({
 }
 
 export default function Page() {
+  const { userId, sessionReady } = useLessonProgressSession();
   const [done, setDone] = useState(false);
 
   // Stany do kalkulatorów
@@ -101,20 +114,20 @@ export default function Page() {
     return riskCash / denom;
   }, [riskCash, slPips, pipValuePerLot]);
 
-  // znacznik ukończenia
   useEffect(() => {
+    if (!sessionReady) return;
     try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setDone(JSON.parse(raw).includes(SLUG));
+      setDone(readPodstawyDoneSlugSet(localStorage, userId).has(SLUG));
     } catch {}
-  }, []);
+  }, [userId, sessionReady]);
   const toggle = () => {
+    if (!sessionReady) return;
     try {
-      const raw = localStorage.getItem(KEY);
-      const arr: string[] = raw ? JSON.parse(raw) : [];
+      const arr = Array.from(readPodstawyDoneSlugSet(localStorage, userId));
       const next = done ? arr.filter(s => s !== SLUG) : Array.from(new Set([...arr, SLUG]));
-      localStorage.setItem(KEY, JSON.stringify(next));
+      writePodstawyDoneSlugArray(localStorage, userId, next);
       setDone(!done);
+      pushPodstawyLessonProgress(SLUG, !done, userId);
     } catch {}
   };
 
@@ -124,218 +137,205 @@ export default function Page() {
   const whatIfFree = useMemo(() => balance - whatIfMargin, [balance, whatIfMargin]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <header className="mb-6">
-          <p className="text-xs text-white/60">Moduł: Podstawy • Lekcja 4</p>
-          <h1 className="text-3xl sm:text-4xl font-bold mt-1">Dźwignia i ryzyko</h1>
-          <p className="text-white/70 mt-2">
-            Ekspozycja, depozyt zabezpieczający (margin) oraz zasada stałego ryzyka na transakcję. Jak dobrać loty tak,
-            aby jednocześnie <em>mieć wystarczający margin</em> i <em>trzymać stałe 1R</em>.
-          </p>
+    <PodstawyLessonShell
+      lessonNumber={4}
+      title="Dźwignia i ryzyko"
+      lead={
+        <>
+          Ekspozycja, depozyt zabezpieczający (margin) oraz zasada stałego ryzyka na transakcję. Jak dobrać loty tak,
+          aby jednocześnie <em>mieć wystarczający margin</em> i <em>trzymać stałe 1R</em>.
+        </>
+      }
+      prevHref="/kursy/podstawy/lekcja-3"
+      nextHref="/kursy/podstawy/lekcja-5"
+      tracker={<LessonVisitTracker course="podstawy" lessonId={SLUG} />}
+      actions={<PodstawyLessonHeaderActions done={done} onToggle={toggle} />}
+    >
+      <PodstawySection title="Podstawy">
+        <ul>
+          <li><strong>Dźwignia</strong> zwiększa ekspozycję względem kapitału, ale <em>nie zwiększa 1R</em> — 1R definiujesz Ty (ryzyko % konta).</li>
+          <li><strong>Depozyt (margin)</strong> to kwota zamrożona jako zabezpieczenie pozycji: <code>margin = nominal / dźwignia</code>.</li>
+          <li><strong>Ryzyko na transakcję</strong> (1R) — zwykle 0.5–2% salda. Kluczem jest <em>dobór lotów</em> do SL.</li>
+        </ul>
 
-          <div className="mt-4 flex items-center gap-3">
-            <button
-              onClick={toggle}
-              className={`px-4 py-2 rounded-lg font-semibold ${done ? "bg-green-400 text-slate-900 hover:opacity-90" : "bg-white/10 hover:bg-white/20"}`}
-              title={done ? "Oznacz jako nieukończoną" : "Oznacz jako ukończoną"}
-            >
-              {done ? "✓ Ukończono" : "Oznacz jako ukończoną"}
-            </button>
-            <Link href="/kursy/podstawy" className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">← Spis lekcji</Link>
+        <h3>Mit vs. prawda</h3>
+        <ul>
+          <li><em>Mit:</em> „Wyższa dźwignia = większy zysk”. <br/> <em>Prawda:</em> Dźwignia decyduje o wymaganym marginie; o zysku/stracie decyduje wielkość pozycji i ruch ceny.</li>
+          <li><em>Mit:</em> „Ryzyko to depozyt”. <br/> <em>Prawda:</em> Ryzyko to strata przy realizacji SL, a nie wysokość wymaganego marginu.</li>
+        </ul>
+      </PodstawySection>
+
+      <PodstawySection
+        title="Kalkulator: dźwignia, ekspozycja i margin"
+        subtitle="Wpisz saldo, dźwignię, nominał lota i wielkość pozycji — zobacz ekspozycję, wymagany margin i wolny margin."
+        prose={false}
+      >
+        <Card>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Saldo konta">
+              <NumberInput value={balance} onChange={e => setBalance(parseFloat(e.target.value || '0'))} />
+            </Field>
+            <Field label="Dźwignia (1:x)">
+              <NumberInput value={leverage} onChange={e => setLeverage(parseFloat(e.target.value || '0'))} />
+            </Field>
+            <Field label="Wartość nominalna 1.00 lota">
+              <NumberInput
+                value={notionalPerLot}
+                onChange={e => setNotionalPerLot(parseFloat(e.target.value || '0'))}
+              />
+              <div className="mt-1 text-xs text-white/50">
+                FX: 100 000. Indeksy/surowce — wstaw odpowiedni nominał u Twojego brokera.
+              </div>
+            </Field>
+            <Field label="Wielkość pozycji (loty)">
+              <NumberInput value={lots} onChange={e => setLots(parseFloat(e.target.value || '0'))} />
+            </Field>
           </div>
-        </header>
 
-        {/* Definicje i mity */}
-        <section className="prose prose-invert prose-slate max-w-none">
-          <h2>Podstawy</h2>
-          <ul>
-            <li><strong>Dźwignia</strong> zwiększa ekspozycję względem kapitału, ale <em>nie zwiększa 1R</em> — 1R definiujesz Ty (ryzyko % konta).</li>
-            <li><strong>Depozyt (margin)</strong> to kwota zamrożona jako zabezpieczenie pozycji: <code>margin = nominal / dźwignia</code>.</li>
-            <li><strong>Ryzyko na transakcję</strong> (1R) — zwykle 0.5–2% salda. Kluczem jest <em>dobór lotów</em> do SL.</li>
-          </ul>
+          <hr className="my-5 border-white/10" />
 
-          <h3>Mit vs. prawda</h3>
-          <ul>
-            <li><em>Mit:</em> „Wyższa dźwignia = większy zysk”. <br/> <em>Prawda:</em> Dźwignia decyduje o wymaganym marginie; o zysku/stracie decyduje wielkość pozycji i ruch ceny.</li>
-            <li><em>Mit:</em> „Ryzyko to depozyt”. <br/> <em>Prawda:</em> Ryzyko to strata przy realizacji SL, a nie wysokość wymaganego marginu.</li>
-          </ul>
-        </section>
-
-        {/* Kalkulator dźwigni & margin */}
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold mb-3">Kalkulator: dźwignia, ekspozycja i margin</h2>
-          <Card>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Saldo konta">
-                <NumberInput value={balance} onChange={e => setBalance(parseFloat(e.target.value || '0'))} />
-              </Field>
-              <Field label="Dźwignia (1:x)">
-                <NumberInput value={leverage} onChange={e => setLeverage(parseFloat(e.target.value || '0'))} />
-              </Field>
-              <Field label="Wartość nominalna 1.00 lota">
-                <NumberInput
-                  value={notionalPerLot}
-                  onChange={e => setNotionalPerLot(parseFloat(e.target.value || '0'))}
-                />
-                <div className="mt-1 text-xs text-white/50">
-                  FX: 100 000. Indeksy/surowce — wstaw odpowiedni nominał u Twojego brokera.
-                </div>
-              </Field>
-              <Field label="Wielkość pozycji (loty)">
-                <NumberInput value={lots} onChange={e => setLots(parseFloat(e.target.value || '0'))} />
-              </Field>
-            </div>
-
-            <hr className="my-5 border-white/10" />
-
-            <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div>Ekspozycja (nominal):</div>
-                <div className="text-lg font-semibold">
-                  {exposure.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </div>
-                <div className="mt-2">Wymagany margin:</div>
-                <div className={`text-lg font-semibold ${marginRequired > balance ? "text-rose-300" : ""}`}>
-                  {marginRequired.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </div>
+          <div className="grid sm:grid-cols-2 gap-4 text-sm">
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
+              <div>Ekspozycja (nominal):</div>
+              <div className="text-lg font-semibold">
+                {exposure.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </div>
-
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div>Wolny margin po otwarciu:</div>
-                <div className={`text-lg font-semibold ${freeAfter < 0 ? "text-rose-300" : "text-emerald-300"}`}>
-                  {freeAfter.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </div>
-                <div className="mt-2">Maks. loty „z marginesu” (≈):</div>
-                <div className="text-lg font-semibold">
-                  {maxLotsByMargin.toLocaleString(undefined, { maximumFractionDigits: 2 })} lot
-                </div>
+              <div className="mt-2">Wymagany margin:</div>
+              <div className={`text-lg font-semibold ${marginRequired > balance ? "text-rose-300" : ""}`}>
+                {marginRequired.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </div>
             </div>
 
-            <div className="mt-3 text-xs text-white/50">
-              Uwaga: obliczenia edukacyjne. Rzeczywisty nominał/mnożniki mogą się różnić między brokerami.
-            </div>
-          </Card>
-        </section>
-
-        {/* Sizing: ryzyko vs. margin */}
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold mb-3">Sizing: stałe 1R i zgodność z marginesem</h2>
-          <Card>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Ryzyko na transakcję (%, 1R)">
-                <NumberInput value={riskPct} onChange={e => setRiskPct(parseFloat(e.target.value || '0'))} />
-              </Field>
-              <Field label="Stop-Loss (pips)">
-                <NumberInput value={slPips} onChange={e => setSlPips(parseFloat(e.target.value || '0'))} />
-              </Field>
-              <Field label="Wartość 1 pips dla 1.00 lota (np. 10 USD)">
-                <NumberInput value={pipValuePerLot} onChange={e => setPipValuePerLot(parseFloat(e.target.value || '0'))} />
-              </Field>
-              <Field label="(Podgląd) Aktualne loty">
-                <NumberInput value={lots} onChange={e => setLots(parseFloat(e.target.value || '0'))} />
-              </Field>
-            </div>
-
-            <hr className="my-5 border-white/10" />
-
-            <div className="grid sm:grid-cols-3 gap-4 text-sm">
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div>1R (kwotowo):</div>
-                <div className="text-lg font-semibold">{(balance * (riskPct / 100)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-                <div className="mt-2">Ryzyko z bieżących lotów (SL):</div>
-                <div className={`text-lg font-semibold ${riskFromSL > balance * (riskPct / 100) ? "text-rose-300" : "text-emerald-300"}`}>
-                  {riskFromSL.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </div>
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
+              <div>Wolny margin po otwarciu:</div>
+              <div className={`text-lg font-semibold ${freeAfter < 0 ? "text-rose-300" : "text-emerald-300"}`}>
+                {freeAfter.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </div>
-
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div>Wartość 1 pips (dla {lots.toFixed(2)} lot):</div>
-                <div className="text-lg font-semibold">{pipValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-                <div className="mt-2">Loty „z ryzyka” (≈):</div>
-                <div className="text-lg font-semibold">{lotsByRisk.toLocaleString(undefined, { maximumFractionDigits: 2 })} lot</div>
-              </div>
-
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div>Limit lotów „z marginesu” (≈):</div>
-                <div className="text-lg font-semibold">{maxLotsByMargin.toLocaleString(undefined, { maximumFractionDigits: 2 })} lot</div>
-                <div className="mt-2 text-xs text-white/60">
-                  Ostatecznie wybierz <strong>mniejszą</strong> z wartości: „z ryzyka” vs „z marginesu”.
-                </div>
+              <div className="mt-2">Maks. loty „z marginesu” (≈):</div>
+              <div className="text-lg font-semibold">
+                {maxLotsByMargin.toLocaleString(undefined, { maximumFractionDigits: 2 })} lot
               </div>
             </div>
-          </Card>
-        </section>
+          </div>
 
-        {/* Co-jeśli: suwak dźwigni */}
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold mb-3">Co-jeśli zmienię dźwignię?</h2>
-          <Card>
-            <div className="grid sm:grid-cols-5 gap-4 items-center">
-              <div className="sm:col-span-4">
-                <RangeInput
-                  min={1}
-                  max={100}
-                  step={1}
-                  value={whatIfLev}
-                  onChange={(e) => setWhatIfLev(parseFloat(e.target.value || '0'))}
-                />
-              </div>
-              <div className="text-right text-sm">
-                1:<span className="text-lg font-semibold">{whatIfLev}</span>
+          <PodstawyCallout variant="neutral" className="mt-4" eyebrow="Uwaga">
+            <p className="text-xs text-slate-400">
+              Obliczenia edukacyjne. Rzeczywisty nominał/mnożniki mogą się różnić między brokerami.
+            </p>
+          </PodstawyCallout>
+        </Card>
+      </PodstawySection>
+
+      <PodstawySection
+        title="Sizing: stałe 1R i zgodność z marginesem"
+        subtitle="Połącz procent ryzyka na transakcję ze stop-loss i wartością pipsa — zobacz, czy bieżące loty mieszczą się w 1R i limicie marginu."
+        prose={false}
+      >
+        <Card>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Ryzyko na transakcję (%, 1R)">
+              <NumberInput value={riskPct} onChange={e => setRiskPct(parseFloat(e.target.value || '0'))} />
+            </Field>
+            <Field label="Stop-Loss (pips)">
+              <NumberInput value={slPips} onChange={e => setSlPips(parseFloat(e.target.value || '0'))} />
+            </Field>
+            <Field label="Wartość 1 pips dla 1.00 lota (np. 10 USD)">
+              <NumberInput value={pipValuePerLot} onChange={e => setPipValuePerLot(parseFloat(e.target.value || '0'))} />
+            </Field>
+            <Field label="(Podgląd) Aktualne loty">
+              <NumberInput value={lots} onChange={e => setLots(parseFloat(e.target.value || '0'))} />
+            </Field>
+          </div>
+
+          <hr className="my-5 border-white/10" />
+
+          <div className="grid sm:grid-cols-3 gap-4 text-sm">
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
+              <div>1R (kwotowo):</div>
+              <div className="text-lg font-semibold">{(balance * (riskPct / 100)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+              <div className="mt-2">Ryzyko z bieżących lotów (SL):</div>
+              <div className={`text-lg font-semibold ${riskFromSL > balance * (riskPct / 100) ? "text-rose-300" : "text-emerald-300"}`}>
+                {riskFromSL.toLocaleString(undefined, { maximumFractionDigits: 2 })}
               </div>
             </div>
 
-            <div className="mt-4 grid sm:grid-cols-2 gap-4 text-sm">
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div>Margin przy {lots.toFixed(2)} lot i 1:{whatIfLev}:</div>
-                <div className={`text-lg font-semibold ${whatIfMargin > balance ? "text-rose-300" : ""}`}>
-                  {whatIfMargin.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </div>
-              </div>
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div>Wolny margin po otwarciu:</div>
-                <div className={`text-lg font-semibold ${whatIfFree < 0 ? "text-rose-300" : "text-emerald-300"}`}>
-                  {whatIfFree.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </div>
-              </div>
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
+              <div>Wartość 1 pips (dla {lots.toFixed(2)} lot):</div>
+              <div className="text-lg font-semibold">{pipValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+              <div className="mt-2">Loty „z ryzyka” (≈):</div>
+              <div className="text-lg font-semibold">{lotsByRisk.toLocaleString(undefined, { maximumFractionDigits: 2 })} lot</div>
             </div>
 
-            <div className="mt-3 text-xs text-white/50">
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
+              <div>Limit lotów „z marginesu” (≈):</div>
+              <div className="text-lg font-semibold">{maxLotsByMargin.toLocaleString(undefined, { maximumFractionDigits: 2 })} lot</div>
+              <div className="mt-2 text-xs text-white/60">
+                Ostatecznie wybierz <strong>mniejszą</strong> z wartości: „z ryzyka” vs „z marginesu”.
+              </div>
+            </div>
+          </div>
+        </Card>
+      </PodstawySection>
+
+      <PodstawySection
+        title="Co-jeśli zmienię dźwignię?"
+        subtitle="Przesuń suwak i zobacz, jak rośnie wymagany margin przy tej samej wielkości pozycji — bez zmiany założonego 1R."
+        prose={false}
+      >
+        <Card>
+          <div className="grid sm:grid-cols-5 gap-4 items-center">
+            <div className="sm:col-span-4">
+              <RangeInput
+                min={1}
+                max={100}
+                step={1}
+                value={whatIfLev}
+                onChange={(e) => setWhatIfLev(parseFloat(e.target.value || '0'))}
+              />
+            </div>
+            <div className="text-right text-sm">
+              1:<span className="text-lg font-semibold">{whatIfLev}</span>
+            </div>
+          </div>
+
+          <div className="mt-4 grid sm:grid-cols-2 gap-4 text-sm">
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
+              <div>Margin przy {lots.toFixed(2)} lot i 1:{whatIfLev}:</div>
+              <div className={`text-lg font-semibold ${whatIfMargin > balance ? "text-rose-300" : ""}`}>
+                {whatIfMargin.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
+              <div>Wolny margin po otwarciu:</div>
+              <div className={`text-lg font-semibold ${whatIfFree < 0 ? "text-rose-300" : "text-emerald-300"}`}>
+                {whatIfFree.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </div>
+            </div>
+          </div>
+
+          <PodstawyCallout variant="accent" className="mt-4" eyebrow="Wniosek">
+            <p className="text-sm">
               Niższa dźwignia = większy wymagany margin. To nie zwiększa ryzyka 1R — ale może ograniczyć liczbę lotów możliwych do otwarcia.
-            </div>
-          </Card>
-        </section>
+            </p>
+          </PodstawyCallout>
+        </Card>
+      </PodstawySection>
 
-        {/* Dobre praktyki + checklist */}
-        <section className="prose prose-invert prose-slate max-w-none mt-10">
-          <h2>Dobre praktyki</h2>
-          <ul>
-            <li>Najpierw określ <strong>1R</strong> (np. 1% konta), potem policz loty z uwzględnieniem <strong>SL</strong> i wartości pipsa.</li>
-            <li>Sprawdź, czy przy tych lotach masz wystarczający <strong>margin</strong>. Jeśli nie — zmniejsz loty.</li>
-            <li>Nie „ścigaj” dźwigni. Wyższa dźwignia jest tylko narzędziem zmniejszającym margin, nie powodem do zwiększania ryzyka.</li>
-          </ul>
+      <PodstawySection title="Dobre praktyki">
+        <ul>
+          <li>Najpierw określ <strong>1R</strong> (np. 1% konta), potem policz loty z uwzględnieniem <strong>SL</strong> i wartości pipsa.</li>
+          <li>Sprawdź, czy przy tych lotach masz wystarczający <strong>margin</strong>. Jeśli nie — zmniejsz loty.</li>
+          <li>Nie „ścigaj” dźwigni. Wyższa dźwignia jest tylko narzędziem zmniejszającym margin, nie powodem do zwiększania ryzyka.</li>
+        </ul>
+      </PodstawySection>
 
-          <h3>Checklist po lekcji</h3>
-          <ul>
-            <li>Potrafię policzyć ekspozycję, margin i wolny margin po otwarciu.</li>
-            <li>Umiem dobrać loty tak, by 1R był stały i jednocześnie mieścił się w ograniczeniach marginu.</li>
-            <li>Rozumiem, że dźwignia ≠ ryzyko — ryzykiem zarządza <em>wielkość pozycji</em> i <em>odległość SL</em>.</li>
-          </ul>
-        </section>
-
-        {/* Nawigacja */}
-        <footer className="mt-10 flex items-center justify-between">
-          <Link href="/kursy/podstawy/lekcja-3" className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">
-            ← Poprzednia
-          </Link>
-          <Link href="/kursy/podstawy/lekcja-5" className="px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90">
-            Następna →
-          </Link>
-        </footer>
-      </article>
-    </main>
+      <PodstawyChecklist>
+        <ul>
+          <li>Potrafię policzyć ekspozycję, margin i wolny margin po otwarciu.</li>
+          <li>Umiem dobrać loty tak, by 1R był stały i jednocześnie mieścił się w ograniczeniach marginu.</li>
+          <li>Rozumiem, że dźwignia ≠ ryzyko — ryzykiem zarządza <em>wielkość pozycji</em> i <em>odległość SL</em>.</li>
+        </ul>
+      </PodstawyChecklist>
+    </PodstawyLessonShell>
   );
 }

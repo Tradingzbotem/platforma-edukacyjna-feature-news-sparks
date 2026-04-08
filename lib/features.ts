@@ -1,6 +1,12 @@
 import 'server-only';
 import { sql } from '@vercel/postgres';
 
+/** Pełny moduł „Brief decyzyjny” (teaser publiczny; flaga odblokowuje widok bez ograniczeń). */
+export const FEATURE_BRIEF_DECISION = 'brief_decision';
+
+/** Moduł certyfikatu i egzaminu w panelu konta — wyłącznie gdy admin włączy użytkownikowi. */
+export const FEATURE_CERTIFICATION_ACCESS = 'certification_access';
+
 /**
  * Check if a user has a specific feature flag enabled
  * @param userId - User ID to check

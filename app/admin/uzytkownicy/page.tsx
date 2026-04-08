@@ -19,6 +19,8 @@ type UserRow = {
   last_active_at: string | null;
   is_online: boolean;
   decisionLabEnabled?: boolean;
+  briefDecisionEnabled?: boolean;
+  certificationAccessEnabled?: boolean;
 };
 
 type Banner = { kind: 'ok' | 'err'; text: string };
@@ -52,12 +54,26 @@ export default function AdminUsersPage() {
               if (flagsRes.ok) {
                 const flagsData = await flagsRes.json();
                 const decisionLabFlag = flagsData.flags?.find((f: { feature: string }) => f.feature === 'decision_lab');
-                return { ...user, decisionLabEnabled: decisionLabFlag?.enabled || false };
+                const briefDecisionFlag = flagsData.flags?.find((f: { feature: string }) => f.feature === 'brief_decision');
+                const certificationFlag = flagsData.flags?.find(
+                  (f: { feature: string }) => f.feature === 'certification_access',
+                );
+                return {
+                  ...user,
+                  decisionLabEnabled: decisionLabFlag?.enabled || false,
+                  briefDecisionEnabled: briefDecisionFlag?.enabled || false,
+                  certificationAccessEnabled: certificationFlag?.enabled || false,
+                };
               }
             } catch {
               // ignore
             }
-            return { ...user, decisionLabEnabled: false };
+            return {
+              ...user,
+              decisionLabEnabled: false,
+              briefDecisionEnabled: false,
+              certificationAccessEnabled: false,
+            };
           }),
         );
 
@@ -121,9 +137,10 @@ export default function AdminUsersPage() {
       }
       setUsers((prev) =>
         prev.map((u) => {
-          if (u.id === userId && feature === 'decision_lab') {
-            return { ...u, decisionLabEnabled: enabled };
-          }
+          if (u.id !== userId) return u;
+          if (feature === 'decision_lab') return { ...u, decisionLabEnabled: enabled };
+          if (feature === 'brief_decision') return { ...u, briefDecisionEnabled: enabled };
+          if (feature === 'certification_access') return { ...u, certificationAccessEnabled: enabled };
           return u;
         }),
       );
@@ -131,7 +148,13 @@ export default function AdminUsersPage() {
     } catch (e: unknown) {
       showBanner('err', e instanceof Error ? e.message : 'Zmiana flagi nie powiodła się');
       setUsers((prev) =>
-        prev.map((u) => (u.id === userId && feature === 'decision_lab' ? { ...u, decisionLabEnabled: !enabled } : u)),
+        prev.map((u) => {
+          if (u.id !== userId) return u;
+          if (feature === 'decision_lab') return { ...u, decisionLabEnabled: !enabled };
+          if (feature === 'brief_decision') return { ...u, briefDecisionEnabled: !enabled };
+          if (feature === 'certification_access') return { ...u, certificationAccessEnabled: !enabled };
+          return u;
+        }),
       );
     } finally {
       setTogglingFlagFor(null);
@@ -259,7 +282,7 @@ export default function AdminUsersPage() {
                   </div>
                 </div>
 
-                <div className="col-span-12 sm:col-span-3">
+                <div className="col-span-12 sm:col-span-3 flex flex-col gap-2.5">
                   <label className="flex items-center gap-2 text-sm cursor-pointer text-white/80">
                     <input
                       type="checkbox"
@@ -275,6 +298,38 @@ export default function AdminUsersPage() {
                       className="rounded border-white/20 bg-slate-800 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
                     />
                     <span>{flagBusy ? '…' : 'Decision Lab'}</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer text-white/80">
+                    <input
+                      type="checkbox"
+                      checked={u.briefDecisionEnabled || false}
+                      onChange={(e) => {
+                        const enabled = e.target.checked;
+                        setUsers((prev) =>
+                          prev.map((x) => (x.id === u.id ? { ...x, briefDecisionEnabled: enabled } : x)),
+                        );
+                        void toggleFeatureFlag(u.id, 'brief_decision', enabled);
+                      }}
+                      disabled={flagBusy || saving}
+                      className="rounded border-white/20 bg-slate-800 text-violet-500 focus:ring-violet-500 disabled:opacity-50"
+                    />
+                    <span>{flagBusy ? '…' : 'Brief decyzyjny'}</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer text-white/80">
+                    <input
+                      type="checkbox"
+                      checked={u.certificationAccessEnabled || false}
+                      onChange={(e) => {
+                        const enabled = e.target.checked;
+                        setUsers((prev) =>
+                          prev.map((x) => (x.id === u.id ? { ...x, certificationAccessEnabled: enabled } : x)),
+                        );
+                        void toggleFeatureFlag(u.id, 'certification_access', enabled);
+                      }}
+                      disabled={flagBusy || saving}
+                      className="rounded border-white/20 bg-slate-800 text-amber-400 focus:ring-amber-500 disabled:opacity-50"
+                    />
+                    <span>{flagBusy ? '…' : 'Moduł certyfikatu'}</span>
                   </label>
                 </div>
 

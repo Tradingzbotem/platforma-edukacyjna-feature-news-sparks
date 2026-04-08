@@ -4,27 +4,27 @@
 // Badget "Ukończono" oparty o localStorage. Eksportuje *zarówno* default jak i named.
 
 import { useEffect, useState } from 'react';
-
-function storageKey(course: string, id: string) {
-  return `progress:${course}:${id}`;
-}
+import { useLessonProgressSession } from '@/app/contexts/LessonProgressSessionContext';
+import { LESSON_PROGRESS_DONE, readLessonProgressValue } from '@/lib/lessonProgressStorage';
 
 export function LessonProgress({ course, id }: { course: string; id: string }) {
+  const { userId, sessionReady } = useLessonProgressSession();
   const [done, setDone] = useState(false);
 
   useEffect(() => {
     try {
-      const v = typeof window !== 'undefined'
-        ? localStorage.getItem(storageKey(course, id))
-        : null;
-      setDone(v === '1');
+      if (!sessionReady || typeof window === 'undefined') return;
+      const v = readLessonProgressValue(localStorage, course, id, userId);
+      setDone(v === LESSON_PROGRESS_DONE);
     } catch {
       // ignore
     }
-  }, [course, id]);
+  }, [course, id, userId, sessionReady]);
 
   return done ? (
-    <span className="text-xs rounded-full border px-2 py-0.5">Ukończono ✅</span>
+    <span className="inline-flex items-center rounded-full border border-emerald-400/35 bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-200">
+      Ukończono ✓
+    </span>
   ) : null;
 }
 

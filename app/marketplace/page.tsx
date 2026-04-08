@@ -3,7 +3,13 @@
 import Link from 'next/link';
 import { ArrowLeft, Coins, Scale, Store, Tag } from 'lucide-react';
 import { FoundersMarketOverviewGrid } from '@/components/marketplace/FoundersMarketPanels';
-import { listPurchasableOffers, offerAccessDescriptor, offerEditionToken, type FoundersOffer } from '@/lib/marketplace/offers';
+import {
+  isFoundersMarketplaceSalesPaused,
+  listOffersForMarketplaceGrid,
+  offerAccessDescriptor,
+  offerEditionToken,
+  type FoundersOffer,
+} from '@/lib/marketplace/offers';
 
 const cardFrame =
   'relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/90 backdrop-blur-md shadow-lg shadow-black/25';
@@ -192,6 +198,9 @@ function MarketplaceMiniNftVisual({ offer }: { offer: FoundersOffer }) {
 }
 
 export default function MarketplacePage() {
+  const salesPaused = isFoundersMarketplaceSalesPaused();
+  const gridOffers = listOffersForMarketplaceGrid();
+
   return (
     <main id="content" className="min-h-screen bg-slate-950 text-white">
       <section className="relative overflow-hidden border-b border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
@@ -214,6 +223,15 @@ export default function MarketplacePage() {
             panelu idą z tokenem — przy odsprzedaży przechodzą na nowego właściciela. Wcześniejsze wejście zwykle oznacza niższy
             próg cenowy niż późniejsze etapy modelu.
           </p>
+          {salesPaused ? (
+            <div
+              className="mt-6 max-w-3xl rounded-xl border border-amber-400/25 bg-amber-500/[0.08] px-4 py-3 text-sm text-amber-100/90 leading-relaxed"
+              role="status"
+            >
+              <strong className="font-semibold text-amber-50">Brak miejsc.</strong> Pierwotna sprzedaż kart NFT i dostępów jest na
+              razie wstrzymana — nie składasz tu zamówienia. Oferty poniżej mają charakter informacyjny.
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -238,7 +256,7 @@ export default function MarketplacePage() {
           </div>
 
           <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {listPurchasableOffers().map((offer) => {
+            {gridOffers.map((offer) => {
               const cardExtra =
                 offer.variant === 'gold'
                   ? 'hover:border-amber-400/25'
@@ -261,12 +279,21 @@ export default function MarketplacePage() {
                     <Coins className="h-3.5 w-3.5 shrink-0 text-emerald-400/80" aria-hidden />
                     Płatność: {offer.payOptions}
                   </p>
-                  <Link
-                    href={`/marketplace/buy/${encodeURIComponent(offer.id)}`}
-                    className="mt-5 flex w-full items-center justify-center rounded-xl bg-white py-2.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
-                  >
-                    Przejdź do zakupu
-                  </Link>
+                  {salesPaused ? (
+                    <span
+                      className="mt-5 flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-white/15 bg-white/[0.06] py-2.5 text-sm font-semibold text-white/50"
+                      aria-disabled
+                    >
+                      Brak miejsc
+                    </span>
+                  ) : (
+                    <Link
+                      href={`/marketplace/buy/${encodeURIComponent(offer.id)}`}
+                      className="mt-5 flex w-full items-center justify-center rounded-xl bg-white py-2.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50"
+                    >
+                      Przejdź do zakupu
+                    </Link>
+                  )}
                 </li>
               );
             })}
@@ -370,7 +397,36 @@ export default function MarketplacePage() {
                 <li className="break-inside-avoid pl-1 border-l-2 border-white/10 lg:pl-4">
                   Warunki dostępu, odsprzedaży i płatności regulują dokumenty prawne serwisu oraz regulamin marketplace.
                 </li>
+                <li className="break-inside-avoid pl-1 border-l-2 border-white/10 lg:pl-4">
+                  Zawierasz umowę o <strong className="text-white/70 font-medium">dostęp do funkcji cyfrowych</strong> (usługa
+                  cyfrowa w opisanym zakresie), nie o inwestycję ani lokatę.
+                </li>
               </ul>
+              <p className="mt-5 text-xs text-white/45 leading-relaxed lg:col-span-2">
+                Pełne dokumenty przed zakupem:{" "}
+                <Link href="/prawne/regulamin" className="text-emerald-300/85 hover:text-emerald-200 underline underline-offset-2">
+                  regulamin serwisu
+                </Link>
+                ,{" "}
+                <Link href="/prawne/nft" className="text-emerald-300/85 hover:text-emerald-200 underline underline-offset-2">
+                  regulamin NFT
+                </Link>
+                ,{" "}
+                <Link
+                  href="/prawne/polityka-prywatnosci"
+                  className="text-emerald-300/85 hover:text-emerald-200 underline underline-offset-2"
+                >
+                  polityka prywatności
+                </Link>
+                ,{" "}
+                <Link
+                  href="/prawne/zwroty-odstapienie"
+                  className="text-emerald-300/85 hover:text-emerald-200 underline underline-offset-2"
+                >
+                  zwroty i odstąpienie
+                </Link>
+                .
+              </p>
             </div>
           </div>
         </section>

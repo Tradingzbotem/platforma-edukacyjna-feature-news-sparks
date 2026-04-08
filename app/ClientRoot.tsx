@@ -2,6 +2,7 @@
 
 import { autoTranslateContainer, useLang } from '@/lib/i18n-client';
 import { useEffect, useRef } from 'react';
+import { LessonProgressSessionProvider } from '@/app/contexts/LessonProgressSessionContext';
 import ProgressSync from './components/ProgressSync';
 
 /**
@@ -28,8 +29,10 @@ export default function ClientRoot({ children }: { children: React.ReactNode }) 
 
   return (
     <div id="app-content" ref={containerRef} data-lang={lang}>
-      {children}
-      <ProgressSync />
+      <LessonProgressSessionProvider>
+        {children}
+        <ProgressSync />
+      </LessonProgressSessionProvider>
     </div>
   );
 }

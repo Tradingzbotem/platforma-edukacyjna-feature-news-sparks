@@ -22,8 +22,13 @@ const DICT: Dict = {
     challenge: 'Challenge',
 
     // Nav
+    market_nav: 'Rynek',
     market_panel_nav: 'Panel rynkowy',
-    learn_nav: 'Nauka',
+    charts_nav: 'Wykresy',
+    investor_nav: 'Dla inwestora',
+    learn_nav: 'Edukacja',
+    edu_preview_nav: 'Przegląd edukacji',
+    edu_preview_nav_hint: 'Publiczny podgląd modułów — bez logowania',
     about_nav: 'O nas',
 
     // Hero
@@ -79,12 +84,22 @@ const DICT: Dict = {
     // Disclaimer
     faq_title_short: 'FAQ',
     disclaimer_short:
-      'Materiały mają charakter edukacyjny. Brak rekomendacji inwestycyjnych ani sygnałów rynkowych.',
+      'Dostęp do funkcji cyfrowych, materiałów EDU i modułów analitycznych — bez brokera, bez doradztwa inwestycyjnego i bez sygnałów.',
     compliance_disclaimer:
-      'Treści mają charakter edukacyjno-analityczny i nie stanowią rekomendacji ani doradztwa inwestycyjnego.',
+      'Serwis udostępnia funkcjonalności cyfrowe oraz treści edukacyjne i analityczne. Nie jest biurem maklerskim ani firmą inwestycyjną i nie świadczy doradztwa inwestycyjnego ani sygnałów transakcyjnych.',
+    footer_notice_line1:
+      'Materiały i funkcjonalności mają charakter edukacyjny oraz informacyjny.',
+    footer_notice_line2:
+      'Treści, analizy, briefy i odpowiedzi AI nie stanowią rekomendacji inwestycyjnych ani sygnałów transakcyjnych.',
+    footer_notice_line3:
+      'Handel instrumentami finansowymi wiąże się z ryzykiem utraty kapitału, a decyzje użytkownik podejmuje samodzielnie.',
+    legal_disclaimer: 'Disclaimer (ryzyko)',
 
     // Footer / legal nav
     navigation: 'Nawigacja',
+    footer_service: 'Serwis',
+    footer_help: 'Pomoc',
+    redakcja_nav: 'Redakcja',
     resources: 'Zasoby',
     legal: 'Prawne',
     faq: 'FAQ',
@@ -117,8 +132,13 @@ const DICT: Dict = {
     challenge: 'Challenge',
 
     // Nav
+    market_nav: 'Markets',
     market_panel_nav: 'Market Panel',
-    learn_nav: 'Learn',
+    charts_nav: 'Charts',
+    investor_nav: 'For investors',
+    learn_nav: 'Education',
+    edu_preview_nav: 'Education overview',
+    edu_preview_nav_hint: 'Public preview of modules — no sign-in required',
     about_nav: 'About us',
 
     // Hero
@@ -174,12 +194,22 @@ const DICT: Dict = {
     // Disclaimer
     faq_title_short: 'FAQ',
     disclaimer_short:
-      'Materials are for educational purposes only. No investment recommendations or trading signals.',
+      'Digital features, EDU materials and analytical modules — not a broker, not investment advice, no trading signals.',
     compliance_disclaimer:
-      'Content is for educational and analytical purposes only and does not constitute investment advice or recommendations.',
+      'The service provides digital features and educational and analytical content. It is not a brokerage or investment firm and does not provide investment advice or trading signals.',
+    footer_notice_line1:
+      'Materials and features are for education and information.',
+    footer_notice_line2:
+      'Content, analyses, briefs and AI replies are not investment recommendations or trading signals.',
+    footer_notice_line3:
+      'Trading financial instruments involves risk of losing capital; you make your own decisions.',
+    legal_disclaimer: 'Risk disclaimer',
 
     // Footer / legal nav
     navigation: 'Navigation',
+    footer_service: 'Service',
+    footer_help: 'Help',
+    redakcja_nav: 'Editorial',
     resources: 'Resources',
     legal: 'Legal',
     faq: 'FAQ',

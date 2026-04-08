@@ -4,6 +4,8 @@
 export type CoverInfo = { url?: string; alt?: string | null };
 
 const COVER_META_RE = /<!--\s*cover\s*:\s*(\{[\s\S]*?\})\s*-->/i;
+/** Wszystkie bloki meta okładki (np. po duplikatach z modelu). */
+const COVER_META_RE_ALL = /<!--\s*cover\s*:\s*(\{[\s\S]*?\})\s*-->/gi;
 const MARKDOWN_IMAGE_RE = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/;
 const MARKDOWN_IMAGE_RE_GLOBAL = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g;
 
@@ -14,7 +16,7 @@ export function injectCoverMeta(content: string, cover: CoverInfo): string {
 }
 
 export function removeCoverMeta(content: string): string {
-	return content.replace(COVER_META_RE, '').trimStart();
+	return content.replace(COVER_META_RE_ALL, '').trimStart();
 }
 
 export function extractCoverFromContent(content: string): {
@@ -121,4 +123,22 @@ export function removeImageByUrl(content: string, url: string): { content: strin
 	return { content, removed: changed };
 }
 
+/**
+ * First ~2 sentences of plain text from markdown (for list/teaser UI). Best-effort strip.
+ */
+export function leadPlainTextFromMarkdown(markdown: string, maxLen = 320): string {
+	let text = removeCoverMeta(markdown || '');
+	text = text.replace(/<!--[\s\S]*?-->/g, ' ');
+	text = text.replace(/```[\s\S]*?```/g, ' ');
+	text = text.replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1 ');
+	text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1 ');
+	text = text.replace(/^#{1,6}\s+/gm, '');
+	text = text.replace(/[*_`>|]/g, ' ');
+	text = text.replace(/\s+/g, ' ').trim();
+	if (!text) return '';
+	const parts = text.split(/(?<=[.!?…])\s+/).filter((p) => p.length > 1);
+	let joined = parts.slice(0, 2).join(' ');
+	if (!joined) joined = text;
+	return joined.length > maxLen ? `${joined.slice(0, maxLen - 1).trim()}…` : joined;
+}
 

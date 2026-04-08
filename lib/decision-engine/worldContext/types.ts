@@ -7,6 +7,12 @@ export type WorldDirectionalPressure = 'risk_on' | 'risk_off' | 'mixed' | 'neutr
 
 export type WorldEventMatchKind = 'instrument_tag' | 'keyword_geo' | 'keyword_energy' | 'keyword_cb' | 'category_geo';
 
+export type WorldRelatedEventImpact = {
+	symbol: string;
+	direction?: string | null;
+	effect: string;
+};
+
 export type WorldRelatedEvent = {
 	id: string;
 	title: string;
@@ -21,6 +27,12 @@ export type WorldRelatedEvent = {
 	impact?: number;
 	timeEdge?: number;
 	source?: string;
+	/** Pola z `NewsItemEnriched` — do lekkiego boxa „Kontekst rynkowy” w Decision Center. */
+	url?: string;
+	whyItMatters?: string | null;
+	summaryShort?: string | null;
+	watch?: string[];
+	impacts?: WorldRelatedEventImpact[];
 };
 
 export type WorldTakeawayEmphasis =

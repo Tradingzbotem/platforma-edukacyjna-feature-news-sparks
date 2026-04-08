@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
   session.userId = user.id;
   session.email = user.email;
   session.plan = (user.plan === 'elite' || user.plan === 'pro' || user.plan === 'starter' || user.plan === 'free') ? user.plan : 'free';
+  session.courseProgress = undefined;
   await session.save();
 
   return NextResponse.json({ ok: true, redirect: next }, { status: 200 });

@@ -1,42 +1,7 @@
 'use client';
 
-import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-
-/* ───────────────────── Layout (spójny z poprzednimi lekcjami) ───────────────────── */
-function LessonLayout({
-  coursePath, courseTitle, lessonNumber, title, minutes, children, prevSlug, nextSlug,
-}: {
-  coursePath: "cfd"; courseTitle: string; lessonNumber: number; title: string; minutes: number;
-  children: ReactNode; prevSlug?: string; nextSlug?: string;
-}) {
-  return (
-    <main className="mx-auto max-w-4xl p-6 md:p-8 space-y-6">
-      <Link href={`/kursy/${coursePath}`} className="text-sm underline">← Wróć do spisu</Link>
-      <header className="space-y-1">
-        <p className="text-slate-400 text-sm">
-          <span>{courseTitle}</span>
-          <span> — </span>
-          <span>Lekcja</span> <span>{lessonNumber}</span>
-          <span> • ⏱ </span>
-          <span>{minutes}</span> <span>min</span>
-        </p>
-        <h1 className="text-3xl font-semibold">{title}</h1>
-      </header>
-      <article className="rounded-2xl border border-white/10 bg-[#0b1220] p-6 space-y-8">
-        {children}
-      </article>
-      <nav className="flex items-center justify-between">
-        <Link className="underline" href={`/kursy/${coursePath}/${prevSlug ?? ""}`}>← Poprzednia lekcja</Link>
-        {nextSlug ? (
-          <Link className="underline" href={`/kursy/${coursePath}/${nextSlug}`}>Następna lekcja →</Link>
-        ) : (
-          <Link className="underline" href={`/kursy/${coursePath}`}>Zakończ moduł</Link>
-        )}
-      </nav>
-    </main>
-  );
-}
+import ForexCfdLessonLayout from "@/components/kursy/ForexCfdLessonLayout";
 
 /* ───────────────────── Drobne klocki UI ───────────────────── */
 function Callout({ type = "info", title, children }: { type?: "info"|"tip"|"warn"; title: string; children: ReactNode }) {
@@ -555,14 +520,15 @@ function MiniQuiz() {
 /* ───────────────────── STRONA LEKCJI 5 ───────────────────── */
 export default function Page() {
   return (
-    <LessonLayout
+    <ForexCfdLessonLayout
       coursePath="cfd"
       courseTitle="CFD"
+      lessonSlug="lekcja-5"
       lessonNumber={5}
       minutes={20}
       title="Zarządzanie ryzykiem: 1R, sizing, ATR, limity i dziennik"
       prevSlug="lekcja-4"
-      // nextSlug brak (ostatnia) → pokaż „Zakończ moduł”
+      finishModuleHref="/kursy/cfd"
     >
       {/* 1R i wzór */}
       <section>
@@ -623,6 +589,6 @@ export default function Page() {
       <Callout type="info" title="Zastrzeżenie edukacyjne">
         Materiały mają charakter wyłącznie edukacyjny i nie stanowią rekomendacji inwestycyjnych.
       </Callout>
-    </LessonLayout>
+    </ForexCfdLessonLayout>
   );
 }

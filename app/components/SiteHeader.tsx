@@ -4,16 +4,87 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { BarChart3, BookOpen, Info, LineChart, Newspaper } from 'lucide-react';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLang } from '@/lib/i18n-client';
 import { t } from '@/lib/i18n';
 
 const TickerFinnhubNoSSR = dynamic(() => import('@/components/TickerFinnhub'), { ssr: false });
 
+function stripLocalePrefix(pathname: string): string {
+	const m = pathname.match(/^\/(en|pl)(?=\/|$)/);
+	if (!m) return pathname;
+	const rest = pathname.slice(m[0].length);
+	return rest || '/';
+}
+
+function isEduSection(path: string): boolean {
+	return (
+		path.startsWith('/edukacja') ||
+		path.startsWith('/kursy') ||
+		path.startsWith('/quizy') ||
+		path.startsWith('/challenge') ||
+		path.startsWith('/symulator')
+	);
+}
+
+function isMarketSection(path: string): boolean {
+	return (
+		path.startsWith('/ebooki') ||
+		path.startsWith('/news') ||
+		path.startsWith('/rynek')
+	);
+}
+
+const navEase = 'transition-all duration-200 ease-out';
+const navFocus = 'focus:outline-none focus:ring-2 focus:ring-white/25 focus:ring-offset-0';
+
+/** Edukacja + zwykłe linki: płaski domyślny stan, wyraźniejszy hover */
+const navTriggerBase = `group inline-flex items-center gap-1.5 rounded-md px-2 py-1 ${navFocus} ${navEase} origin-center`;
+const navTriggerInactive = `${navTriggerBase} text-white/60 hover:text-white hover:bg-white/[0.07] hover:scale-[1.03] hover:shadow-[0_0_14px_rgba(255,255,255,0.07)] hover:brightness-110`;
+
+/** Aktywna sekcja: pełna jasność tekstu, linia pod spodem, delikatny glow (bez kolorów akcentu) */
+const navTriggerActive = `${navTriggerBase} text-white bg-white/[0.05] shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.45),0_0_18px_rgba(255,255,255,0.06)]`;
+
+const navLinkBase = navTriggerBase;
+const navLinkInactive = navTriggerInactive;
+const navLinkActive = navTriggerActive;
+
+/** Rynek: zawsze lekko „wysunięty” (tło, obramowanie, glow); mocniejszy hover niż reszta */
+const navMarketBase = `group inline-flex items-center gap-1.5 rounded-md px-2 py-1 ${navFocus} ${navEase} origin-center bg-white/5 border border-white/12 shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_4px_22px_rgba(0,0,0,0.35)]`;
+const navMarketInactive = `${navMarketBase} text-white/65 hover:text-white hover:bg-white/[0.12] hover:border-white/22 hover:scale-[1.04] hover:shadow-[0_0_26px_rgba(255,255,255,0.11),0_4px_22px_rgba(0,0,0,0.28)] hover:brightness-110`;
+const navMarketActive = `${navMarketBase} text-white bg-white/[0.11] border-white/24 shadow-[inset_0_-2px_0_0_rgba(255,255,255,0.42),0_0_22px_rgba(255,255,255,0.1),0_4px_22px_rgba(0,0,0,0.3)]`;
+
+const navMenuItem =
+	'block px-3 py-2 rounded-md text-white/75 transition-all duration-200 ease-out origin-left hover:text-white hover:bg-white/[0.08] hover:scale-[1.02] hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white/20';
+
+const mobileRow =
+	'w-full flex items-center justify-between rounded-xl px-4 py-3 border transition-all duration-200 ease-out origin-center';
+const mobileEduInactive = `${mobileRow} border-white/10 bg-white/5 text-white/75 hover:text-white hover:bg-white/[0.08] hover:border-white/16 hover:scale-[1.02] hover:shadow-[0_0_14px_rgba(255,255,255,0.06)] hover:brightness-110`;
+const mobileEduActive = `${mobileRow} border-white/18 bg-white/[0.07] text-white shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.42),0_0_16px_rgba(255,255,255,0.06)]`;
+const mobileMarketInactive = `${mobileRow} border-white/12 bg-white/5 text-white/70 shadow-[0_4px_20px_rgba(0,0,0,0.35)] hover:text-white hover:bg-white/[0.12] hover:border-white/22 hover:scale-[1.03] hover:shadow-[0_0_24px_rgba(255,255,255,0.1),0_4px_20px_rgba(0,0,0,0.28)] hover:brightness-110`;
+const mobileMarketActive = `${mobileRow} border-white/22 bg-white/[0.1] text-white shadow-[inset_0_-2px_0_0_rgba(255,255,255,0.4),0_0_22px_rgba(255,255,255,0.09),0_4px_20px_rgba(0,0,0,0.32)]`;
+
+const mobileLinkRow =
+	'flex w-full items-center gap-2 rounded-xl px-4 py-3 border transition-all duration-200 ease-out origin-left';
+const mobileLinkInactive = `${mobileLinkRow} border-white/10 bg-white/5 text-white/75 hover:text-white hover:bg-white/[0.08] hover:border-white/16 hover:scale-[1.02] hover:shadow-[0_0_14px_rgba(255,255,255,0.06)] hover:brightness-110`;
+const mobileLinkActive = `${mobileLinkRow} border-white/18 bg-white/[0.07] text-white shadow-[inset_0_-1px_0_0_rgba(255,255,255,0.42),0_0_16px_rgba(255,255,255,0.06)]`;
+
+function navIconClass(active: boolean): string {
+	const base = 'h-4 w-4 shrink-0 transition-colors duration-200 ease-out';
+	return active ? `${base} text-white` : `${base} text-white/60 group-hover:text-white`;
+}
+
 export default function SiteHeader({ showTicker = false, initialIsLoggedIn = null, initialIsAdmin = false }: { showTicker?: boolean; initialIsLoggedIn?: boolean | null; initialIsAdmin?: boolean }) {
 	const lang = useLang('pl');
 	const dictLang: import('@/lib/i18n').Lang = lang === 'en' ? 'en' : 'pl';
 	const pathname = usePathname();
+	const path = stripLocalePrefix(pathname);
+	const eduActive = isEduSection(path);
+	const marketActive = isMarketSection(path);
+	const brokersActive = path.startsWith('/rankingi/brokerzy');
+	const redakcjaActive = path.startsWith('/redakcja');
+	const aboutActive = path.startsWith('/o-nas');
 
 	const studyRef = useRef<HTMLLIElement | null>(null);
 	const [studyOpen, setStudyOpen] = useState(false);
@@ -138,18 +209,19 @@ export default function SiteHeader({ showTicker = false, initialIsLoggedIn = nul
 				</Link>
 
 				{/* ŚRODEK: menu */}
-				<ul className="hidden md:flex items-center gap-6 text-sm text-white/80">
-					{/* Dropdown: Nauka */}
+				<ul className="hidden md:flex items-center gap-6 text-sm">
+					{/* Dropdown: Edukacja */}
 					<li ref={studyRef} className="relative">
 						<button
 							type="button"
 							onClick={() => setStudyOpen((v) => !v)}
-							className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded-md px-2 py-1 inline-flex items-center gap-1 transition-all duration-200 hover:bg-white/5"
+							className={eduActive ? navTriggerActive : navTriggerInactive}
 							aria-haspopup="menu"
 							aria-expanded={studyOpen}
 						>
+							<BookOpen className={navIconClass(eduActive)} aria-hidden />
 							{t(dictLang, 'learn_nav')}
-							<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 transition-transform duration-200 ${studyOpen ? 'rotate-180' : ''}`}>
+							<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 shrink-0 transition-transform duration-200 ${studyOpen ? 'rotate-180' : ''}`}>
 								<path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
 							</svg>
 						</button>
@@ -157,11 +229,21 @@ export default function SiteHeader({ showTicker = false, initialIsLoggedIn = nul
 							<div
 								role="menu"
 								aria-label={t(dictLang, 'learn_nav')}
-								className="absolute left-0 mt-2 w-44 rounded-lg bg-slate-900/95 backdrop-blur-md border border-white/20 shadow-2xl shadow-black/60 p-1 z-50 animate-fade-in-scale"
+								className="absolute left-0 mt-2 min-w-[11rem] w-max max-w-[16rem] rounded-lg bg-slate-900/95 backdrop-blur-md border border-white/20 shadow-2xl shadow-black/60 p-1 z-50 animate-fade-in-scale"
 							>
 								<Link
+									href="/edukacja"
+									className={navMenuItem}
+									role="menuitem"
+									title={t(dictLang, 'edu_preview_nav_hint')}
+									aria-label={`${t(dictLang, 'edu_preview_nav')}. ${t(dictLang, 'edu_preview_nav_hint')}`}
+									onClick={() => setStudyOpen(false)}
+								>
+									{t(dictLang, 'edu_preview_nav')}
+								</Link>
+								<Link
 									href="/kursy"
-									className="block px-3 py-2 rounded-md hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-colors duration-150"
+									className={navMenuItem}
 									role="menuitem"
 									onClick={() => setStudyOpen(false)}
 								>
@@ -169,7 +251,7 @@ export default function SiteHeader({ showTicker = false, initialIsLoggedIn = nul
 								</Link>
 								<Link
 									href="/quizy"
-									className="block px-3 py-2 rounded-md hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-colors duration-150"
+									className={navMenuItem}
 									role="menuitem"
 									onClick={() => setStudyOpen(false)}
 								>
@@ -177,93 +259,106 @@ export default function SiteHeader({ showTicker = false, initialIsLoggedIn = nul
 								</Link>
 								<Link
 									href="/challenge"
-									className="block px-3 py-2 rounded-md hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-colors duration-150"
+									className={navMenuItem}
 									role="menuitem"
 									onClick={() => setStudyOpen(false)}
 								>
 									{t(dictLang, 'challenge')}
 								</Link>
+								<Link
+									href="/symulator"
+									className={navMenuItem}
+									role="menuitem"
+									onClick={() => setStudyOpen(false)}
+								>
+									{t(dictLang, 'calculator')}
+								</Link>
+								<Link
+									href="/ebooki#plany"
+									className={navMenuItem}
+									role="menuitem"
+									onClick={() => setStudyOpen(false)}
+								>
+									{t(dictLang, 'investor_nav')}
+								</Link>
 							</div>
 						)}
 					</li>
-					{/* Dropdown: Panel rynkowy */}
+					{/* Dropdown: Rynek */}
 					<li ref={marketRef} className="relative">
 						<button
 							type="button"
 							onClick={() => setMarketOpen((v) => !v)}
-							className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded-md px-2 py-1 inline-flex items-center gap-1 transition-all duration-200 hover:bg-white/5"
+							className={marketActive ? navMarketActive : navMarketInactive}
 							aria-haspopup="menu"
 							aria-expanded={marketOpen}
 						>
-							{t(dictLang, 'market_panel_nav')}
-							<span
-								className="inline-flex items-center rounded-md bg-gradient-to-r from-yellow-500/25 to-yellow-500/15 text-yellow-300 text-[10px] leading-4 font-semibold px-1.5 py-0.5 ring-1 ring-inset ring-yellow-400/40 shadow-sm"
-								aria-label="VIP"
-								title="VIP"
-							>
-								VIP
-							</span>
-							<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 transition-transform duration-200 ${marketOpen ? 'rotate-180' : ''}`}>
+							<LineChart className={navIconClass(marketActive)} aria-hidden />
+							{t(dictLang, 'market_nav')}
+							<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 shrink-0 transition-transform duration-200 ${marketOpen ? 'rotate-180' : ''}`}>
 								<path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
 							</svg>
 						</button>
 						{marketOpen && (
 							<div
 								role="menu"
-								aria-label="Panel rynkowy"
+								aria-label={t(dictLang, 'market_nav')}
 								className="absolute left-0 mt-2 w-48 rounded-lg bg-slate-900/95 backdrop-blur-md border border-white/20 shadow-2xl shadow-black/60 p-1 z-50 animate-fade-in-scale"
 							>
 								<Link
-									href="/ebooki#plany"
-									className="block px-3 py-2 rounded-md hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-colors duration-150"
-									role="menuitem"
-									onClick={() => setMarketOpen(false)}
-								>
-									<span className="inline-flex items-center gap-1.5">
-										{t(dictLang, 'market_panel_nav')}
-										<span
-											className="inline-flex items-center rounded-md bg-gradient-to-r from-yellow-500/25 to-yellow-500/15 text-yellow-300 text-[10px] leading-4 font-semibold px-1.5 py-0.5 ring-1 ring-inset ring-yellow-400/40"
-											aria-label="VIP"
-											title="VIP"
-										>
-											VIP
-										</span>
-									</span>
-								</Link>
-								<Link
 									href="/news"
-									className="block px-3 py-2 rounded-md hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-colors duration-150"
+									className={navMenuItem}
 									role="menuitem"
 									onClick={() => setMarketOpen(false)}
 								>
 									{t(dictLang, 'news')}
 								</Link>
 								<Link
-									href="/symulator"
-									className="block px-3 py-2 rounded-md hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-colors duration-150"
+									href="/rynek/panel-rynkowy"
+									className={navMenuItem}
 									role="menuitem"
 									onClick={() => setMarketOpen(false)}
 								>
-									{t(dictLang, 'calculator')}
+									{t(dictLang, 'market_panel_nav')}
+								</Link>
+								<Link
+									href="/rynek/wykresy"
+									className={navMenuItem}
+									role="menuitem"
+									onClick={() => setMarketOpen(false)}
+								>
+									{t(dictLang, 'charts_nav')}
 								</Link>
 							</div>
 						)}
 					</li>
-					<li><Link href="/rankingi/brokerzy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded-md px-2 py-1 transition-all duration-200 hover:bg-white/5">{t(dictLang, 'broker_rankings')}</Link></li>
+					<li>
+						<Link
+							href="/rankingi/brokerzy"
+							className={brokersActive ? navLinkActive : navLinkInactive}
+							aria-current={brokersActive ? 'page' : undefined}
+						>
+							<BarChart3 className={navIconClass(brokersActive)} aria-hidden />
+							{t(dictLang, 'broker_rankings')}
+						</Link>
+					</li>
 					<li>
 						<Link
 							href="/redakcja"
-							className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded-md px-2 py-1 transition-all duration-200 hover:bg-white/5"
+							className={redakcjaActive ? navLinkActive : navLinkInactive}
+							aria-current={redakcjaActive ? 'page' : undefined}
 						>
+							<Newspaper className={navIconClass(redakcjaActive)} aria-hidden />
 							Redakcja
 						</Link>
 					</li>
 					<li>
 						<Link
 							href="/o-nas"
-							className={`rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-all duration-200 ${pathname === '/o-nas' ? 'text-white underline underline-offset-4 decoration-emerald-400/70 bg-white/5' : 'hover:text-white hover:bg-white/5'}`}
-							aria-current={pathname === '/o-nas' ? 'page' : undefined}
+							className={aboutActive ? navLinkActive : navLinkInactive}
+							aria-current={aboutActive ? 'page' : undefined}
 						>
+							<Info className={navIconClass(aboutActive)} aria-hidden />
 							{t(dictLang, 'about_nav')}
 						</Link>
 					</li>
@@ -377,74 +472,109 @@ export default function SiteHeader({ showTicker = false, initialIsLoggedIn = nul
 
 					<div className="flex-1 overflow-y-auto p-4">
 						<div className="space-y-2">
-							<Link href="/" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white">
+							<Link
+								href="/"
+								onClick={() => setMobileOpen(false)}
+								className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/[0.09] border border-white/10 text-white/90 hover:text-white transition-all duration-200 ease-out hover:scale-[1.01] hover:shadow-[0_0_14px_rgba(255,255,255,0.06)]"
+							>
 								{t(dictLang, 'home')}
 							</Link>
 
-							{/* Nauka */}
+							{/* Edukacja */}
 							<button
 								type="button"
 								onClick={() => setMobileStudyOpen(v => !v)}
-								className="w-full flex items-center justify-between rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+								className={eduActive ? mobileEduActive : mobileEduInactive}
 								aria-expanded={mobileStudyOpen}
 							>
-								<span>{t(dictLang, 'learn_nav')}</span>
-								<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 transition-transform ${mobileStudyOpen ? 'rotate-180' : ''}`}>
+								<span className="inline-flex items-center gap-2">
+									<BookOpen className={`h-4 w-4 shrink-0 ${eduActive ? 'text-white' : 'text-white/60'}`} aria-hidden />
+									{t(dictLang, 'learn_nav')}
+								</span>
+								<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 shrink-0 transition-transform duration-200 ease-out ${mobileStudyOpen ? 'rotate-180' : ''}`}>
 									<path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
 								</svg>
 							</button>
 							{mobileStudyOpen && (
 								<div className="ml-2 pl-2 border-l border-white/10 space-y-1">
-									<Link href="/kursy" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
+									<Link
+										href="/edukacja"
+										onClick={() => setMobileOpen(false)}
+										className={navMenuItem}
+										title={t(dictLang, 'edu_preview_nav_hint')}
+										aria-label={`${t(dictLang, 'edu_preview_nav')}. ${t(dictLang, 'edu_preview_nav_hint')}`}
+									>
+										{t(dictLang, 'edu_preview_nav')}
+									</Link>
+									<Link href="/kursy" onClick={() => setMobileOpen(false)} className={navMenuItem}>
 										{t(dictLang, 'courses')}
 									</Link>
-									<Link href="/quizy" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
+									<Link href="/quizy" onClick={() => setMobileOpen(false)} className={navMenuItem}>
 										{t(dictLang, 'quizzes')}
 									</Link>
-									<Link href="/challenge" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
+									<Link href="/challenge" onClick={() => setMobileOpen(false)} className={navMenuItem}>
 										{t(dictLang, 'challenge')}
+									</Link>
+									<Link href="/symulator" onClick={() => setMobileOpen(false)} className={navMenuItem}>
+										{t(dictLang, 'calculator')}
+									</Link>
+									<Link href="/ebooki#plany" onClick={() => setMobileOpen(false)} className={navMenuItem}>
+										{t(dictLang, 'investor_nav')}
 									</Link>
 								</div>
 							)}
 
-							{/* Panel rynkowy */}
+							{/* Rynek */}
 							<button
 								type="button"
 								onClick={() => setMobileMarketOpen(v => !v)}
-								className="w-full flex items-center justify-between rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white"
+								className={marketActive ? mobileMarketActive : mobileMarketInactive}
 								aria-expanded={mobileMarketOpen}
 							>
 								<span className="inline-flex items-center gap-2">
-									{t(dictLang, 'market_panel_nav')}
-									<span className="inline-flex items-center rounded-md bg-gradient-to-r from-yellow-500/25 to-yellow-500/15 text-yellow-300 text-[10px] leading-4 font-semibold px-1.5 py-0.5 ring-1 ring-inset ring-yellow-400/40">
-										VIP
-									</span>
+									<LineChart className={`h-4 w-4 shrink-0 ${marketActive ? 'text-white' : 'text-white/60'}`} aria-hidden />
+									{t(dictLang, 'market_nav')}
 								</span>
-								<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 transition-transform ${mobileMarketOpen ? 'rotate-180' : ''}`}>
+								<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={`w-4 h-4 shrink-0 transition-transform duration-200 ease-out ${mobileMarketOpen ? 'rotate-180' : ''}`}>
 									<path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
 								</svg>
 							</button>
 							{mobileMarketOpen && (
 								<div className="ml-2 pl-2 border-l border-white/10 space-y-1">
-									<Link href="/ebooki#plany" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
-										{t(dictLang, 'market_panel_nav')} <span className="text-yellow-300">VIP</span>
-									</Link>
-									<Link href="/news" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
+									<Link href="/news" onClick={() => setMobileOpen(false)} className={navMenuItem}>
 										{t(dictLang, 'news')}
 									</Link>
-									<Link href="/symulator" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2 text-white/85 hover:text-white hover:bg-white/5">
-										{t(dictLang, 'calculator')}
+									<Link href="/rynek/panel-rynkowy" onClick={() => setMobileOpen(false)} className={navMenuItem}>
+										{t(dictLang, 'market_panel_nav')}
+									</Link>
+									<Link href="/rynek/wykresy" onClick={() => setMobileOpen(false)} className={navMenuItem}>
+										{t(dictLang, 'charts_nav')}
 									</Link>
 								</div>
 							)}
 
-							<Link href="/rankingi/brokerzy" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/90">
+							<Link
+								href="/rankingi/brokerzy"
+								onClick={() => setMobileOpen(false)}
+								className={brokersActive ? mobileLinkActive : mobileLinkInactive}
+							>
+								<BarChart3 className={`h-4 w-4 shrink-0 ${brokersActive ? 'text-white' : 'text-white/60'}`} aria-hidden />
 								{t(dictLang, 'broker_rankings')}
 							</Link>
-							<Link href="/redakcja" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/90">
+							<Link
+								href="/redakcja"
+								onClick={() => setMobileOpen(false)}
+								className={redakcjaActive ? mobileLinkActive : mobileLinkInactive}
+							>
+								<Newspaper className={`h-4 w-4 shrink-0 ${redakcjaActive ? 'text-white' : 'text-white/60'}`} aria-hidden />
 								Redakcja
 							</Link>
-							<Link href="/o-nas" onClick={() => setMobileOpen(false)} className="block rounded-xl px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/90">
+							<Link
+								href="/o-nas"
+								onClick={() => setMobileOpen(false)}
+								className={aboutActive ? mobileLinkActive : mobileLinkInactive}
+							>
+								<Info className={`h-4 w-4 shrink-0 ${aboutActive ? 'text-white' : 'text-white/60'}`} aria-hidden />
 								{t(dictLang, 'about_nav')}
 							</Link>
 						</div>

@@ -1,6 +1,19 @@
 import Link from 'next/link';
-import { CheckCircle2, Layers, ListChecks, Newspaper, Radar, Sparkles, Store } from 'lucide-react';
+import {
+  Award,
+  BookOpen,
+  CheckCircle2,
+  ClipboardCheck,
+  Layers,
+  ListChecks,
+  Newspaper,
+  Radar,
+  Sparkles,
+  Store,
+} from 'lucide-react';
 import { FOUNDERS_MARKET_COPY, FOUNDERS_MARKET_PRICING } from '@/lib/marketplace/foundersMarketCopy';
+import { isFoundersMarketplaceSalesPaused } from '@/lib/marketplace/offers';
+import plMessages from '@/messages/pl.json';
 
 const cardBase =
   'rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] backdrop-blur-md p-5 sm:p-6 shadow-lg shadow-black/20';
@@ -12,11 +25,12 @@ const homeMarketCard =
 /** Statyczna wizualizacja karty NFT w hero (PL) — collectible / pass, bez assetu zewnętrznego */
 function HeroFoundersNftCard() {
   const gid = 'hero-nft-pl';
+  const h = plMessages.home;
   return (
     <div
       className="relative mx-auto w-full max-w-[380px] sm:max-w-[410px] lg:w-[min(100%,440px)] lg:max-w-[460px] shrink-0 select-none [perspective:1400px]"
       role="img"
-      aria-label="Ilustracja karty FXEDULAB Founders NFT — nośnik dostępu do platformy"
+      aria-label={h.hero_nft_aria}
     >
       <div
         className="pointer-events-none absolute -bottom-12 left-1/2 h-32 w-[110%] max-w-none -translate-x-1/2 rounded-[100%] bg-[radial-gradient(ellipse_at_center,rgba(45,212,191,0.28),rgba(34,211,238,0.08)_45%,transparent_72%)] blur-3xl"
@@ -151,22 +165,22 @@ function HeroFoundersNftCard() {
                 FX
               </div>
               <span className="max-w-[11rem] text-right text-[10px] font-semibold uppercase leading-snug tracking-[0.2em] text-cyan-100/80">
-                FOUNDING EDITION
+                {h.hero_nft_edition}
               </span>
             </div>
             <div className="mt-auto pt-16 sm:pt-20">
               <p className="bg-gradient-to-r from-white via-emerald-50 to-cyan-100/90 bg-clip-text text-2xl font-bold leading-tight tracking-tight text-transparent sm:text-[1.65rem]">
-                FXEDULAB Founders
+                {h.hero_nft_title}
               </p>
               <p className="mt-3 text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-200/55">
-                Pas dostępu Founders
+                {h.hero_nft_pass}
               </p>
-              <p className="mt-6 text-sm leading-relaxed text-white/45">Dostęp przypisany do NFT</p>
+              <p className="mt-6 text-sm leading-relaxed text-white/45">{h.hero_nft_access}</p>
               <p className="mt-8 text-lg font-medium tabular-nums tracking-wide text-white/[0.88] sm:text-xl">
                 {FOUNDERS_MARKET_PRICING.currentPriceUsd} USD
               </p>
               <p className="mt-1.5 text-xs text-white/45">
-                Kolejny poziom: {FOUNDERS_MARKET_PRICING.nextPriceUsd} USD
+                {h.hero_nft_next_tier.replace('{amount}', String(FOUNDERS_MARKET_PRICING.nextPriceUsd))}
               </p>
             </div>
           </div>
@@ -176,7 +190,29 @@ function HeroFoundersNftCard() {
   );
 }
 
+function HomePrimaryBuyCta({ className }: { className: string }) {
+  const h = plMessages.home;
+  if (isFoundersMarketplaceSalesPaused()) {
+    return (
+      <span role="status" className={`${className} cursor-not-allowed opacity-60`} title={h.sales_paused_note}>
+        {h.cta_buy_paused}
+      </span>
+    );
+  }
+  return (
+    <Link href="/marketplace" className={className}>
+      {h.cta_buy}
+    </Link>
+  );
+}
+
 export default function HomePage() {
+  const h = plMessages.home;
+  const heroHighlights = [
+    { Icon: BookOpen, title: h.hero_highlight_0_title, desc: h.hero_highlight_0_desc },
+    { Icon: Award, title: h.hero_highlight_1_title, desc: h.hero_highlight_1_desc },
+    { Icon: Radar, title: h.hero_highlight_2_title, desc: h.hero_highlight_2_desc },
+  ];
   return (
     <main id="content" className="min-h-screen bg-slate-950 text-white">
       {/* HERO */}
@@ -187,34 +223,47 @@ export default function HomePage() {
               <div className="max-w-3xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-200/90 mb-6">
                   <Sparkles className="w-4 h-4" aria-hidden />
-                  <span className="tracking-wide font-semibold">FXEDULAB · dostęp przez Founders NFT</span>
+                  <span className="tracking-wide font-semibold">{h.hero_kicker}</span>
                 </div>
                 <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold leading-[1.12] tracking-tight text-white">
-                  Dostęp do systemu decyzji rynkowych przez{' '}
+                  {h.hero_h1_before}{' '}
                   <span className="bg-gradient-to-r from-white via-emerald-100 to-emerald-200/90 bg-clip-text text-transparent">
-                    FXEDULAB Founders NFT
+                    {h.hero_h1_accent}
                   </span>
                 </h1>
-                <p className="mt-6 text-lg sm:text-xl text-white/85 leading-relaxed max-w-2xl">
-                  FXEDULAB porządkuje scenariusze, checklisty i kontekst rynkowy w jednym miejscu. Kupujesz dostęp przez NFT —
-                  bez miesięcznego abonamentu.
-                </p>
+                <p className="mt-6 text-lg sm:text-xl text-white/85 leading-relaxed max-w-2xl">{h.subheadline}</p>
+                <ul
+                  className="mt-6 grid max-w-2xl list-none gap-3 p-0 sm:grid-cols-3 sm:gap-4"
+                  aria-label={h.hero_highlights_aria}
+                >
+                  {heroHighlights.map(({ Icon, title, desc }) => (
+                    <li
+                      key={title}
+                      className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 sm:px-4 sm:py-3.5"
+                    >
+                      <div className="flex items-center gap-2 text-emerald-200/90">
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">{title}</span>
+                      </div>
+                      <p className="mt-1.5 text-xs leading-snug text-white/65">{desc}</p>
+                    </li>
+                  ))}
+                </ul>
                 <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
-                  <Link
-                    href="/marketplace"
-                    className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-opacity text-center"
-                  >
-                    Kup Founders NFT
-                  </Link>
+                  <HomePrimaryBuyCta className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-opacity text-center" />
                   <Link
                     href="/konto/panel-rynkowy"
                     className="inline-flex justify-center items-center rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 transition-colors text-center"
                   >
-                    Zobacz jak działa platforma
+                    {h.cta_platform}
                   </Link>
                 </div>
                 <p className="mt-5 text-sm text-white/55 max-w-xl">
-                  Płatność w BTC / ETH / USDT. Dostęp przypisany do NFT.
+                  {isFoundersMarketplaceSalesPaused() ? (
+                    <span className="text-amber-200/85 font-medium">{h.sales_paused_note}</span>
+                  ) : (
+                    h.payment_note
+                  )}
                 </p>
               </div>
             </div>
@@ -225,6 +274,58 @@ export default function HomePage() {
         </div>
         <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-cyan-500/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-emerald-600/10 blur-3xl" />
+      </section>
+
+      {/* ŚCIEŻKI UŻYTKOWNIKA */}
+      <section className="border-t border-white/10 bg-white/[0.02]" aria-labelledby="home-paths-heading">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
+          <h2 id="home-paths-heading" className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Jak chcesz korzystać z FXEDULAB?
+          </h2>
+          <p className="mt-3 text-white/75 max-w-2xl text-sm sm:text-base leading-relaxed">
+            {plMessages.home.paths_direction}
+          </p>
+          <p className="mt-2 text-white/65 max-w-2xl text-sm sm:text-base">Wybierz ścieżkę dopasowaną do Twojego celu.</p>
+          <div className="mt-10 grid gap-4 md:grid-cols-3 items-stretch">
+            {[
+              {
+                Icon: Radar,
+                title: 'Podejmowanie decyzji',
+                desc: 'Scenariusze, checklisty i kontekst rynkowy w jednym panelu.',
+                cta: 'Zobacz panel',
+                href: '/konto/panel-rynkowy',
+              },
+              {
+                Icon: BookOpen,
+                title: 'Nauka rynku',
+                desc: 'Kursy i quizy pomagające zrozumieć mechanikę rynku.',
+                cta: 'Rozpocznij naukę',
+                href: '/edukacja',
+              },
+              {
+                Icon: Award,
+                title: 'Certyfikacja',
+                desc: 'Egzamin i certyfikat FXEDULAB potwierdzający wiedzę.',
+                cta: 'Zobacz certyfikat',
+                href: '/konto/certyfikat',
+              },
+            ].map(({ Icon, title, desc, cta, href }) => (
+              <div key={href} className={`${cardBase} flex h-full flex-col`}>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                  <Icon className="h-5 w-5 text-emerald-300" aria-hidden />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-white/70">{desc}</p>
+                <Link
+                  href={href}
+                  className="mt-6 inline-flex w-full justify-center items-center rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 transition-colors text-center sm:w-auto sm:self-start"
+                >
+                  {cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* CO DOSTAJESZ */}
@@ -331,6 +432,81 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* CERTYFIKAT FXEDULAB */}
+      <section
+        id="certyfikat-fxedulab"
+        className="relative scroll-mt-24 overflow-hidden border-t border-white/10 bg-white/[0.02]"
+      >
+        <div
+          className="pointer-events-none absolute -right-24 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-amber-500/[0.06] blur-3xl"
+          aria-hidden
+        />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-200/80">
+            Certyfikat FXEDULAB
+          </p>
+          <h2 className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            Zweryfikuj wiedzę i zdobądź certyfikat FXEDULAB
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm sm:text-base leading-relaxed text-white/65">
+            Dostęp do platformy otwiera materiały i narzędzia. Certyfikacja to osobny, dobrowolny etap: po pracy z treścią możesz
+            sprawdzić wiedzę w egzaminie końcowym. Po pozytywnym wyniku generujesz certyfikat FXEDULAB przypisany do wybranej
+            ścieżki.
+          </p>
+          <div className="mt-10 grid gap-4 sm:grid-cols-3 items-stretch">
+            {[
+              {
+                icon: ClipboardCheck,
+                title: 'Praktyczna weryfikacja',
+                desc: 'Egzamin nie opiera się wyłącznie na suchej teorii — stawia scenariusze i decyzje w centrum, w stylu pracy z materiałem na platformie.',
+              },
+              {
+                icon: Layers,
+                title: 'Osobne ścieżki',
+                desc: 'Certyfikacja jest przypisana do konkretnych obszarów, m.in. Forex Fundamentals, Technical Analysis i Risk Management.',
+              },
+              {
+                icon: Award,
+                title: 'Certyfikat po zaliczeniu',
+                desc: 'Po zdanym egzaminie możesz wygenerować certyfikat i zobaczyć go na swoim koncie.',
+              },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div key={title} className={`${cardBase} flex h-full flex-col`}>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                  <Icon className="h-5 w-5 text-emerald-300" aria-hidden />
+                </div>
+                <h3 className="mt-4 font-semibold text-white">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/70">{desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 flex flex-wrap gap-2">
+            {['Egzamin końcowy', 'Przypisanie do ścieżki', 'Certyfikat generowany po zaliczeniu'].map((label) => (
+              <span
+                key={label}
+                className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-white/65"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <Link
+              href="/certyfikat-fxedulab"
+              className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-opacity text-center"
+            >
+              Zobacz certyfikat
+            </Link>
+            <Link
+              href="/certyfikat-fxedulab#jak-dziala-egzamin"
+              className="inline-flex justify-center items-center rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 transition-colors text-center"
+            >
+              Jak działa egzamin
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* FOUNDERS NFT */}
       <section id="founders-nft" className="scroll-mt-24 border-t border-white/10 bg-gradient-to-b from-emerald-950/20 to-transparent">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
@@ -350,12 +526,7 @@ export default function HomePage() {
               {FOUNDERS_MARKET_COPY.resaleTransferNote}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row flex-wrap gap-3">
-              <Link
-                href="/marketplace"
-                className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 text-center"
-              >
-                Kup Founders NFT
-              </Link>
+              <HomePrimaryBuyCta className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 text-center" />
               <Link
                 href="/marketplace#offers"
                 className="inline-flex justify-center items-center rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 transition-colors text-center"
@@ -386,12 +557,7 @@ export default function HomePage() {
               Jednorazowy dostęp do systemu decyzji rynkowych, scenariuszy i narzędzi uporządkowanych w jednym miejscu.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center sm:items-center">
-              <Link
-                href="/marketplace"
-                className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-opacity text-center"
-              >
-                Kup Founders NFT
-              </Link>
+              <HomePrimaryBuyCta className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-opacity text-center" />
               <Link
                 href="/marketplace#offers"
                 className="inline-flex justify-center items-center rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 transition-colors text-center"

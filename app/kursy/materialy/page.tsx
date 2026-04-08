@@ -7,25 +7,25 @@ const items: Item[] = [
     slug: "analiza-techniczna",
     title: "Analiza techniczna — fundamenty i praktyka",
     blurb: "Trend, S/R, price action, multi-timeframe, ATR/vol i kilka wskaźników sensownie.",
-    minutes: 18,
+    minutes: 38,
   },
   {
     slug: "formacje-swiecowe",
     title: "Formacje świecowe — jak czytać i filtrować",
     blurb: "Pin bar, engulfing, inside bar, doji — jako kontekst, nie sygnał magiczny.",
-    minutes: 15,
+    minutes: 39,
   },
   {
-    slug: "psychologia",
+    slug: "psychologia-inwestowania",
     title: "Psychologia inwestowania — proces i odporność",
     blurb: "Błędy poznawcze, tilt, rutyny, limity w R i dziennik decyzyjny.",
-    minutes: 16,
+    minutes: 39,
   },
   {
     slug: "kalendarz-ekonomiczny",
     title: "Kalendarz ekonomiczny — jak nim pracować",
     blurb: "Jakie dane są ważne (CPI, NFP, PMI…), kiedy nie handlować i jak skalować ryzyko.",
-    minutes: 14,
+    minutes: 39,
   },
 ];
 

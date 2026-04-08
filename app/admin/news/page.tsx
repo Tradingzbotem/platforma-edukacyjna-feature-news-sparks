@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import BackButton from '@/components/BackButton';
-import { ExternalLink, Trash2, CheckCircle, XCircle, RefreshCw, RotateCw, X } from 'lucide-react';
+import { ExternalLink, Trash2, CheckCircle, XCircle, RefreshCw, RotateCw, X, Sparkles } from 'lucide-react';
 
 type NewsItem = {
   id: string;
@@ -17,10 +18,13 @@ type NewsItem = {
 };
 
 export default function AdminNewsPage() {
+  const router = useRouter();
   const [items, setItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [generatingArticleId, setGeneratingArticleId] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -84,6 +88,47 @@ export default function AdminNewsPage() {
     };
   }, [enriched, load, page, q, source]);
 
+  async function generateArticleFromNews(newsId: string) {
+    setGeneratingArticleId(newsId);
+    setError(null);
+    try {
+      const res = await fetch('/api/admin/redakcja/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newsId }),
+      });
+
+      let data: any = null;
+      const contentType = res.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        try {
+          data = await res.json();
+        } catch {
+          data = null;
+        }
+      }
+
+      if (!res.ok || !data?.ok) {
+        const msg =
+          (typeof data?.message === 'string' && data.message) ||
+          (typeof data?.error === 'string' && data.error) ||
+          `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
+
+      if (data.article?.id) {
+        const tmp = data.imagePersisted === false ? '&tmpImage=1' : '';
+        router.push(`/admin/redakcja/${data.article.id}?generated=1${tmp}`);
+      } else {
+        router.refresh();
+      }
+    } catch (e: any) {
+      setError(e?.message || 'Nie udało się wygenerować artykułu');
+    } finally {
+      setGeneratingArticleId(null);
+    }
+  }
+
   async function deleteItem(id: string) {
     if (!confirm('Czy na pewno chcesz usunąć tę wiadomość?')) return;
     setBusy(id);
@@ -101,6 +146,7 @@ export default function AdminNewsPage() {
 
   async function refreshList() {
     setBusyAction('refreshList');
+    setInfo(null);
     try {
       await load();
     } catch (e: any) {
@@ -114,6 +160,7 @@ export default function AdminNewsPage() {
   async function runRefreshJob() {
     setBusyAction('refreshJob');
     setError(null);
+    setInfo(null);
     try {
       const r = await fetch('/api/admin/news', {
         method: 'POST',
@@ -126,6 +173,42 @@ export default function AdminNewsPage() {
       await load();
     } catch (e: any) {
       setError(e?.message || 'Nie udało się uruchomić odświeżania');
+    } finally {
+      setBusyAction(null);
+      setLoading(false);
+    }
+  }
+
+  async function runEnrichJob() {
+    setBusyAction('enrichJob');
+    setError(null);
+    setInfo(null);
+    try {
+      const r = await fetch('/api/admin/news', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'enrich' }),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      if (!data.ok) throw new Error(data.error || 'Enrich failed');
+      const res = data.result as { enriched?: number; pending?: number; failures?: number } | undefined;
+      if (res && typeof res.pending === 'number') {
+        if (res.pending === 0) {
+          setInfo('Brak surowych newsów do wzbogacenia w kolejce.');
+        } else {
+          const fail =
+            typeof res.failures === 'number' && res.failures > 0
+              ? ` Nie udało się: ${res.failures}.`
+              : '';
+          setInfo(
+            `Partia zakończona: wzbogacono ${res.enriched ?? 0} z ${res.pending} w tej rundzie.${fail} Uruchom ponownie, aby kolejne surowe wpisy.`
+          );
+        }
+      }
+      await load();
+    } catch (e: any) {
+      setError(e?.message || 'Nie udało się uruchomić wzbogacenia');
     } finally {
       setBusyAction(null);
       setLoading(false);
@@ -211,6 +294,15 @@ export default function AdminNewsPage() {
               Odśwież listę
             </button>
             <button
+              onClick={runEnrichJob}
+              disabled={busyAction !== null}
+              className="inline-flex items-center gap-2 rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-500 disabled:opacity-50"
+              title="Wzbogaca jednorazowo małą partię surowych wpisów (ok. 15) — szybsze niż pełna kolejka cron. Zmienna NEWS_ENRICH_ADMIN_BATCH."
+            >
+              <Sparkles className={`h-4 w-4 ${busyAction === 'enrichJob' ? 'animate-pulse' : ''}`} />
+              {busyAction === 'enrichJob' ? 'Wzbogacanie…' : 'Wzbogać (AI)'}
+            </button>
+            <button
               onClick={runRefreshJob}
               disabled={busyAction !== null}
               className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
@@ -225,6 +317,11 @@ export default function AdminNewsPage() {
         {error && (
           <div className="mb-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
             Błąd: {error}
+          </div>
+        )}
+        {info && !error && (
+          <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+            {info}
           </div>
         )}
 
@@ -344,7 +441,7 @@ export default function AdminNewsPage() {
                   )}
                 </div>
               </div>
-              <div className="col-span-2 flex items-center gap-2">
+              <div className="col-span-2 flex flex-wrap items-center gap-2">
                 <a
                   href={item.url}
                   target="_blank"
@@ -354,6 +451,24 @@ export default function AdminNewsPage() {
                   <ExternalLink className="h-3 w-3 mr-1" />
                   Otwórz
                 </a>
+                <button
+                  type="button"
+                  onClick={() => generateArticleFromNews(item.id)}
+                  disabled={
+                    generatingArticleId === item.id || busy === item.id || busyAction !== null
+                  }
+                  className="inline-flex items-center gap-1 rounded-md bg-violet-600 px-2 py-1 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
+                  title={
+                    item.isEnriched
+                      ? 'Wygeneruj artykuł Redakcji na podstawie tego newsa'
+                      : 'Wygeneruj artykuł Redakcji (news surowy — model oprze się na tytule, źródle i linku; opcjonalnie wzbogać news później)'
+                  }
+                >
+                  <Sparkles
+                    className={`h-3 w-3 ${generatingArticleId === item.id ? 'animate-pulse' : ''}`}
+                  />
+                  {generatingArticleId === item.id ? 'Generowanie…' : 'Generuj artykuł'}
+                </button>
                 <button
                   onClick={() => deleteItem(item.id)}
                   disabled={busy === item.id}

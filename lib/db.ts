@@ -50,7 +50,13 @@ export type User = {
   plan?: 'free' | 'starter' | 'pro' | 'elite';
   phone: string | null;
   name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   marketing_consent?: boolean | null;
+  /** URL awatara (opcjonalnie), https/http. */
+  avatar_url?: string | null;
+  notify_edu?: boolean | null;
+  notify_market?: boolean | null;
   created_at: Date | string;
   last_active_at?: Date | string | null;
 };
@@ -71,18 +77,41 @@ export async function ensureUsersTable() {
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ;`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS marketing_consent BOOLEAN DEFAULT FALSE;`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_edu BOOLEAN DEFAULT TRUE;`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS notify_market BOOLEAN DEFAULT TRUE;`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name TEXT;`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name TEXT;`;
 }
 
 export async function findUserByEmail(email: string): Promise<User | null> {
   if (!hasPostgres()) return null;
-  const { rows } = await sql<User>`SELECT id, email, password_hash, plan, phone, name, marketing_consent, created_at, last_active_at FROM users WHERE email = ${email} LIMIT 1`;
+  const { rows } = await sql<User>`SELECT id, email, password_hash, plan, phone, name, first_name, last_name, marketing_consent, avatar_url, notify_edu, notify_market, created_at, last_active_at FROM users WHERE email = ${email} LIMIT 1`;
   return rows[0] ?? null;
 }
 
 export async function findUserById(id: string): Promise<User | null> {
   if (!hasPostgres()) return null;
-  const { rows } = await sql<User>`SELECT id, email, password_hash, plan, phone, name, marketing_consent, created_at, last_active_at FROM users WHERE id = ${id} LIMIT 1`;
+  const { rows } = await sql<User>`SELECT id, email, password_hash, plan, phone, name, first_name, last_name, marketing_consent, avatar_url, notify_edu, notify_market, created_at, last_active_at FROM users WHERE id = ${id} LIMIT 1`;
   return rows[0] ?? null;
+}
+
+/** Podstawowe dane konta dla list admina (np. podejścia do egzaminu). */
+export async function findUsersBasicByIds(
+  ids: string[],
+): Promise<Map<string, { email: string; name: string | null }>> {
+  const out = new Map<string, { email: string; name: string | null }>();
+  if (!hasPostgres() || ids.length === 0) return out;
+  const unique = [...new Set(ids)];
+  const result = await sql.query<{ id: string; email: string; name: string | null }>(
+    "SELECT id, email, name FROM users WHERE id = ANY($1::text[])",
+    [unique],
+  );
+  const { rows } = result;
+  for (const r of rows) {
+    out.set(r.id, { email: r.email, name: r.name });
+  }
+  return out;
 }
 
 export async function insertUser(u: { id: string; email: string; password_hash: string; name?: string | null; phone: string; plan?: 'free' | 'starter' | 'pro' | 'elite'; marketing_consent?: boolean | null; }) {
@@ -133,6 +162,47 @@ export async function listUsersBasic(): Promise<Array<{ id: string; email: strin
 export async function updateUserPlan(userId: string, plan: 'free' | 'starter' | 'pro' | 'elite'): Promise<void> {
   if (!hasPostgres()) return;
   await sql`UPDATE users SET plan = ${plan} WHERE id = ${userId}`;
+}
+
+export type UserProfilePatch = {
+  name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
+  notify_edu?: boolean;
+  notify_market?: boolean;
+};
+
+/** Aktualizacja pól profilu z /konto/ustawienia — tylko przekazane klucze. */
+export async function updateUserProfileSettings(userId: string, patch: UserProfilePatch): Promise<void> {
+  if (!hasPostgres()) return;
+  if (patch.name !== undefined) {
+    const v = patch.name === null ? null : patch.name.trim() || null;
+    await sql`UPDATE users SET name = ${v} WHERE id = ${userId}`;
+  }
+  if (patch.first_name !== undefined) {
+    const v = patch.first_name === null ? null : patch.first_name.trim() || null;
+    await sql`UPDATE users SET first_name = ${v} WHERE id = ${userId}`;
+  }
+  if (patch.last_name !== undefined) {
+    const v = patch.last_name === null ? null : patch.last_name.trim() || null;
+    await sql`UPDATE users SET last_name = ${v} WHERE id = ${userId}`;
+  }
+  if (patch.phone !== undefined) {
+    const v = patch.phone === null ? null : patch.phone.trim() || null;
+    await sql`UPDATE users SET phone = ${v} WHERE id = ${userId}`;
+  }
+  if (patch.avatar_url !== undefined) {
+    const v = patch.avatar_url === null ? null : patch.avatar_url.trim() || null;
+    await sql`UPDATE users SET avatar_url = ${v} WHERE id = ${userId}`;
+  }
+  if (patch.notify_edu !== undefined) {
+    await sql`UPDATE users SET notify_edu = ${patch.notify_edu} WHERE id = ${userId}`;
+  }
+  if (patch.notify_market !== undefined) {
+    await sql`UPDATE users SET notify_market = ${patch.notify_market} WHERE id = ${userId}`;
+  }
 }
 
 export async function touchUserLastActive(userId: string): Promise<void> {
@@ -305,16 +375,64 @@ export async function upsertLessonProgress(params: {
   course: string;
   lessonId: string;
   done: boolean;
+  /**
+   * Gdy `done=false`: zapis „wizyty” z LessonVisitTracker — nie cofaj wcześniejszego ukończenia w DB
+   * (np. pusty localStorage po czyszczeniu danych).
+   */
+  visitOnly?: boolean;
 }) {
-  const { userId, course, lessonId, done } = params;
+  const { userId, course, lessonId, done, visitOnly = false } = params;
   if (!hasPostgres()) return;
   await ensureProgressTables();
   await sql`
     INSERT INTO lesson_progress (user_id, course, lesson_id, done)
     VALUES (${userId}, ${course}, ${lessonId}, ${done})
     ON CONFLICT (user_id, course, lesson_id)
-    DO UPDATE SET done = EXCLUDED.done, updated_at = NOW();
+    DO UPDATE SET
+      done = CASE
+        WHEN ${visitOnly} AND NOT EXCLUDED.done THEN lesson_progress.done
+        ELSE EXCLUDED.done
+      END,
+      updated_at = NOW();
   `;
+}
+
+/** Zmapowany postęp lekcji w jednym kursie (wartość true = ukończono lub w toku z done). */
+export async function getLessonProgressBooleanMapForCourse(
+  userId: string,
+  courseId: string,
+): Promise<Record<string, boolean>> {
+  if (!hasPostgres() || !userId) return {};
+  await ensureProgressTables();
+  const { rows } = await sql<{ lesson_id: string; done: boolean }>`
+    SELECT lesson_id, done
+    FROM lesson_progress
+    WHERE user_id = ${userId} AND course = ${courseId}
+  `;
+  const out: Record<string, boolean> = {};
+  for (const r of rows) {
+    if (r.done) out[r.lesson_id] = true;
+  }
+  return out;
+}
+
+/** Wszystkie wiersze postępu dla jednego kursu (ukończenie + wizyta) — spisy lekcji vs /kursy. */
+export async function getLessonProgressRowMapForCourse(
+  userId: string,
+  course: string
+): Promise<Record<string, { done: boolean }>> {
+  if (!hasPostgres() || !userId) return {};
+  await ensureProgressTables();
+  const { rows } = await sql<{ lesson_id: string; done: boolean }>`
+    SELECT lesson_id, done
+    FROM lesson_progress
+    WHERE user_id = ${userId} AND course = ${course}
+  `;
+  const out: Record<string, { done: boolean }> = {};
+  for (const r of rows) {
+    out[r.lesson_id] = { done: Boolean(r.done) };
+  }
+  return out;
 }
 
 export async function insertQuizResult(params: {
@@ -388,6 +506,49 @@ export async function getProgressSummary(userId: string): Promise<ProgressSummar
   }));
 
   return { coursesDone, quizzesDone, recentQuizResults };
+}
+
+export type LessonProgressRow = {
+  course: string;
+  lesson_id: string;
+  done: boolean;
+  updated_at: Date;
+};
+
+/** Wiersze postępu lekcji dla głównych modułów /kursy (wizyta: done=false, ukończenie: done=true). */
+export async function getLessonProgressRowsForMainCourses(userId: string): Promise<LessonProgressRow[]> {
+  if (!hasPostgres() || !userId) return [];
+  await ensureProgressTables();
+  const result = await sql<{ course: string; lesson_id: string; done: boolean; updated_at: Date }>`
+    SELECT course, lesson_id, done, updated_at
+    FROM lesson_progress
+    WHERE user_id = ${userId}
+      AND course IN ('podstawy', 'forex', 'cfd', 'zaawansowane')
+  `;
+  return result.rows.map((r) => ({
+    course: r.course,
+    lesson_id: r.lesson_id,
+    done: Boolean(r.done),
+    updated_at: r.updated_at instanceof Date ? r.updated_at : new Date(r.updated_at),
+  }));
+}
+
+/** Postęp lekcji kursu „regulacje” (spis /kursy/regulacje). */
+export async function getLessonProgressRowsForRegulacje(userId: string): Promise<LessonProgressRow[]> {
+  if (!hasPostgres() || !userId) return [];
+  await ensureProgressTables();
+  const result = await sql<{ course: string; lesson_id: string; done: boolean; updated_at: Date }>`
+    SELECT course, lesson_id, done, updated_at
+    FROM lesson_progress
+    WHERE user_id = ${userId}
+      AND course = 'regulacje'
+  `;
+  return result.rows.map((r) => ({
+    course: r.course,
+    lesson_id: r.lesson_id,
+    done: Boolean(r.done),
+    updated_at: r.updated_at instanceof Date ? r.updated_at : new Date(r.updated_at),
+  }));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

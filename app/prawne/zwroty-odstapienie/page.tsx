@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Page() {
   const Updated = () => (
-    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-04-02</p>
+    <p className="text-xs text-white/60">Ostatnia aktualizacja: 2026-04-04</p>
   );
 
   const H2 = ({ id, children }: { id: string; children: React.ReactNode }) => (
@@ -17,39 +17,59 @@ export default function Page() {
     </div>
   );
 
+  const toc: [string, string][] = [
+    ["czym-umowa", "1. Czym jest umowa u nas"],
+    ["prawo", "2. Prawo odstąpienia — 14 dni"],
+    ["rozpoczecie", "3. Co znaczy „rozpoczęcie” usługi cyfrowej"],
+    ["zgoda", "4. Zgoda na wcześniejsze rozpoczęcie"],
+    ["po-rozpoczeciu", "5. Po rozpoczęciu świadczenia"],
+    ["nft", "6. Zakup Founders NFT"],
+    ["procedura", "7. Jak odstąpić (gdy przysługuje)"],
+    ["zwroty", "8. Zwrot płatności"],
+    ["reklamacje", "9. Reklamacje (nie to samo co odstąpienie)"],
+    ["kontakt", "10. Kontakt"],
+  ];
+
   return (
     <main className="mx-auto max-w-4xl p-6 md:p-8 space-y-8">
-      {/* Nawigacja */}
       <nav className="flex items-center gap-2">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10">← Strona główna</Link>
-        <Link href="/prawne" className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10">← Prawne</Link>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10"
+        >
+          ← Strona główna
+        </Link>
+        <Link
+          href="/prawne"
+          className="inline-flex items-center gap-2 text-sm rounded-xl px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/10"
+        >
+          ← Prawne
+        </Link>
       </nav>
 
-      {/* Nagłówek */}
       <header className="space-y-2">
         <h1 className="text-3xl md:text-4xl font-bold">Zwroty i odstąpienie od umowy</h1>
         <p className="text-slate-300">
-          Zasady dotyczące prawa odstąpienia oraz polityki zwrotów dla usług cyfrowych i zakupu Founders NFT.
+          Prosto o prawie odstąpienia od umowy zawartej na odległość przy{" "}
+          <strong>usłudze cyfrowej</strong> i treściach cyfrowych — oraz jak to łączy się z zakupem
+          Founders NFT. Szczegóły umowy:{" "}
+          <Link href="/prawne/regulamin" className="underline">
+            regulamin serwisu
+          </Link>
+          .
         </p>
         <Updated />
       </header>
 
-      {/* Spis treści */}
       <Card>
         <div className="text-sm text-white/80 mb-3 font-semibold">Spis treści</div>
         <ul className="grid md:grid-cols-2 gap-2 text-sm">
-          {[
-            ["prawo", "1. Prawo odstąpienia 14 dni"],
-            ["wylaczenia", "2. Wyłączenia prawa odstąpienia"],
-            ["procedura", "3. Procedura odstąpienia"],
-            ["terminy", "4. Terminy i forma"],
-            ["zwroty", "5. Zwrot świadczeń"],
-            ["reklamacje", "6. Reklamacje i rekompensaty"],
-            ["biznes", "7. Klienci biznesowi"],
-            ["kontakt", "8. Kontakt"],
-          ].map(([id, label]) => (
+          {toc.map(([id, label]) => (
             <li key={id}>
-              <a href={`#${id}`} className="inline-block rounded-lg px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10">
+              <a
+                href={`#${id}`}
+                className="inline-block rounded-lg px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10"
+              >
                 {label}
               </a>
             </li>
@@ -58,101 +78,168 @@ export default function Page() {
       </Card>
 
       <section className="space-y-3">
-        <H2 id="prawo">1. Prawo odstąpienia 14 dni</H2>
+        <H2 id="czym-umowa">1. Czym jest umowa u nas</H2>
         <p className="text-white/80">
-          Konsument może odstąpić od umowy zawartej na odległość w terminie 14 dni bez podawania przyczyny,
-          chyba że zachodzą ustawowe wyłączenia dotyczące treści cyfrowych.
-        </p>
-      </section>
-
-      <section className="space-y-3">
-        <H2 id="wylaczenia">2. Wyłączenia prawa odstąpienia</H2>
-        <p className="text-white/80">
-          W przypadku dostarczania treści cyfrowych, które nie są zapisane na nośniku materialnym, prawo odstąpienia
-          nie przysługuje, jeżeli świadczenie rozpoczęto za wyraźną zgodą konsumenta przed upływem terminu odstąpienia
-          i po poinformowaniu o utracie tego prawa.
-        </p>
-        <p className="text-white/80">
-          <strong>Founders NFT:</strong> nabycie tokenu związanego z licencją dostępu może oznaczać rozpoczęcie lub
-          wykonanie świadczenia niezwłocznie po zaksięgowaniu transakcji (w tym zapisie na blockchainie). W takim
-          zakresie mogą znajdować zastosowanie ustawowe wyłączenia prawa odstąpienia — szczegóły procesu, zgód i
-          reklamacji:{" "}
-          <Link href="/prawne/nft" className="underline">
-            Regulamin sprzedaży NFT
+          Typowa umowa z konsumentem dotyczy <strong>dostępu do funkcji cyfrowych</strong> Serwisu
+          (materiały edukacyjne, moduły, panel itd.) — w zakresie opisanym przy zamówieniu lub
+          w{" "}
+          <Link href="/prawne/regulamin" className="underline">
+            regulaminie
           </Link>
-          .
+          . Nie kupujesz od nas produktu inwestycyjnego, lokaty ani usługi zarządzania
+          kapitałem.
         </p>
       </section>
 
       <section className="space-y-3">
-        <H2 id="procedura">3. Procedura odstąpienia</H2>
+        <H2 id="prawo">2. Prawo odstąpienia — 14 dni</H2>
+        <p className="text-white/80">
+          Jeśli jesteś <strong>konsumentem</strong>, zwykle przysługuje Ci prawo odstąpienia od umowy
+          zawartej na odległość w ciągu <strong>14 dni</strong> bez podania przyczyny — o ile prawo to
+          nie zostało wyłączone w konkretnym przypadku na podstawie przepisów (patrz niżej).
+        </p>
+        <p className="text-white/80">
+          Termin liczy się od dnia zawarcia umowy. Aby go zachować, wystarczy wysłać oświadczenie
+          przed upływem 14 dni.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <H2 id="rozpoczecie">3. Co znaczy „rozpoczęcie” usługi cyfrowej</H2>
+        <p className="text-white/80">
+          W przypadku <strong>treści cyfrowych</strong> dostarczanych bez nośnika fizycznego ustawa
+          przewiduje wyłączenie prawa odstąpienia, jeśli:
+        </p>
         <ul className="list-disc pl-6 text-white/80 space-y-1">
-          <li>Złóż oświadczenie o odstąpieniu w terminie 14 dni (np. przez formularz kontaktowy).</li>
-          <li>Wskaż dane konta i numer zamówienia/płatności, aby przyspieszyć obsługę.</li>
-          <li>Otrzymasz potwierdzenie przyjęcia oświadczenia na trwałym nośniku.</li>
+          <li>
+            <strong>świadczenie zostało rozpoczęte</strong> (np. udostępniono Ci dostęp do modułów,
+            treści lub konta z pełnym zakresem){" "}
+            <strong>za Twoją wyraźną zgodą</strong> przed upływem 14 dni, oraz
+          </li>
+          <li>
+            zostałeś <strong>poinformowany</strong>, że po wyrażeniu tej zgody tracisz prawo
+            odstąpienia.
+          </li>
         </ul>
-      </section>
-
-      <section className="space-y-3">
-        <H2 id="terminy">4. Terminy i forma</H2>
         <p className="text-white/80">
-          Termin 14 dni liczony jest od dnia zawarcia umowy (dla usług cyfrowych). Do zachowania terminu
-          wystarczy wysłanie oświadczenia przed jego upływem. Możesz skorzystać z naszego{" "}
-          <Link href="/kontakt" className="underline">formularza</Link> lub własnego wzoru.
-        </p>
-        <p className="text-white/80">
-          Przykładowy wzór: „Ja/My … niniejszym informuję/informujemy o odstąpieniu od umowy zawartej dnia …
-          dotyczącej (Founders NFT / dostęp do Serwisu) na koncie … (email)”.
+          W skrócie: jeśli przed upływem terminu wyraźnie zgodzisz się na natychmiastowy dostęp
+          do treści/usługi cyfrowej i zostaniesz o konsekwencjach poinformowany, odstąpienie może
+          nie przysługiwać — zgodnie z art. 38 ustawy o prawach konsumenta (brzmienie aktualne w
+          źródle prawnym).
         </p>
       </section>
 
       <section className="space-y-3">
-        <H2 id="zwroty">5. Zwrot świadczeń</H2>
+        <H2 id="zgoda">4. Zgoda na wcześniejsze rozpoczęcie</H2>
         <p className="text-white/80">
-          W przypadku skutecznego odstąpienia zwracamy dokonane płatności niezwłocznie, nie później niż w ciągu 14 dni
-          od otrzymania oświadczenia, z wykorzystaniem tego samego sposobu zapłaty, chyba że uzgodniono inaczej.
+          Jeśli przy zakupie zaznaczysz odpowiednią zgodę (lub w inny sposób wyraźnie ją wyrazisz
+          — zgodnie z procesem opisanym przy zamówieniu), możemy od razu włączyć dostęp. To
+          typowe przy usługach cyfrowych, gdzie użytkownik chce korzystać od razu.
         </p>
         <p className="text-white/80">
-          W przypadku zakupu NFT po wykonaniu świadczenia (np. przekazaniu tokena) zwrot może nie przysługiwać w zakresie
-          przewidzianym przepisami — zob.{" "}
+          Treść i moment zbierania zgody muszą być zgodne z obowiązującym prawem; przy ścieżce
+          NFT dodatkowe informacje znajdziesz w{" "}
           <Link href="/prawne/nft" className="underline">
-            Regulamin NFT
+            regulaminie NFT
           </Link>
           .
         </p>
       </section>
 
       <section className="space-y-3">
-        <H2 id="reklamacje">6. Reklamacje i rekompensaty</H2>
+        <H2 id="po-rozpoczeciu">5. Po rozpoczęciu świadczenia</H2>
         <p className="text-white/80">
-          W razie braku dostępu lub istotnych problemów technicznych z naszej winy możesz złożyć reklamację.
-          Każdy przypadek rozpatrujemy indywidualnie. Zgłoszenia:{" "}
-          <Link href="/kontakt" className="underline">formularz kontaktowy</Link>.
+          Gdy wyłączenie prawa odstąpienia jest skuteczne, <strong>nie możesz już odstąpić</strong> od
+          umowy w trybie 14-dniowym — ale nadal mogą Ci przysługiwać uprawnienia z tytułu{" "}
+          <strong>niezgodności usługi z umową</strong> lub reklamacji (np. brak dostępu mimo
+          zapłaty), zgodnie z przepisami.
+        </p>
+        <p className="text-white/80">
+          W razie wątpliwości, czy w Twoim przypadku odstąpienie jeszcze przysługuje, napisz przez{" "}
+          <Link href="/kontakt" className="underline">
+            kontakt
+          </Link>{" "}
+          — podaj datę zakupu i rodzaj produktu.
         </p>
       </section>
 
       <section className="space-y-3">
-        <H2 id="biznes">7. Klienci biznesowi</H2>
+        <H2 id="nft">6. Zakup Founders NFT</H2>
         <p className="text-white/80">
-          Postanowienia dotyczące prawa odstąpienia przewidziane są dla konsumentów i, w pewnych przypadkach,
-          dla przedsiębiorców na prawach konsumenta. W pozostałych przypadkach zastosowanie mają postanowienia
-          umowne oraz przepisy Kodeksu cywilnego.
+          Zakup Founders NFT wiąże się z przekazaniem tokenu i uruchomieniem ścieżki licencji na
+          dostęp. W praktyce świadczenie może rozpocząć się <strong>niezwłocznie</strong> po spełnieniu
+          warunków technicznych (np. zaksięgowanie, zapis na blockchainie). W takim zakresie
+          mogą mieć zastosowanie <strong>ustawowe wyłączenia</strong> odstąpienia — dokładny opis procesu,
+          zgód i wyjątków jest w{" "}
+          <Link href="/prawne/nft" className="underline">
+            Regulaminie sprzedaży NFT
+          </Link>
+          .
         </p>
       </section>
 
       <section className="space-y-3">
-        <H2 id="kontakt">8. Kontakt</H2>
+        <H2 id="procedura">7. Jak odstąpić (gdy przysługuje)</H2>
+        <ul className="list-disc pl-6 text-white/80 space-y-1">
+          <li>Wyślij jednoznaczne oświadczenie o odstąpieniu w terminie 14 dni (np. przez formularz kontaktowy).</li>
+          <li>Podaj e-mail konta, datę zamówienia oraz — jeśli masz — ID zamówienia lub TXID.</li>
+          <li>Na żądanie możemy potwierdzić odbiór oświadczenia na trwałym nośniku.</li>
+        </ul>
         <p className="text-white/80">
-          Pytania dotyczące odstąpienia lub zwrotów kieruj przez{" "}
-          <Link href="/kontakt" className="underline">formularz kontaktowy</Link>.
+          Przykład treści: „Ja … niniejszym odstępuję od umowy zawartej dnia … dotyczącej dostępu
+          do Serwisu / Founders NFT, konto …”.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <H2 id="zwroty">8. Zwrot płatności</H2>
+        <p className="text-white/80">
+          Jeśli odstąpienie jest skuteczne, zwracamy otrzymane płatności <strong>niezwłocznie</strong>, w
+          zasadzie nie później niż w ciągu 14 dni od otrzymania oświadczenia, tą samą metodą
+          płatności, o ile nie uzgodnimy inaczej.
+        </p>
+        <p className="text-white/80">
+          Przy płatnościach krypto lub NFT szczegóły rozliczenia mogą zależeć od możliwości
+          technicznych zwrotu — wtedy stosujemy zasady z{" "}
+          <Link href="/prawne/nft" className="underline">
+            regulaminu NFT
+          </Link>{" "}
+          i obowiązujące przepisy.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <H2 id="reklamacje">9. Reklamacje (nie to samo co odstąpienie)</H2>
+        <p className="text-white/80">
+          Jeśli zapłaciłeś, a <strong>nie otrzymujesz opisanego dostępu</strong> albo usługa cyfrowa nie
+          działa zgodnie z umową, złóż <strong>reklamację</strong> — to odrębna ścieżka od odstąpienia.
+          Zasady:{" "}
+          <Link href="/prawne/regulamin#reklamacje" className="underline">
+            regulamin — reklamacje
+          </Link>
+          .
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <H2 id="kontakt">10. Kontakt</H2>
+        <p className="text-white/80">
+          Pytania o odstąpienie, zwroty i reklamacje:{" "}
+          <Link href="/kontakt" className="underline">
+            formularz kontaktowy
+          </Link>
+          .
         </p>
       </section>
 
       <div className="pt-4 border-t border-white/10">
-        <Link href="/prawne" className="inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 text-sm border border-white/10">← Wróć do „Prawne”</Link>
+        <Link
+          href="/prawne"
+          className="inline-flex items-center gap-2 rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 text-sm border border-white/10"
+        >
+          ← Wróć do „Prawne”
+        </Link>
       </div>
     </main>
   );
 }
-
-

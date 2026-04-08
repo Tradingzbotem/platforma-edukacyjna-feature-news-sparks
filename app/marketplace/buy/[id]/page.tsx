@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { getSession } from '@/lib/session';
-import { getOfferById, isOfferPurchasable } from '@/lib/marketplace/offers';
+import { getOfferById, isFoundersMarketplaceSalesPaused, isOfferPurchasable } from '@/lib/marketplace/offers';
 import BuyNftClient from './BuyNftClient';
 import type { Metadata } from 'next';
 
@@ -36,12 +36,15 @@ export default async function MarketplaceBuyPage({ params }: PageProps) {
   }
 
   if (!isOfferPurchasable(offer)) {
+    const paused = isFoundersMarketplaceSalesPaused();
     return (
       <main id="content" className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center px-4 py-16">
         <div className="max-w-md text-center rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md p-8 shadow-lg">
-          <h1 className="text-xl font-bold text-white">Oferta niedostępna</h1>
+          <h1 className="text-xl font-bold text-white">{paused ? 'Brak miejsc' : 'Oferta niedostępna'}</h1>
           <p className="mt-3 text-sm text-white/65 leading-relaxed">
-            Ta pozycja nie jest już dostępna do zakupu w marketplace. Wróć do listy ofert i wybierz inną edycję.
+            {paused
+              ? 'Na razie nie ma wolnych miejsc na pierwotny zakup Founders NFT ani dostępu przez tę ścieżkę. Sprzedaż zostanie wznowiona w osobnym komunikacie.'
+              : 'Ta pozycja nie jest już dostępna do zakupu w marketplace. Wróć do listy ofert i wybierz inną edycję.'}
           </p>
           <Link
             href="/marketplace"

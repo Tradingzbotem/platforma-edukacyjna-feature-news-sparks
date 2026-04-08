@@ -17,19 +17,34 @@ export type Course = {
 };
 
 // -------------------------------------------------------------
-// Ważne: ID lekcji poniżej MUSZĄ istnieć w data/lessons/index.ts
-// (fx-01..04, cfd-01..04, adv-01..04) — podaliśmy je wcześniej.
+// Forex / CFD / Zaawansowane: statyczne strony `/kursy/{slug}/lekcja-n` zapisują postęp
+// pod tymi samymi ID (`lekcja-1` …) — muszą się zgadzać z COURSES, inaczej /kursy pokaże 0/Y.
+// Rejestr LESSONS (fx-01, …) służy /kursy/{slug}/lekcje/{id} — stare linki przekierowują do lekcja-*.
 // -------------------------------------------------------------
+
+const PODSTAWY: Course = {
+  slug: 'podstawy',
+  title: 'Podstawy',
+  subtitle: 'Notowania, zlecenia, dźwignia — start przed modułami FX/CFD.',
+  lessons: [
+    { id: 'lekcja-1', title: 'Wprowadzenie: czym jest rynek Forex?' },
+    { id: 'lekcja-2', title: 'Pipsy, punkty i loty' },
+    { id: 'lekcja-3', title: 'Rodzaje zleceń' },
+    { id: 'lekcja-4', title: 'Dźwignia i ryzyko' },
+    { id: 'lekcja-5', title: 'Czytanie świec' },
+  ],
+};
 
 const FOREX: Course = {
   slug: 'forex',
   title: 'Forex',
   subtitle: 'Rynek walutowy, pipsy/loty, sesje, ryzyko i praktyka.',
   lessons: [
-    { id: 'fx-01', title: 'Wprowadzenie do rynku FX', duration: '08:30' },
-    { id: 'fx-02', title: 'Pary walutowe i kwotowania', duration: '09:10' },
-    { id: 'fx-03', title: 'Dźwignia, margin i ryzyko', duration: '11:45' },
-    { id: 'fx-04', title: 'Strategie intraday',        duration: '12:05' },
+    { id: 'lekcja-1', title: 'Wprowadzenie do rynku walutowego', duration: '18:00' },
+    { id: 'lekcja-2', title: 'Pipsy, punkty i loty', duration: '07:00' },
+    { id: 'lekcja-3', title: 'Rodzaje zleceń', duration: '08:00' },
+    { id: 'lekcja-4', title: 'Dźwignia i ryzyko', duration: '09:00' },
+    { id: 'lekcja-5', title: 'Plan transakcyjny i dziennik', duration: '10:00' },
   ],
 };
 
@@ -38,10 +53,11 @@ const CFD: Course = {
   title: 'CFD',
   subtitle: 'Mechanika kontraktów, koszty, indeksy i surowce.',
   lessons: [
-    { id: 'cfd-01', title: 'Jak działają CFD?',              duration: '07:55' },
-    { id: 'cfd-02', title: 'Koszty i overnight',             duration: '06:40' },
-    { id: 'cfd-03', title: 'Indeksy i surowce',              duration: '10:20' },
-    { id: 'cfd-04', title: 'Risk & money management',        duration: '09:30' },
+    { id: 'lekcja-1', title: 'Wprowadzenie do CFD', duration: '06:00' },
+    { id: 'lekcja-2', title: 'Koszty i finansowanie overnight', duration: '07:00' },
+    { id: 'lekcja-3', title: 'Indeksy i surowce — specyfika', duration: '08:00' },
+    { id: 'lekcja-4', title: 'Realizacja zleceń i poślizg', duration: '09:00' },
+    { id: 'lekcja-5', title: 'Zarządzanie ryzykiem w CFD', duration: '10:00' },
   ],
 };
 
@@ -50,10 +66,11 @@ const ADV: Course = {
   title: 'Zaawansowane',
   subtitle: 'Edge/EV, testy OOS, automatyzacja i psychologia.',
   lessons: [
-    { id: 'adv-01', title: 'Edge i testy A/B strategii',     duration: '12:40' },
-    { id: 'adv-02', title: 'Backtest i walk-forward',        duration: '13:05' },
-    { id: 'adv-03', title: 'Automatyzacja sygnałów',         duration: '11:15' },
-    { id: 'adv-04', title: 'Psychologia i ryzyko portfela',  duration: '09:50' },
+    { id: 'lekcja-1', title: 'Edge i wartość oczekiwana (EV)', duration: '22:00' },
+    { id: 'lekcja-2', title: 'Backtest: OOS, walk-forward, unikanie przecieku', duration: '22:00' },
+    { id: 'lekcja-3', title: 'Statystyka wyników: rozkłady, DD, risk of ruin, Monte Carlo', duration: '22:00' },
+    { id: 'lekcja-4', title: 'Sizing pro: Kelly (częściowy), fixed-fractional, portfel i korelacje', duration: '22:00' },
+    { id: 'lekcja-5', title: 'Psychologia i operacyjka: rutyny, checklisty, dziennik', duration: '20:00' },
   ],
 };
 
@@ -74,6 +91,7 @@ const REGULACJE: Course = {
 // Możesz później dodać kolejne kursy (np. "materialy") – byle ID lekcji
 // były zdefiniowane w data/lessons/index.ts.
 export const COURSES: Record<string, Course> = {
+  [PODSTAWY.slug]: PODSTAWY,
   [FOREX.slug]: FOREX,
   [CFD.slug]: CFD,
   [ADV.slug]: ADV,

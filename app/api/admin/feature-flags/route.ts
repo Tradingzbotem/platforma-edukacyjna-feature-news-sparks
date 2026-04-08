@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getIsAdmin } from '@/lib/admin';
+import { FEATURE_CERTIFICATION_ACCESS } from '@/lib/features';
 import { sql } from '@vercel/postgres';
 
 export const dynamic = 'force-dynamic';
@@ -9,7 +10,7 @@ export const runtime = 'nodejs';
  * POST /api/admin/feature-flags
  * Body: {
  *   userId: string,
- *   feature: "decision_lab",
+ *   feature: "decision_lab" | "brief_decision" | "certification_access",
  *   enabled: boolean
  * }
  */
@@ -27,8 +28,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'INVALID_PARAMS' }, { status: 400 });
     }
 
-    // Validate feature name
-    if (feature !== 'decision_lab') {
+    const allowedFeatures = ['decision_lab', 'brief_decision', FEATURE_CERTIFICATION_ACCESS] as const;
+    if (!allowedFeatures.includes(feature as (typeof allowedFeatures)[number])) {
       return NextResponse.json({ ok: false, error: 'INVALID_FEATURE' }, { status: 400 });
     }
 

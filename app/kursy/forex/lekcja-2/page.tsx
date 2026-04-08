@@ -1,47 +1,8 @@
 'use client';
 
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
-
-/** Lokalny szablon – w TYM pliku */
-function LessonLayout({
-  coursePath, courseTitle, lessonNumber, title, minutes, children, prevSlug, nextSlug,
-}: {
-  coursePath: "forex" | "cfd" | "zaawansowane";
-  courseTitle: string;
-  lessonNumber: number;
-  title: string;
-  minutes: number;
-  children: ReactNode;
-  prevSlug?: string;
-  nextSlug?: string;
-}) {
-  return (
-    <main className="mx-auto max-w-4xl p-6 md:p-8 space-y-6">
-      <Link href={`/kursy/${coursePath}`} className="text-sm underline">← Wróć do spisu</Link>
-      <header className="space-y-1">
-        <p className="text-slate-400 text-sm">
-          <span>{courseTitle}</span>
-          <span> — </span>
-          <span>Lekcja</span> <span>{lessonNumber}</span>
-          <span> • ⏱ </span>
-          <span>{minutes}</span> <span>min</span>
-        </p>
-        <h1 className="text-3xl font-semibold">{title}</h1>
-      </header>
-      <article className="rounded-2xl border border-white/10 bg-[#0b1220] p-6 space-y-8">{children}</article>
-      <nav className="flex items-center justify-between">
-        {prevSlug ? (
-          <Link className="underline" href={`/kursy/${coursePath}/${prevSlug}`}>← Poprzednia lekcja</Link>
-        ) : <span/>}
-        {nextSlug ? (
-          <Link className="underline" href={`/kursy/${coursePath}/${nextSlug}`}>Następna lekcja →</Link>
-        ) : <span/>}
-      </nav>
-    </main>
-  );
-}
+import ForexCfdLessonLayout from "@/components/kursy/ForexCfdLessonLayout";
 
 /* ───────────────────── UI helpers ───────────────────── */
 function Card({ children }: { children: React.ReactNode }) {
@@ -126,9 +87,10 @@ export default function Page() {
   }, [riskCash, slPips, pipPerLotInAccount]);
 
   return (
-    <LessonLayout
+    <ForexCfdLessonLayout
       coursePath="forex"
       courseTitle="Forex"
+      lessonSlug="lekcja-2"
       lessonNumber={2}
       title="Pipsy, punkty i loty"
       minutes={16}
@@ -297,6 +259,6 @@ export default function Page() {
           <li>EURPLN, konto PLN: policz 1 pip/1 lot i 1 pip dla 0.12 lota.</li>
         </ol>
       </section>
-    </LessonLayout>
+    </ForexCfdLessonLayout>
   );
 }

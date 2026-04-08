@@ -143,12 +143,12 @@ export default async function AdminRedakcjaList({ searchParams }: SearchParams) 
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-8">
-			<div className="mb-6 flex items-center justify-between">
-				<div>
+			<div className="mb-6 flex items-center justify-between gap-4">
+				<div className="min-w-0">
 					<h1 className="text-2xl font-semibold tracking-tight">Redakcja — artykuły</h1>
 					<p className="text-sm text-white/60">Treści edukacyjne — bez porad inwestycyjnych.</p>
 				</div>
-				<div className="flex items-center gap-2">
+				<div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
 					<BackButton variant="pill" fallbackHref="/admin" />
 					<Link href="/redakcja" className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/15 border border-white/15">Zobacz publicznie</Link>
 					<GenerateArticleButton />

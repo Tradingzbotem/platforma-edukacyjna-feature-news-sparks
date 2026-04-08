@@ -2,6 +2,10 @@
 import { NextResponse } from 'next/server';
 import { buildDecisionBlockV1 } from '@/lib/decision-engine/buildDecisionBlock';
 import { parseDecisionHorizonMode } from '@/lib/decision-engine/horizonMode';
+import {
+	getLatestNewsContextForAsset,
+	type RedakcjaNewsPickDebug,
+} from '@/lib/redakcja/getLatestNewsContextForAsset';
 import type { ScenarioItem } from '@/lib/panel/scenariosABC';
 
 export const runtime = 'nodejs';
@@ -36,10 +40,22 @@ export async function GET(req: Request) {
 		}
 
 		const b = result.block;
+		let redakcjaNewsContext = null;
+		let redakcjaNewsPick: RedakcjaNewsPickDebug | null = null;
+		try {
+			const pick = await getLatestNewsContextForAsset(b.asset);
+			redakcjaNewsContext = pick.context;
+			redakcjaNewsPick = pick.pickDebug;
+		} catch {
+			redakcjaNewsContext = null;
+			redakcjaNewsPick = null;
+		}
+
 		return NextResponse.json(
 			{
 				ok: true,
 				block: b,
+				redakcjaNewsContext,
 				debug: {
 					sourcesUsed: b.sourcesUsed,
 					rulesApplied: b.rulesApplied,
@@ -47,6 +63,7 @@ export async function GET(req: Request) {
 					engineTrace: b.engineTrace,
 					selectedScenarioKey: b.selectedScenarioKey,
 					scenarioRuleId: b.scenarioRuleId,
+					redakcjaNewsPick,
 				},
 			},
 			{ status: 200, headers: { 'Cache-Control': 'no-store' } }

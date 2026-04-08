@@ -18,13 +18,16 @@ function buildHref(pathname: string, searchParams: URLSearchParams, category: Ca
 	return qs ? `${pathname}?${qs}` : pathname;
 }
 
-export default function CategoryTabs() {
+export default function CategoryTabs({ compact }: { compact?: boolean } = {}) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const active = (searchParams.get('cat') as CategoryKey) || 'Wszystkie';
 
 	return (
-		<nav aria-label="Kategorie artykułów" className="flex flex-wrap gap-2">
+		<nav
+			aria-label="Kategorie artykułów"
+			className={compact ? 'flex flex-wrap gap-1' : 'flex flex-wrap gap-2'}
+		>
 			{CATEGORIES.map((cat) => {
 				const isActive = active === cat;
 				return (
@@ -33,7 +36,9 @@ export default function CategoryTabs() {
 						href={buildHref(pathname, searchParams, cat)}
 						aria-current={isActive ? 'page' : undefined}
 						className={[
-							'px-3 py-1.5 rounded-full text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60',
+							compact
+								? 'px-2 py-0.5 rounded-full text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60'
+								: 'px-3 py-1.5 rounded-full text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60',
 							'border',
 							isActive
 								? 'bg-zinc-800/80 border-zinc-600 text-zinc-100'

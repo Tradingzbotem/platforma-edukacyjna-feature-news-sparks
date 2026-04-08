@@ -28,6 +28,8 @@ export function middleware(req: NextRequest) {
   const isPublicMarketPanel = pathname.startsWith('/konto/panel-rynkowy');
   // Stara zakładka z opisem pakietów (ebooki) dostępna publicznie
   const isPublicEbooki = pathname.startsWith('/ebooki');
+  // Publiczny przegląd rynku (nie mylić z /konto/panel-rynkowy)
+  const isPublicRynek = pathname.startsWith('/rynek');
   // Marketplace NFT (Founders) — podgląd ofert i formularz wystawienia bez logowania
   // Uwaga: zawężamy match, żeby nie whitelistingować przypadkowych ścieżek typu `/marketplace-x`.
   const isPublicMarketplace = pathname === '/marketplace' || pathname.startsWith('/marketplace/');
@@ -48,6 +50,13 @@ export function middleware(req: NextRequest) {
   // Cała sekcja prawna publiczna
   const isPublicLegalSection = pathname.startsWith('/prawne');
   const isPublicFAQ = pathname.startsWith('/faq') || pathname.startsWith('/zasoby/faq');
+  // Publiczna weryfikacja certyfikatów (bez logowania)
+  const isPublicCertificatesVerify = pathname.startsWith('/certificates/verify');
+  // Opis certyfikatu FXEDULAB dla wszystkich (bez modułu na koncie)
+  const isPublicCertFxedulabInfo = pathname === '/certyfikat-fxedulab' || pathname.startsWith('/certyfikat-fxedulab/');
+  // Publiczny landing edukacji (preview) — /edukacja oraz /{pl|en}/edukacja
+  const isPublicEducationPreview =
+    pathname === '/edukacja' || /^\/[a-z]{2}\/edukacja$/.test(pathname);
 
   const isWhitelisted =
     isAsset ||
@@ -56,6 +65,7 @@ export function middleware(req: NextRequest) {
     isPublicRankings ||
     isPublicMarketPanel ||
     isPublicEbooki ||
+    isPublicRynek ||
     isPublicMarketplace ||
     isPublicContact ||
     isPublicAbout ||
@@ -66,7 +76,10 @@ export function middleware(req: NextRequest) {
     isPublicPrivacy ||
     isPublicCookies ||
     isPublicLegalSection ||
-    isPublicFAQ;
+    isPublicFAQ ||
+    isPublicCertificatesVerify ||
+    isPublicCertFxedulabInfo ||
+    isPublicEducationPreview;
 
   // Uznajemy użytkownika za zalogowanego, jeśli istnieje sesja iron-session
   // lub (w trybie dev) legacy cookie 'auth' === '1'

@@ -4,9 +4,10 @@ import Link from "next/link";
 
 type Props = {
   slug: 'knf' | 'cysec' | 'przewodnik';
+  className?: string;
 };
 
-export default function ExamCTA({ slug }: Props) {
+export default function ExamCTA({ slug, className = '' }: Props) {
   const hrefMap: Record<Props['slug'], string> = {
     knf: '/kursy/egzaminy/knf/egzamin',
     cysec: '/kursy/egzaminy/cysec/egzamin',
@@ -20,7 +21,7 @@ export default function ExamCTA({ slug }: Props) {
   };
 
   return (
-    <div className="mt-8">
+    <div className={`mt-8 ${className}`.trim()}>
       <Link
         href={hrefMap[slug]}
         className="inline-flex items-center justify-center rounded-xl bg-white text-slate-900 font-semibold px-6 py-3 hover:opacity-90 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5"

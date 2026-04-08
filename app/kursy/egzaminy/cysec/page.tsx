@@ -1,15 +1,26 @@
 'use client';
 
-import ExamCTA from '../../../components/ExamCTA';
+import ExamCTA from '@/components/ExamCTA';
 import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import ExamTrackHero from '@/components/kursy/exam-track/ExamTrackHero';
+import ExamTrackOverviewCard from '@/components/kursy/exam-track/ExamTrackOverviewCard';
+import ExamTrackProgress from '@/components/kursy/exam-track/ExamTrackProgress';
+import ExamTrackSidebar from '@/components/kursy/exam-track/ExamTrackSidebar';
+import ExamMaterialsLibrary from '@/components/education/ExamMaterialsLibrary';
+import {
+  ExamTrackMaterialsPanel,
+  ExamTrackPracticePanel,
+} from '@/components/kursy/exam-track/ExamTrackBottomPanels';
+import { parseExamBlockTitle } from '@/components/kursy/exam-track/examTrackDisplay';
+import { getExamBlockMeta } from '@/lib/examTrackBlockMeta';
 import { LESSONS } from './data';
 
 const AUTH_KEY = 'auth:pro';
 const PROGRESS_KEY = 'course:egz:cysec:done';
+const EGZAMINY_INDEX_HREF = '/kursy/egzaminy';
 
-/** Minimalny typ lekcji – dokładnie te pola są używane przez widok */
 type LessonItem = {
   id: string;
   title: string;
@@ -18,22 +29,31 @@ type LessonItem = {
   content?: ReactNode | string;
 };
 
-// Informujemy TS, jakich pól oczekujemy (dane pozostają bez zmian)
 const LESSON_LIST = LESSONS as unknown as LessonItem[];
 
-function Card({
-  children,
-  className = '',
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={`rounded-2xl bg-[#0b1220] border border-white/10 p-6 ${className}`}>
-      {children}
-    </section>
-  );
-}
+const CYSEC_MATERIALS = [
+  {
+    title: 'Checklisty compliance CIF',
+    description: 'Licencja, kapitał, funkcje kontrolne, outsourcing, skargi klientów — operacyjnie.',
+    href: '/materialy/cysec/checklisty',
+    type: 'checklist' as const,
+  },
+  {
+    title: 'Notatki CySEC / CIF',
+    description: 'Circulars, CFD/marketing, governance — co egzamin lubi powtórzyć.',
+    href: '/materialy/cysec/notatki',
+    type: 'notes' as const,
+  },
+  {
+    title: 'Ściąga CySEC',
+    description: 'Szybkie hasła i wzorce pod test w środowisku cypryjskim.',
+    href: '/materialy/cysec/sciaga',
+    type: 'cheatsheet' as const,
+  },
+];
+
+const primaryCtaClass =
+  'inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:border-amber-500/25 hover:bg-amber-500/[0.08]';
 
 function Lock({ show }: { show: boolean }) {
   if (!show) return null;
@@ -66,12 +86,10 @@ function Lock({ show }: { show: boolean }) {
 export default function Page() {
   const router = useRouter();
   const firstId = LESSON_LIST[0]?.id ?? 'intro';
-  const [pro, setPro] = useState(false);
   const [active, setActive] = useState<string>(firstId);
   const [done, setDone] = useState<string[]>([]);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
-  // Sprawdź autoryzację po stronie klienta
   useEffect(() => {
     let isActive = true;
     (async () => {
@@ -85,7 +103,7 @@ export default function Page() {
           return;
         }
         const data = await res.json().catch(() => ({}));
-        if (!Boolean((data as any)?.isLoggedIn)) {
+        if (!Boolean((data as { isLoggedIn?: boolean })?.isLoggedIn)) {
           if (isActive) router.push('/logowanie');
           return;
         }
@@ -94,11 +112,12 @@ export default function Page() {
         if (isActive) router.push('/logowanie');
       }
     })();
-    return () => { isActive = false; };
+    return () => {
+      isActive = false;
+    };
   }, [router]);
 
   useEffect(() => {
-    setPro(localStorage.getItem(AUTH_KEY) === '1');
     try {
       const raw = localStorage.getItem(PROGRESS_KEY);
       if (raw) setDone(JSON.parse(raw));
@@ -107,12 +126,16 @@ export default function Page() {
     }
   }, []);
 
-  // Wszystkie hooki muszą być przed warunkowym returnem
   const l =
-    useMemo(() => LESSON_LIST.find((x) => x.id === active) ?? LESSON_LIST[0], [active]) ??
-    { id: 'intro', title: 'Wprowadzenie', minutes: 0, free: true, content: null };
+    useMemo(() => LESSON_LIST.find((x) => x.id === active) ?? LESSON_LIST[0], [active]) ?? {
+      id: 'intro',
+      title: 'Wprowadzenie',
+      minutes: 0,
+      free: true,
+      content: null,
+    };
 
-  const locked = false; // Odblokowane - wszystkie treści dostępne po zalogowaniu
+  const locked = false;
 
   const progress = useMemo(() => {
     const total = LESSON_LIST.length || 1;
@@ -127,6 +150,12 @@ export default function Page() {
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
   };
 
+  const lessonIndex = LESSON_LIST.findIndex((x) => x.id === l.id) + 1;
+  const { blockLabel } = parseExamBlockTitle(l.title, lessonIndex);
+  const blockMeta = getExamBlockMeta('cysec', l.id);
+
+  const durationLabel = typeof l.minutes === 'number' ? `${l.minutes} min` : undefined;
+
   if (!isAuthChecked) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
@@ -138,115 +167,98 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <div className="mx-auto max-w-6xl p-6 md:p-8 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <Link href="/kursy" className="text-sm underline">
-            ← Wróć do kursów
-          </Link>
-          <h1 className="mt-2 text-3xl font-semibold">CySEC — ścieżka nauki</h1>
-          <p className="text-slate-300">CIF, marketing, ochrona klienta, cross-border.</p>
-        </div>
-        <div className="text-right">
-          <div className="text-sm text-slate-300">Postęp</div>
-          <div className="mt-1 w-48 h-2 rounded bg-white/10 overflow-hidden">
-            <div className="h-full bg-white" style={{ width: `${Math.min(100, progress)}%` }} />
-          </div>
-          <div className="mt-1 text-sm text-slate-300">{Math.min(100, progress)}%</div>
-        </div>
-      </div>
+        <Link
+          href="/kursy"
+          className="text-sm text-slate-400 underline-offset-4 transition-colors hover:text-white hover:underline"
+        >
+          ← Wróć do kursów
+        </Link>
 
-      <div className="mt-6 grid lg:grid-cols-[320px_1fr] gap-6">
-        <Card>
-          <h2 className="text-lg font-semibold">Program kursu</h2>
-          <ul className="mt-4 space-y-2">
-            {LESSON_LIST.map((m) => {
-              const act = m.id === active;
-              const isDone = done.includes(m.id);
-              return (
-                <li key={m.id}>
-                  <button
-                    onClick={() => setActive(m.id)}
-                    className={`w-full text-left rounded-xl px-3 py-2 border transition-all duration-200 ${
-                      act ? 'bg-white text-slate-900 border-white shadow-md' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{m.title}</span>
-                      </div>
-                      <span className="text-xs text-slate-300">
-                        {m.minutes ?? '—'} min {isDone ? '• ✓' : ''}
-                      </span>
-                    </div>
-                  </button>
-                </li>
-              );
+        <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <ExamTrackHero
+              badge="Compliance"
+              title="CySEC — ścieżka CIF"
+              subtitle="Przygotowanie pod nadzór cypryjski i praktykę w firmach inwestycyjnych: CIF, marketing CFD, outsourcing i obsługa skarg w modelu compliance."
+              tracksHref={EGZAMINY_INDEX_HREF}
+              tracksLabel="Mapa ścieżek"
+            />
+          </div>
+          <ExamTrackProgress percent={Math.min(100, progress)} />
+        </div>
+
+        <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-4 py-3 text-sm leading-relaxed text-slate-200">
+          <p className="font-semibold text-white">To nie jest kurs.</p>
+          <p className="mt-1 text-slate-300">
+            To jest przygotowanie i symulacja egzaminu regulacyjnego.
+          </p>
+        </div>
+
+        <div className="mt-8 grid lg:grid-cols-[320px_1fr] gap-6 lg:gap-8">
+          <ExamTrackSidebar
+            items={LESSON_LIST.map((m, idx) => {
+              const i = idx + 1;
+              const { blockLabel: bl, displayTitle: dt } = parseExamBlockTitle(m.title, i);
+              return {
+                key: m.id,
+                blockLabel: bl,
+                title: dt,
+                minutes: typeof m.minutes === 'number' ? m.minutes : undefined,
+                done: done.includes(m.id),
+                active: m.id === active,
+                onSelect: () => setActive(m.id),
+              };
             })}
-          </ul>
-        </Card>
+          />
 
-        <div className="relative">
-          <Card>
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">{l.title}</h2>
-                <p className="text-slate-400 text-sm">
-                  <span>Szacowany czas:</span> <span>{l.minutes ?? 0}</span> <span>min</span>
-                </p>
-              </div>
-              <button
-                onClick={toggleDone}
-                className={`px-3 py-1.5 rounded-lg font-semibold ${
-                  done.includes(l.id)
-                    ? 'bg-green-400 text-slate-900 hover:opacity-90'
-                    : 'bg-white/10 hover:bg-white/20'
-                }`}
-              >
-                {done.includes(l.id) ? '✓ Ukończono' : 'Oznacz jako ukończone'}
-              </button>
-            </div>
-            <div className="mt-4">{l.content ?? null}</div>
-            <Lock show={locked} />
-          </Card>
-
-          <div className="mt-6 grid md:grid-cols-2 gap-6">
-            <Card>
-              <h3 className="text-lg font-semibold">Materiały</h3>
-              <ul className="mt-2 list-disc pl-6 text-slate-300">
-                <li>
-                  <a href="/materialy/cysec/circulars-podsumowanie.pdf" target="_blank" rel="noreferrer">
-                    Circulars — podsumowanie (PDF)
-                  </a>
-                </li>
-                <li>
-                  <a href="/materialy/cysec/wytyczne-marketing-cfd.pdf" target="_blank" rel="noreferrer">
-                    Wytyczne marketing. CFD (PDF)
-                  </a>
-                </li>
-                <li>
-                  <a href="/materialy/cysec/lista-kontroli-compliance.docx" target="_blank" rel="noreferrer">
-                    Lista kontroli (DOCX)
-                  </a>
-                </li>
-              </ul>
-            </Card>
-            <Card>
-              <h3 className="text-lg font-semibold">Egzamin próbny</h3>
-              <p className="text-slate-300">20 pytań z case’ami marketing/compliance.</p>
-              <div className="mt-3">
-                <Link
-                  href="/kursy/egzaminy/cysec/egzamin"
-                  className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 inline-block"
+          <div className="relative space-y-8">
+            <ExamTrackOverviewCard
+              eyebrow="Cyprus Investment Firms"
+              blockLabel={blockLabel}
+              title={l.title}
+              durationLabel={durationLabel}
+              meta={blockMeta}
+              actions={
+                <button
+                  type="button"
+                  onClick={toggleDone}
+                  className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition-opacity ${
+                    done.includes(l.id)
+                      ? 'bg-emerald-400/90 text-slate-900 hover:opacity-90'
+                      : 'border border-white/15 bg-white/5 text-white hover:border-white/25 hover:bg-white/10'
+                  }`}
+                  title={
+                    done.includes(l.id) ? 'Cofnij status zaliczenia' : 'Oznacz moduł jako opanowany'
+                  }
                 >
-                  Uruchom test
+                  {done.includes(l.id) ? '✓ Zaliczone' : 'Oznacz jako zaliczone'}
+                </button>
+              }
+              lockOverlay={<Lock show={locked} />}
+            >
+              {l.content ?? null}
+            </ExamTrackOverviewCard>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <ExamTrackMaterialsPanel>
+                <ExamMaterialsLibrary items={CYSEC_MATERIALS} />
+              </ExamTrackMaterialsPanel>
+              <ExamTrackPracticePanel
+                title="Egzamin próbny"
+                description="Dwadzieścia pytań z case’ami marketingowymi, governance i ochroną klienta — format zbliżony do rzeczywistych testów wewnętrznych."
+              >
+                <Link href="/kursy/egzaminy/cysec/egzamin" className={primaryCtaClass}>
+                  Uruchom symulację
                 </Link>
-              </div>
-            </Card>
+              </ExamTrackPracticePanel>
+            </div>
           </div>
         </div>
-      </div>
 
-      <ExamCTA slug="cysec" />
+        <ExamCTA
+          slug="cysec"
+          className="rounded-2xl border border-white/10 bg-[#0b1220] px-5 py-5 md:px-6"
+        />
       </div>
     </main>
   );

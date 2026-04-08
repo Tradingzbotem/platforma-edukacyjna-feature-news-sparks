@@ -1,5 +1,6 @@
 // app/konto/panel-rynkowy/kalendarz-7-dni/page.tsx — Moduł: Kalendarz 7 dni (EDU)
 import Link from 'next/link';
+import { PanelModuleNav } from '@/components/panel/PanelModuleNav';
 import { cookies, headers } from 'next/headers';
 import { getSession } from '@/lib/session';
 import { CALENDAR_7D, type CalendarEvent } from '@/lib/panel/calendar7d';
@@ -116,7 +117,10 @@ function importanceBadge(importance: CalendarEvent['importance']) {
   );
 }
 
-export default async function Page() {
+type PageSearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function Page({ searchParams }: { searchParams?: PageSearchParams }) {
+  const sp = (await searchParams) ?? {};
   const session = await getSession();
   const c = await cookies();
 
@@ -165,27 +169,8 @@ export default async function Page() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        {/* breadcrumbs */}
-        <div className="flex items-center gap-3 text-sm text-white/70">
-          <Link href="/" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40 rounded">
-            ← Strona główna
-          </Link>
-          <span className="text-white/30">/</span>
-          <Link href="/konto/panel-rynkowy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40 rounded">
-            Panel (EDU)
-          </Link>
-          <span className="text-white/30">/</span>
-          <span className="text-white/70">Kalendarz</span>
-        </div>
-
-        {/* back */}
-        <div className="mt-3">
-          <Link
-            href="/konto/panel-rynkowy"
-            className="inline-flex items-center text-sm text-white/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40 rounded"
-          >
-            ← Wróć do Panelu (EDU)
-          </Link>
+        <div className="mt-1">
+          <PanelModuleNav searchParams={sp} moduleTitle="Kalendarz" />
         </div>
 
         {/* header */}

@@ -10,6 +10,10 @@ import { sql } from '@vercel/postgres';
 import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
+import {
+	buildEditorialImagePrompt,
+	type EditorialCoverImageCategory,
+} from '@/lib/redakcja/editorialCoverImagePrompt';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // DALL-E może zająć trochę czasu
@@ -191,62 +195,35 @@ async function saveImageToMediaLibrary(
 	return null;
 }
 
-function sanitizeTitleForImagePrompt(title: string): string {
-	let t = title;
-	// Najczęstsze przypadki z realnymi nazwiskami, które często triggerują filtry obrazów
-	const replacements: Array<[RegExp, string]> = [
-		[/\bDonald\s+Trump\b/gi, 'a US political figure'],
-		[/\bJoe\s+Biden\b/gi, 'a US political figure'],
-		[/\bVladimir\s+Putin\b/gi, 'a world leader'],
-		[/\bVolodymyr\s+Zelensky\b/gi, 'a world leader'],
-	];
-	for (const [re, rep] of replacements) t = t.replace(re, rep);
-	// Jeśli dalej wygląda jak "Imię Nazwisko", usuń nazwisko (heurystyka)
-	if (/\b[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+\s+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+\b/.test(t)) {
-		t = t.replace(/\b([A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+)\s+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]+\b/g, '$1 (public figure)');
-	}
-	return t.trim();
-}
+const EDITORIAL_IMAGE_CATEGORIES = new Set<EditorialCoverImageCategory>([
+	'forex',
+	'giełda',
+	'surowce',
+	'makro',
+	'wiadomości',
+]);
 
-function buildPrompt(title: string, tags: string[], variant: 'primary' | 'safe'): string {
-	const tagStr = tags.slice(0, 2).join(', ');
-	const subject = variant === 'safe' ? sanitizeTitleForImagePrompt(title) : title;
-
-	if (variant === 'safe') {
-		return [
-			'Create a professional, modern editorial cover illustration for an article.',
-			`Article subject: "${subject}".`,
-			tagStr ? `Optional context tags: ${tagStr}.` : null,
-			'Style: clean, minimalist, modern, high-quality.',
-			'Use symbolic / conceptual elements that match the subject.',
-			'Do NOT depict any real person or recognizable face. No portraits.',
-			'No text, no logos, no watermarks, no charts.',
-		]
-			.filter(Boolean)
-			.join(' ');
-	}
-
-	return [
-		'Create a professional, modern editorial cover illustration for an article.',
-		`Article subject: "${subject}".`,
-		tagStr ? `Optional context tags: ${tagStr}.` : null,
-		'Style: clean, minimalist, editorial, high-quality, modern.',
-		'Focus on the main subject implied by the title.',
-		'No text, no logos, no watermarks, no charts.',
-		'Important: do NOT depict real people or recognizable faces; use conceptual symbolism instead.',
-	]
-		.filter(Boolean)
-		.join(' ');
+function coerceEditorialImageCategory(value: unknown): EditorialCoverImageCategory | undefined {
+	if (typeof value !== 'string') return undefined;
+	const s = value.trim();
+	return EDITORIAL_IMAGE_CATEGORIES.has(s as EditorialCoverImageCategory) ? (s as EditorialCoverImageCategory) : undefined;
 }
 
 async function generateImageWithDALLE(
 	apiKey: string,
 	title: string,
-	tags: string[]
+	tags: string[],
+	opts?: { summary?: string; category?: EditorialCoverImageCategory }
 ): Promise<{ url: string; alt: string; persisted: boolean } | null> {
 	const openai = new OpenAI({ apiKey });
 
-	const prompt = buildPrompt(title, tags, 'primary');
+	const prompt = buildEditorialImagePrompt({
+		title,
+		tags,
+		summary: opts?.summary,
+		category: opts?.category,
+		variant: 'primary',
+	});
 
 	try {
 		let response: any;
@@ -261,7 +238,13 @@ async function generateImageWithDALLE(
 		} catch (e: any) {
 			// Jeśli filtr zablokował prompt (częste przy nazwiskach), spróbuj bezpieczniejszego wariantu.
 			if (isContentFilterBlock(e)) {
-				const safePrompt = buildPrompt(title, tags, 'safe');
+				const safePrompt = buildEditorialImagePrompt({
+					title,
+					tags,
+					summary: opts?.summary,
+					category: opts?.category,
+					variant: 'safe',
+				});
 				response = await openai.images.generate({
 					model: 'dall-e-3',
 					prompt: safePrompt,
@@ -323,6 +306,8 @@ export async function POST(request: Request) {
 
 	const title = coerceString(payload?.title).trim();
 	const tags = parseTags(payload?.tags);
+	const summary = coerceString(payload?.summary).trim();
+	const category = coerceEditorialImageCategory(payload?.category);
 
 	if (!title) {
 		return NextResponse.json({ ok: false, error: 'BAD_REQUEST', message: 'Missing "title".' }, { status: 400 });
@@ -330,7 +315,10 @@ export async function POST(request: Request) {
 
 	let image: { url: string; alt: string; persisted: boolean } | null = null;
 	try {
-		image = await generateImageWithDALLE(apiKey, title, tags);
+		image = await generateImageWithDALLE(apiKey, title, tags, {
+			...(summary ? { summary } : {}),
+			...(category ? { category } : {}),
+		});
 	} catch (e: any) {
 		if (isContentFilterBlock(e)) {
 			return NextResponse.json(

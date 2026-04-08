@@ -1,29 +1,30 @@
 // app/client/layout.tsx
 import type { ReactNode } from "react";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import KontoHeader from "@/app/konto/KontoHeader";
+import { FEATURE_CERTIFICATION_ACCESS, hasFeature } from "@/lib/features";
 import { getSession } from "@/lib/session";
-import SlowDataNotice from "@/components/SlowDataNotice";
 
 export default async function ClientLayout({ children }: { children: ReactNode }) {
   // Użyj iron-session, aby wiarygodnie potwierdzić logowanie
-  let isLoggedIn = false;
+  let userId: string | undefined;
   try {
     const s = await getSession();
-    isLoggedIn = Boolean(s.userId);
+    userId = s.userId;
   } catch {
-    // brak SESSION_PASSWORD itp. -> traktuj jako niezalogowany
-    isLoggedIn = false;
+    userId = undefined;
   }
 
-  if (!isLoggedIn) {
+  if (!userId) {
     redirect("/logowanie?next=/client");
   }
 
+  const certificationAccess = await hasFeature(userId, FEATURE_CERTIFICATION_ACCESS);
+
   return (
     <>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
-        <SlowDataNotice />
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-8">
+        <KontoHeader certificationAccess={certificationAccess} />
       </div>
       {children}
     </>

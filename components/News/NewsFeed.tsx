@@ -8,6 +8,8 @@ type Props = {
   showMiniCharts: boolean;
 };
 
+const ARCHIVE_PREVIEW_COUNT = 7;
+
 function Tooltip({ children, content }: { children: React.ReactNode; content: string }) {
   const [show, setShow] = useState(false);
   return (
@@ -95,13 +97,139 @@ function formatTimeAgo(date: string): string {
   return new Date(date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' });
 }
 
+function NewsArticleCard({ it, showMiniCharts }: { it: NewsItemEnriched; showMiniCharts: boolean }) {
+  return (
+    <article className="group rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/50 to-slate-950/50 backdrop-blur-sm p-5 hover:border-white/20 transition-all">
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 text-xs text-white/70">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span className="uppercase font-medium">{it.source}</span>
+          </span>
+          <time dateTime={it.publishedAt} className="text-xs text-white/50">
+            {formatTimeAgo(it.publishedAt)}
+          </time>
+          {it.category && (
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] text-white/70 font-medium">
+              {it.category}
+            </span>
+          )}
+        </div>
+        {typeof it.timeEdge === 'number' && it.timeEdge >= 7 && (
+          <span className="rounded-full bg-emerald-500/20 text-emerald-300 px-2 py-0.5 text-[10px] font-semibold">
+            NOW
+          </span>
+        )}
+      </div>
+
+      <h3 className="text-lg font-bold mb-2 leading-snug group-hover:text-white transition-colors">{it.title}</h3>
+      {it.summaryShort && (
+        <p className="text-sm text-white/70 leading-relaxed mb-4 line-clamp-2">{it.summaryShort}</p>
+      )}
+
+      {(it.instruments || []).length > 0 && (
+        <div className="mb-4">
+          <div className="text-xs text-white/50 mb-2">Instrumenty:</div>
+          <div className="flex flex-wrap items-center gap-2">
+            {(it.instruments || []).slice(0, 8).map((sym) => (
+              <span
+                key={sym}
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-300 font-medium"
+              >
+                {formatInstrument(sym)}
+              </span>
+            ))}
+            {(it.instruments || []).length > 8 && (
+              <span className="text-xs text-white/50">+{(it.instruments || []).length - 8} więcej</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-black/20 border border-white/5 mb-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-white/60 font-medium">Impact</span>
+            <span className="text-xs text-white/40">
+              ({Math.max(1, Math.min(5, Number(it.impact || 1)))}/5)
+            </span>
+          </div>
+          <ImpactDots value={it.impact} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-white/60 font-medium">TimeEdge</span>
+            <span className="text-xs text-white/40">
+              ({Math.max(0, Math.min(10, Number(it.timeEdge || 0)))}/10)
+            </span>
+          </div>
+          <TimeEdgeBar value={it.timeEdge} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <span className="text-xs text-white/60 font-medium">Sentiment</span>
+          <SentimentBadge value={it.sentiment} />
+        </div>
+      </div>
+
+      {!!it.impacts?.length && (
+        <div className="mb-4 p-3 rounded-lg bg-white/5 border border-white/5">
+          <div className="text-xs text-white/50 mb-2 font-medium">Szczegółowy wpływ:</div>
+          <ul className="space-y-2">
+            {it.impacts.slice(0, 4).map((im, idx) => (
+              <li key={`${im.symbol}-${idx}`} className="flex items-start gap-2 text-sm">
+                <span className="inline-flex items-center rounded-md bg-emerald-400/20 text-emerald-300 px-2 py-0.5 text-xs font-medium">
+                  {formatInstrument(im.symbol)}
+                </span>
+                <span className="text-white/80 flex-1">{im.effect}</span>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded ${
+                    im.direction === 'up'
+                      ? 'bg-emerald-500/20 text-emerald-300'
+                      : im.direction === 'down'
+                        ? 'bg-rose-500/20 text-rose-300'
+                        : 'bg-white/10 text-white/60'
+                  }`}
+                >
+                  {im.direction === 'up' ? '↑' : im.direction === 'down' ? '↓' : '→'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between pt-3 border-t border-white/5">
+        <a
+          href={it.url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 text-sm text-sky-400 hover:text-sky-300 font-medium transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          Czytaj źródło
+        </a>
+        {showMiniCharts && <div className="h-8 w-32 rounded bg-black/30 border border-white/5" />}
+      </div>
+    </article>
+  );
+}
+
 export default function NewsFeed({ items, showMiniCharts }: Props) {
+  const [archiveExpanded, setArchiveExpanded] = useState(false);
+
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/50 to-slate-950/50 backdrop-blur-sm p-12 text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 mb-4">
           <svg className="w-8 h-8 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+            />
           </svg>
         </div>
         <h3 className="text-lg font-semibold mb-2">Brak wiadomości</h3>
@@ -110,138 +238,41 @@ export default function NewsFeed({ items, showMiniCharts }: Props) {
     );
   }
 
+  const needsArchiveToggle = items.length > ARCHIVE_PREVIEW_COUNT;
+  const visibleItems = archiveExpanded || !needsArchiveToggle ? items : items.slice(0, ARCHIVE_PREVIEW_COUNT);
+
   return (
-    <section className="space-y-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Wiadomości ({items.length})</h2>
-        <div className="text-xs text-white/50">
-          Sortowane według TimeEdge (najświeższe pierwsze)
-        </div>
+    <section className="rounded-2xl border border-white/10 bg-slate-950/30 ring-1 ring-white/5 overflow-hidden">
+      <div className="px-5 pt-5 pb-4 border-b border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-transparent">
+        <h2 className="text-lg font-semibold text-white tracking-tight">Archiwum wiadomości</h2>
+        <p className="mt-1.5 text-sm text-white/55 max-w-2xl leading-relaxed">
+          Pełna lista newsów z bieżącego okna czasowego. Sortowanie: TimeEdge (najświeższe pierwsze).
+        </p>
+        <p className="mt-2 text-xs text-white/40">{items.length} pozycji</p>
       </div>
-      {items.map((it) => (
-        <article key={it.id} className="group rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/50 to-slate-950/50 backdrop-blur-sm p-5 hover:border-white/20 transition-all">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4 mb-3">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 text-xs text-white/70">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                <span className="uppercase font-medium">{it.source}</span>
-              </span>
-              <time dateTime={it.publishedAt} className="text-xs text-white/50">
-                {formatTimeAgo(it.publishedAt)}
-              </time>
-              {it.category && (
-                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] text-white/70 font-medium">
-                  {it.category}
-                </span>
-              )}
-            </div>
-            {typeof it.timeEdge === 'number' && it.timeEdge >= 7 && (
-              <span className="rounded-full bg-emerald-500/20 text-emerald-300 px-2 py-0.5 text-[10px] font-semibold">
-                NOW
-              </span>
-            )}
-          </div>
 
-          {/* Title & Summary */}
-          <h3 className="text-lg font-bold mb-2 leading-snug group-hover:text-white transition-colors">
-            {it.title}
-          </h3>
-          {it.summaryShort && (
-            <p className="text-sm text-white/70 leading-relaxed mb-4 line-clamp-2">
-              {it.summaryShort}
-            </p>
-          )}
+      <div className="p-5 space-y-4">
+        {visibleItems.map((it) => (
+          <NewsArticleCard key={it.id} it={it} showMiniCharts={showMiniCharts} />
+        ))}
+      </div>
 
-          {/* Instruments */}
-          {(it.instruments || []).length > 0 && (
-            <div className="mb-4">
-              <div className="text-xs text-white/50 mb-2">Instrumenty:</div>
-              <div className="flex flex-wrap items-center gap-2">
-                {(it.instruments || []).slice(0, 8).map(sym => (
-                  <span
-                    key={sym}
-                    className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-xs text-emerald-300 font-medium"
-                  >
-                    {formatInstrument(sym)}
-                  </span>
-                ))}
-                {(it.instruments || []).length > 8 && (
-                  <span className="text-xs text-white/50">
-                    +{(it.instruments || []).length - 8} więcej
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-black/20 border border-white/5 mb-4">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-white/60 font-medium">Impact</span>
-                <span className="text-xs text-white/40">({Math.max(1, Math.min(5, Number(it.impact || 1)))}/5)</span>
-              </div>
-              <ImpactDots value={it.impact} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-white/60 font-medium">TimeEdge</span>
-                <span className="text-xs text-white/40">({Math.max(0, Math.min(10, Number(it.timeEdge || 0)))}/10)</span>
-              </div>
-              <TimeEdgeBar value={it.timeEdge} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <span className="text-xs text-white/60 font-medium">Sentiment</span>
-              <SentimentBadge value={it.sentiment} />
-            </div>
-          </div>
-
-          {/* Impacts */}
-          {!!it.impacts?.length && (
-            <div className="mb-4 p-3 rounded-lg bg-white/5 border border-white/5">
-              <div className="text-xs text-white/50 mb-2 font-medium">Szczegółowy wpływ:</div>
-              <ul className="space-y-2">
-                {it.impacts.slice(0, 4).map((im, idx) => (
-                  <li key={`${im.symbol}-${idx}`} className="flex items-start gap-2 text-sm">
-                    <span className="inline-flex items-center rounded-md bg-emerald-400/20 text-emerald-300 px-2 py-0.5 text-xs font-medium">
-                      {formatInstrument(im.symbol)}
-                    </span>
-                    <span className="text-white/80 flex-1">{im.effect}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded ${
-                      im.direction === 'up' ? 'bg-emerald-500/20 text-emerald-300' :
-                      im.direction === 'down' ? 'bg-rose-500/20 text-rose-300' :
-                      'bg-white/10 text-white/60'
-                    }`}>
-                      {im.direction === 'up' ? '↑' : im.direction === 'down' ? '↓' : '→'}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-3 border-t border-white/5">
-            <a
-              href={it.url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-sky-400 hover:text-sky-300 font-medium transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-              Czytaj źródło
-            </a>
-            {showMiniCharts && (
-              <div className="h-8 w-32 rounded bg-black/30 border border-white/5" />
-            )}
-          </div>
-        </article>
-      ))}
+      {needsArchiveToggle && (
+        <div className="px-5 pb-5 pt-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-white/[0.06] mt-0">
+          <p className="text-xs text-white/45 pt-4 sm:pt-0">
+            {archiveExpanded
+              ? `Wyświetlono wszystkie ${items.length} wiadomości.`
+              : `Podgląd: ${ARCHIVE_PREVIEW_COUNT} z ${items.length}.`}
+          </p>
+          <button
+            type="button"
+            onClick={() => setArchiveExpanded((e) => !e)}
+            className="shrink-0 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-white/90 hover:bg-white/10 hover:border-white/25 transition-colors"
+          >
+            {archiveExpanded ? 'Zwiń archiwum' : 'Rozwiń archiwum'}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
-
-

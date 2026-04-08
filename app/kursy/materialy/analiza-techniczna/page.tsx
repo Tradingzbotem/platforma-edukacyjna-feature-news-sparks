@@ -1,82 +1,65 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { Metadata } from "next";
 
-function ArticleLayout({
-  backHref, title, minutes, children,
-}: { backHref: string; title: string; minutes: number; children: ReactNode }) {
-  return (
-    <main className="mx-auto max-w-4xl p-6 md:p-8 space-y-6">
-      <Link href={backHref} className="text-sm underline">← Wróć do materiałów</Link>
-      <header className="space-y-1">
-        <p className="text-slate-400 text-sm">Materiały dodatkowe • ⏱ {minutes} min</p>
-        <h1 className="text-3xl font-semibold">{title}</h1>
-      </header>
-      <article className="rounded-2xl bg-[#0b1220] border border-white/10 p-6 space-y-8">{children}</article>
-    </main>
-  );
-}
+import MaterialyModulModuleLessonGrid from "@/components/materialy-modul/MaterialyModulModuleLessonGrid";
+import MaterialyModulModuleProgress from "@/components/materialy-modul/MaterialyModulModuleProgress";
+import { ANALIZA_TECHNICZNA_COURSE_ID } from "@/lib/courseProgressClient";
+
+import { ANALIZA_LEKCJE } from "./lessons";
+
+export const metadata: Metadata = {
+  title: "Analiza techniczna — spis lekcji | Materiały",
+  description: "Fundamenty czytania rynku: struktura, strefy, price action i zarządzanie pozycją.",
+};
 
 export default function Page() {
+  const lessons = ANALIZA_LEKCJE.map(({ slug, title, blurb, minutes }) => ({
+    slug,
+    title,
+    blurb,
+    minutes,
+  }));
+  const lessonSlugs = lessons.map((l) => l.slug);
+
   return (
-    <ArticleLayout
-      backHref="/kursy/materialy"
-      minutes={18}
-      title="Analiza techniczna — fundamenty i praktyka"
-    >
-      <section>
-        <h2 className="text-xl font-semibold">1) Trend i struktura rynku</h2>
-        <ul className="mt-2 list-disc pl-6">
-          <li><strong>Trend</strong>: HH/HL (wzrost), LH/LL (spadek). Handel z kierunkiem zwiększa WR.</li>
-          <li><strong>Struktura</strong>: swing high/low, wybicia, re-testy, konsolidacje.</li>
-          <li><strong>Multi-timeframe</strong>: HTF daje bias; entry na LTF, ale w zgodzie z HTF.</li>
-        </ul>
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 md:py-12 lg:px-8 animate-fade-in">
+      <Link
+        href="/kursy"
+        className="inline-flex text-sm text-slate-300 underline-offset-4 transition-colors hover:text-white hover:underline"
+      >
+        ← Wróć do kursów
+      </Link>
+
+      <section className="relative mt-6 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b1220] via-[#0a0f1a] to-[#080d16] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] md:p-8 md:shadow-lg">
+        <div
+          className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-indigo-500/10 blur-3xl"
+          aria-hidden
+        />
+        <header className="relative">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-indigo-200/80">Materiały · moduł</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white md:text-4xl">Analiza techniczna — spis lekcji</h1>
+          <p className="mt-3 max-w-2xl text-pretty text-sm leading-relaxed text-slate-300 md:text-base">
+            Fundamenty czytania rynku: struktura, strefy, price action i zarządzanie pozycją. Zacznij od lekcji 1 i idź po kolei.
+          </p>
+        </header>
+
+        <MaterialyModulModuleProgress courseId={ANALIZA_TECHNICZNA_COURSE_ID} lessonSlugs={lessonSlugs} />
       </section>
 
-      <section>
-        <h2 className="text-xl font-semibold">2) S/R, strefy popytu/podaży</h2>
-        <ul className="mt-2 list-disc pl-6">
-          <li>Poziomy z wielokrotną reakcją są najcenniejsze.</li>
-          <li>Myśl „strefami”, nie kreskami (miejsce na spread/poślizg).</li>
-          <li>Konfluencja: S/R + trend + PA → lepsze EV niż sam „sygnał”.</li>
-        </ul>
-      </section>
+      <MaterialyModulModuleLessonGrid
+        courseId={ANALIZA_TECHNICZNA_COURSE_ID}
+        moduleBasePath="/kursy/materialy/analiza-techniczna"
+        lessons={lessons}
+      />
 
-      <section>
-        <h2 className="text-xl font-semibold">3) Price Action i setupy</h2>
-        <ul className="mt-2 list-disc pl-6">
-          <li>Wybicia z akumulacji/dystrybucji (z testem powrotu).</li>
-          <li>Reversal po fałszywym wybiciu (stop run) w strefie HTF.</li>
-          <li>Kontynuacja po korekcie do EMA/MA lub S/R (pullback).</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold">4) Volatility/ATR i zarządzanie pozycją</h2>
-        <ul className="mt-2 list-disc pl-6">
-          <li>SL za strukturą i dopasowany do <strong>ATR</strong>.</li>
-          <li>Targety: R:R ≥ 1:1.5; trailing po nowych swingach.</li>
-          <li>Skalowanie lotu odwrotnie do vol, by wyrównać PnL.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold">5) Wskaźniki: minimalistycznie</h2>
-        <ul className="mt-2 list-disc pl-6">
-          <li><strong>MA/EMA</strong> — kontekst trendu i pullbacki.</li>
-          <li><strong>RSI</strong> — dywergencje w strefach; nie handluj „prze-” bez kontekstu.</li>
-          <li><strong>Volume</strong> (jeśli masz) — potwierdza wybicia/konsolidacje.</li>
-        </ul>
-        <p className="mt-2 text-slate-300">Wskaźnik = filtr. Sygnał pochodzi ze struktury ceny i ryzyka.</p>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold">Checklist AT</h2>
-        <ul className="mt-2 list-disc pl-6">
-          <li>Trend/struktura na HTF? Gdzie S/R?</li>
-          <li>Jaki setup PA na LTF? Czy mam konfluencję?</li>
-          <li>SL logiczny (za swingiem), lot wg ATR, 1R stałe.</li>
-        </ul>
-      </section>
-    </ArticleLayout>
+      <div className="mt-10">
+        <Link
+          href="/kursy"
+          className="inline-flex items-center rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:border-white/25 hover:bg-white/10"
+        >
+          ← Wróć do kursów
+        </Link>
+      </div>
+    </div>
   );
 }

@@ -1,14 +1,29 @@
 'use client';
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import LessonVisitTracker from "@/components/LessonVisitTracker";
+import {
+  PodstawyCallout,
+  PodstawyChecklist,
+  PodstawyExercise,
+  PodstawySection,
+} from "@/components/podstawy/content";
+import PodstawyLessonShell, {
+  PodstawyLessonHeaderActions,
+} from "@/components/podstawy/PodstawyLessonShell";
+import { useLessonProgressSession } from "@/app/contexts/LessonProgressSessionContext";
+import { readPodstawyDoneSlugSet, writePodstawyDoneSlugArray } from "@/lib/lessonProgressStorage";
+import { pushPodstawyLessonProgress } from "@/lib/podstawyLessonProgressSync";
 
-const KEY = "course:podstawy:done";
 const SLUG = "lekcja-5";
 
 /* ───────────── UI helpers ───────────── */
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-2xl bg-[#0b1220] border border-white/10 p-5 sm:p-6">{children}</div>;
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[#0d1524]/90 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-sm sm:p-6">
+      {children}
+    </div>
+  );
 }
 function Field({ label, children, help }: { label: string; children: React.ReactNode; help?: string }) {
   return (
@@ -103,22 +118,23 @@ function detectTwoCandlePattern(prev: OHLC, cur: OHLC) {
 }
 
 export default function Page() {
+  const { userId, sessionReady } = useLessonProgressSession();
   const [done, setDone] = useState(false);
 
-  // znacznik ukończenia
   useEffect(() => {
+    if (!sessionReady) return;
     try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setDone(JSON.parse(raw).includes(SLUG));
+      setDone(readPodstawyDoneSlugSet(localStorage, userId).has(SLUG));
     } catch {}
-  }, []);
+  }, [userId, sessionReady]);
   const toggle = () => {
+    if (!sessionReady) return;
     try {
-      const raw = localStorage.getItem(KEY);
-      const arr: string[] = raw ? JSON.parse(raw) : [];
+      const arr = Array.from(readPodstawyDoneSlugSet(localStorage, userId));
       const next = done ? arr.filter(s => s !== SLUG) : Array.from(new Set([...arr, SLUG]));
-      localStorage.setItem(KEY, JSON.stringify(next));
+      writePodstawyDoneSlugArray(localStorage, userId, next);
       setDone(!done);
+      pushPodstawyLessonProgress(SLUG, !done, userId);
     } catch {}
   };
 
@@ -137,150 +153,139 @@ export default function Page() {
   const two = useMemo(() => detectTwoCandlePattern(p, n), [p, n]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <header className="mb-6">
-          <p className="text-xs text-white/60">Moduł: Podstawy • Lekcja 5</p>
-          <h1 className="text-3xl sm:text-4xl font-bold mt-1">Czytanie świec</h1>
-          <p className="text-white/70 mt-2">Ceny OHLC, interwały i podstawowe formacje świecowe w praktyce.</p>
+    <PodstawyLessonShell
+      lessonNumber={5}
+      title="Czytanie świec"
+      lead="Ceny OHLC, interwały i podstawowe formacje świecowe w praktyce."
+      prevHref="/kursy/podstawy/lekcja-4"
+      nextHref="/kursy/podstawy"
+      nextLabel="Zakończ moduł"
+      tracker={<LessonVisitTracker course="podstawy" lessonId={SLUG} />}
+      actions={<PodstawyLessonHeaderActions done={done} onToggle={toggle} />}
+    >
+      <PodstawySection title="Świeca (OHLC) i interwały">
+        <p>Świeca pokazuje cztery ceny: <strong>Open</strong>, <strong>High</strong>, <strong>Low</strong>, <strong>Close</strong> w zadanym czasie (M1, M15, H1, D1…).</p>
+        <ul>
+          <li><strong>Korpus</strong> – odległość między otwarciem a zamknięciem (kierunek: wzrostowy/spadkowy).</li>
+          <li><strong>Knoty (cienie)</strong> – zakres wybicia powyżej/pniżej korpusu (próby rynku, odrzucenia).</li>
+          <li><strong>Zakres świecy</strong> – <code>High − Low</code>; <em>body%</em> = korpus / zakres × 100.</li>
+        </ul>
+      </PodstawySection>
 
-          <div className="mt-4 flex items-center gap-3">
-            <button
-              onClick={toggle}
-              className={`px-4 py-2 rounded-lg font-semibold ${done ? "bg-green-400 text-slate-900 hover:opacity-90" : "bg-white/10 hover:bg-white/20"}`}
-            >
-              {done ? "✓ Ukończono" : "Oznacz jako ukończoną"}
-            </button>
-            <Link href="/kursy/podstawy" className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">← Spis lekcji</Link>
-          </div>
-        </header>
-
-        {/* Teoria */}
-        <section className="prose prose-invert prose-slate max-w-none">
-          <h2>Świeca (OHLC) i interwały</h2>
-          <p>Świeca pokazuje cztery ceny: <strong>Open</strong>, <strong>High</strong>, <strong>Low</strong>, <strong>Close</strong> w zadanym czasie (M1, M15, H1, D1…).</p>
-          <ul>
-            <li><strong>Korpus</strong> – odległość między otwarciem a zamknięciem (kierunek: wzrostowy/spadkowy).</li>
-            <li><strong>Knoty (cienie)</strong> – zakres wybicia powyżej/pniżej korpusu (próby rynku, odrzucenia).</li>
-            <li><strong>Zakres świecy</strong> – <code>High − Low</code>; <em>body%</em> = korpus / zakres × 100.</li>
-          </ul>
-
-          <h2>Formacje bazowe i kontekst</h2>
-          <ul>
+      <PodstawySection title="Formacje bazowe i kontekst" prose={false}>
+        <PodstawyCallout variant="accent" eyebrow="Słownik formacji" title="Co warto rozpoznawać">
+          <ul className="list-disc space-y-2 pl-5">
             <li><strong>Pin bar</strong> (młot / shooting star) – długi knot i mały korpus → odrzucenie poziomu S/R.</li>
             <li><strong>Engulfing</strong> – korpus świecy pochłania korpus poprzedniej (pot. odwrócenie).</li>
             <li><strong>Inside bar</strong> – świeca „w środku” zakresu poprzedniej (konsolidacja → często wybicie).</li>
             <li><strong>Doji</strong> – bardzo mały korpus (niepewność, równowaga podaży/popytu).</li>
           </ul>
-          <p><em>Sam kształt nie wystarczy</em> – liczy się miejsce (strefa S/R), trend wyższej ramy, zmienność i timing (sesja, makro).</p>
-        </section>
+        </PodstawyCallout>
+        <div className="prose prose-invert prose-slate mt-4 max-w-none prose-p:leading-relaxed">
+          <p className="text-slate-300"><em>Sam kształt nie wystarczy</em> – liczy się miejsce (strefa S/R), trend wyższej ramy, zmienność i timing (sesja, makro).</p>
+        </div>
+      </PodstawySection>
 
-        {/* Lab: 1 świeca */}
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold mb-3">Laboratorium świecy (1 świeca)</h2>
-          <Card>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Open">
-                <NumberInput value={o} onChange={e => setO(parseFloat(e.target.value || "0"))} />
-              </Field>
-              <Field label="High">
-                <NumberInput value={h} onChange={e => setH(parseFloat(e.target.value || "0"))} />
-              </Field>
-              <Field label="Low">
-                <NumberInput value={l} onChange={e => setL(parseFloat(e.target.value || "0"))} />
-              </Field>
-              <Field label="Close">
-                <NumberInput value={c} onChange={e => setC(parseFloat(e.target.value || "0"))} />
-              </Field>
+      <PodstawySection
+        title="Laboratorium świecy (1 świeca)"
+        subtitle="Zmieniaj OHLC i obserwuj korpus, knoty oraz prostą klasyfikację — progi są orientacyjne."
+        prose={false}
+      >
+        <Card>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Open">
+              <NumberInput value={o} onChange={e => setO(parseFloat(e.target.value || "0"))} />
+            </Field>
+            <Field label="High">
+              <NumberInput value={h} onChange={e => setH(parseFloat(e.target.value || "0"))} />
+            </Field>
+            <Field label="Low">
+              <NumberInput value={l} onChange={e => setL(parseFloat(e.target.value || "0"))} />
+            </Field>
+            <Field label="Close">
+              <NumberInput value={c} onChange={e => setC(parseFloat(e.target.value || "0"))} />
+            </Field>
+          </div>
+
+          <hr className="my-5 border-white/10" />
+
+          <div className="grid sm:grid-cols-2 gap-4 text-sm">
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset]">
+              <div>Kierunek: <strong>{one.isBull ? "wzrostowa" : "spadkowa"}</strong></div>
+              <div>Korpus: <strong>{(one.body).toFixed(5)}</strong></div>
+              <div>Górny knot: <strong>{(one.upper).toFixed(5)}</strong></div>
+              <div>Dolny knot: <strong>{(one.lower).toFixed(5)}</strong></div>
+              <div>Zakres: <strong>{(one.range).toFixed(5)}</strong> • Korpus%: <strong>{one.bodyPct.toFixed(1)}%</strong></div>
             </div>
+            <PodstawyCallout variant="neutral" title={`Klasyfikacja: ${oneClass.label}`}>
+              <p>{oneClass.note}</p>
+              <p className="mt-2 text-xs text-slate-500">Uwaga: progi orientacyjne – różne rynki mają różną mikrostrukturę.</p>
+            </PodstawyCallout>
+          </div>
+        </Card>
+      </PodstawySection>
 
-            <hr className="my-5 border-white/10" />
-
-            <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div>Kierunek: <strong>{one.isBull ? "wzrostowa" : "spadkowa"}</strong></div>
-                <div>Korpus: <strong>{(one.body).toFixed(5)}</strong></div>
-                <div>Górny knot: <strong>{(one.upper).toFixed(5)}</strong></div>
-                <div>Dolny knot: <strong>{(one.lower).toFixed(5)}</strong></div>
-                <div>Zakres: <strong>{(one.range).toFixed(5)}</strong> • Korpus%: <strong>{one.bodyPct.toFixed(1)}%</strong></div>
-              </div>
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <div className="text-lg">Klasyfikacja: <strong>{oneClass.label}</strong></div>
-                <div className="text-sm text-white/70 mt-1">{oneClass.note}</div>
-                <div className="text-xs text-white/50 mt-2">Uwaga: progi orientacyjne – różne rynki mają różną mikrostrukturę.</div>
-              </div>
-            </div>
-          </Card>
-        </section>
-
-        {/* Lab: 2 świece */}
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold mb-3">Laboratorium układów (2 świece)</h2>
-          <Card>
-            <div className="grid sm:grid-cols-2 gap-6">
-              <div>
-                <div className="text-sm font-semibold mb-2">Poprzednia świeca</div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Open"><NumberInput value={p.o} onChange={e => setP(v => ({ ...v, o: parseFloat(e.target.value || "0") }))} /></Field>
-                  <Field label="High"><NumberInput value={p.h} onChange={e => setP(v => ({ ...v, h: parseFloat(e.target.value || "0") }))} /></Field>
-                  <Field label="Low"><NumberInput value={p.l} onChange={e => setP(v => ({ ...v, l: parseFloat(e.target.value || "0") }))} /></Field>
-                  <Field label="Close"><NumberInput value={p.c} onChange={e => setP(v => ({ ...v, c: parseFloat(e.target.value || "0") }))} /></Field>
-                </div>
-              </div>
-
-              <div>
-                <div className="text-sm font-semibold mb-2">Bieżąca świeca</div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Open"><NumberInput value={n.o} onChange={e => setN(v => ({ ...v, o: parseFloat(e.target.value || "0") }))} /></Field>
-                  <Field label="High"><NumberInput value={n.h} onChange={e => setN(v => ({ ...v, h: parseFloat(e.target.value || "0") }))} /></Field>
-                  <Field label="Low"><NumberInput value={n.l} onChange={e => setN(v => ({ ...v, l: parseFloat(e.target.value || "0") }))} /></Field>
-                  <Field label="Close"><NumberInput value={n.c} onChange={e => setN(v => ({ ...v, c: parseFloat(e.target.value || "0") }))} /></Field>
-                </div>
+      <PodstawySection
+        title="Laboratorium układów (2 świece)"
+        subtitle="Ustaw OHLC dwóch świec — zobacz, czy wykrywamy engulfing, inside/outside bar lub brak klasycznej formacji."
+        prose={false}
+      >
+        <Card>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div>
+              <div className="text-sm font-semibold mb-2 text-white">Poprzednia świeca</div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Open"><NumberInput value={p.o} onChange={e => setP(v => ({ ...v, o: parseFloat(e.target.value || "0") }))} /></Field>
+                <Field label="High"><NumberInput value={p.h} onChange={e => setP(v => ({ ...v, h: parseFloat(e.target.value || "0") }))} /></Field>
+                <Field label="Low"><NumberInput value={p.l} onChange={e => setP(v => ({ ...v, l: parseFloat(e.target.value || "0") }))} /></Field>
+                <Field label="Close"><NumberInput value={p.c} onChange={e => setP(v => ({ ...v, c: parseFloat(e.target.value || "0") }))} /></Field>
               </div>
             </div>
 
-            <hr className="my-5 border-white/10" />
-
-            <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-              <div className="text-lg">Wykryto: <strong>{two.label}</strong></div>
-              <div className="text-sm text-white/70 mt-1">{two.note}</div>
-              <div className="text-xs text-white/50 mt-2">Engulfing dotyczy <em>korpusu</em> (Open–Close), a inside/outside bar – całego zakresu (High–Low).</div>
+            <div>
+              <div className="text-sm font-semibold mb-2 text-white">Bieżąca świeca</div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Open"><NumberInput value={n.o} onChange={e => setN(v => ({ ...v, o: parseFloat(e.target.value || "0") }))} /></Field>
+                <Field label="High"><NumberInput value={n.h} onChange={e => setN(v => ({ ...v, h: parseFloat(e.target.value || "0") }))} /></Field>
+                <Field label="Low"><NumberInput value={n.l} onChange={e => setN(v => ({ ...v, l: parseFloat(e.target.value || "0") }))} /></Field>
+                <Field label="Close"><NumberInput value={n.c} onChange={e => setN(v => ({ ...v, c: parseFloat(e.target.value || "0") }))} /></Field>
+              </div>
             </div>
-          </Card>
-        </section>
+          </div>
 
-        {/* Praktyka, wskazówki, ćwiczenia */}
-        <section className="prose prose-invert prose-slate max-w-none mt-10">
-          <h2>Dobre praktyki i kontekst</h2>
-          <ul>
-            <li>Najpierw <strong>kontekst</strong> (trend wyższej ramy, S/R, zmienność), dopiero potem kształt świecy.</li>
-            <li>Szanuj sesje: dużo fałszywych sygnałów poza overlayem Londyn–NY.</li>
-            <li>Wlicz koszt wejścia (spread/poślizg) – na niskich interwałach niszczy R:R.</li>
-            <li>Stosuj <strong>stałe 1R</strong>, prowadź dziennik screenów (przed/po) – łatwiej ocenisz edge.</li>
-          </ul>
+          <hr className="my-5 border-white/10" />
 
-          <h3>Ćwiczenia (5–10 min)</h3>
-          <ol>
-            <li>Znajdź 5 przykładów pin barów na D1 i zaznacz tylko te ze <em>strefy</em> S/R. Które działały lepiej?</li>
-            <li>Wybierz 20 inside barów na H4. Zmierz skuteczność wybicia z filtrem trendu vs. bez trendu.</li>
-            <li>Policz średni <em>body%</em> dla świec impulsowych na M15 w overlayu EU–US. Czy różni się od reszty dnia?</li>
-          </ol>
+          <PodstawyCallout variant="accent" eyebrow="Wykryto" title={two.label}>
+            <p>{two.note}</p>
+            <p className="mt-2 text-xs text-slate-500">Engulfing dotyczy <em>korpusu</em> (Open–Close), a inside/outside bar – całego zakresu (High–Low).</p>
+          </PodstawyCallout>
+        </Card>
+      </PodstawySection>
 
-          <h3>Checklist po lekcji</h3>
-          <ul>
-            <li>Potrafię policzyć korpus, knoty i <em>body%</em> oraz rozpoznać bazowe formacje świecowe.</li>
-            <li>Wiem, że formacja bez kontekstu ma niską wartość predykcyjną.</li>
-            <li>Łączę wejścia świecowe z zarządzaniem ryzykiem i realnymi kosztami transakcyjnymi.</li>
-          </ul>
-        </section>
+      <PodstawySection title="Dobre praktyki i kontekst">
+        <ul>
+          <li>Najpierw <strong>kontekst</strong> (trend wyższej ramy, S/R, zmienność), dopiero potem kształt świecy.</li>
+          <li>Szanuj sesje: dużo fałszywych sygnałów poza overlayem Londyn–NY.</li>
+          <li>Wlicz koszt wejścia (spread/poślizg) – na niskich interwałach niszczy R:R.</li>
+          <li>Stosuj <strong>stałe 1R</strong>, prowadź dziennik screenów (przed/po) – łatwiej ocenisz edge.</li>
+        </ul>
+      </PodstawySection>
 
-        {/* Nawigacja */}
-        <footer className="mt-10 flex items-center justify-between">
-          <Link href="/kursy/podstawy/lekcja-4" className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">← Poprzednia</Link>
-          <Link href="/kursy/podstawy" className="px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90">Zakończ moduł</Link>
-        </footer>
-      </article>
-    </main>
+      <PodstawyExercise title="Ćwiczenia (5–10 min)">
+        <ol>
+          <li>Znajdź 5 przykładów pin barów na D1 i zaznacz tylko te ze <em>strefy</em> S/R. Które działały lepiej?</li>
+          <li>Wybierz 20 inside barów na H4. Zmierz skuteczność wybicia z filtrem trendu vs. bez trendu.</li>
+          <li>Policz średni <em>body%</em> dla świec impulsowych na M15 w overlayu EU–US. Czy różni się od reszty dnia?</li>
+        </ol>
+      </PodstawyExercise>
+
+      <PodstawyChecklist>
+        <ul>
+          <li>Potrafię policzyć korpus, knoty i <em>body%</em> oraz rozpoznać bazowe formacje świecowe.</li>
+          <li>Wiem, że formacja bez kontekstu ma niską wartość predykcyjną.</li>
+          <li>Łączę wejścia świecowe z zarządzaniem ryzykiem i realnymi kosztami transakcyjnymi.</li>
+        </ul>
+      </PodstawyChecklist>
+    </PodstawyLessonShell>
   );
 }

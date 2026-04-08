@@ -1,9 +1,19 @@
 'use client';
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import LessonVisitTracker from "@/components/LessonVisitTracker";
+import {
+  PodstawyCallout,
+  PodstawyChecklist,
+  PodstawySection,
+} from "@/components/podstawy/content";
+import PodstawyLessonShell, {
+  PodstawyLessonHeaderActions,
+} from "@/components/podstawy/PodstawyLessonShell";
+import { useLessonProgressSession } from "@/app/contexts/LessonProgressSessionContext";
+import { readPodstawyDoneSlugSet, writePodstawyDoneSlugArray } from "@/lib/lessonProgressStorage";
+import { pushPodstawyLessonProgress } from "@/lib/podstawyLessonProgressSync";
 
-const KEY = "course:podstawy:done";
 const SLUG = "lekcja-3";
 
 /** Typy pomocnicze dla asystenta */
@@ -80,6 +90,7 @@ function useEntryCostAndRR({
 }
 
 export default function Page() {
+  const { userId, sessionReady } = useLessonProgressSession();
   const [done, setDone] = useState(false);
 
   /** Asystent – stany */
@@ -111,302 +122,279 @@ export default function Page() {
     tpPips,
   });
 
-  // znacznik ukończenia
   useEffect(() => {
+    if (!sessionReady) return;
     try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setDone(JSON.parse(raw).includes(SLUG));
+      setDone(readPodstawyDoneSlugSet(localStorage, userId).has(SLUG));
     } catch {}
-  }, []);
+  }, [userId, sessionReady]);
 
   const toggle = () => {
+    if (!sessionReady) return;
     try {
-      const raw = localStorage.getItem(KEY);
-      const arr: string[] = raw ? JSON.parse(raw) : [];
+      const arr = Array.from(readPodstawyDoneSlugSet(localStorage, userId));
       const next = done ? arr.filter(s => s !== SLUG) : Array.from(new Set([...arr, SLUG]));
-      localStorage.setItem(KEY, JSON.stringify(next));
+      writePodstawyDoneSlugArray(localStorage, userId, next);
       setDone(!done);
+      pushPodstawyLessonProgress(SLUG, !done, userId);
     } catch {}
   };
 
+  const inputCls =
+    "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 outline-none focus:ring-1 focus:ring-indigo-400/40";
+
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
-        {/* Nagłówek */}
-        <header className="mb-6">
-          <p className="text-xs text-white/60">Moduł: Podstawy • Lekcja 3</p>
-          <h1 className="text-3xl sm:text-4xl font-bold mt-1">Rodzaje zleceń</h1>
-          <p className="text-white/70 mt-2">
-            Market, Limit, Stop, Stop-Limit, OCO, TIF (GTC/Day/IOC/FOK) — czym się różnią, kiedy ich używać
-            i jak minimalizować poślizg.
-          </p>
+    <PodstawyLessonShell
+      lessonNumber={3}
+      title="Rodzaje zleceń"
+      lead="Market, Limit, Stop, Stop-Limit, OCO, TIF (GTC/Day/IOC/FOK) — czym się różnią, kiedy ich używać i jak minimalizować poślizg."
+      prevHref="/kursy/podstawy/lekcja-2"
+      nextHref="/kursy/podstawy/lekcja-4"
+      tracker={<LessonVisitTracker course="podstawy" lessonId={SLUG} />}
+      actions={<PodstawyLessonHeaderActions done={done} onToggle={toggle} />}
+    >
+      <PodstawySection title="Przegląd typów zleceń">
+        <ul>
+          <li>
+            <strong>Market</strong> — natychmiastowa realizacja po dostępnej cenie rynkowej. Plus: pewne wykonanie. Minus: możliwy{" "}
+            <em>poślizg</em> (różnica między ceną na klik a faktycznym fill).
+          </li>
+          <li>
+            <strong>Limit</strong> — wykonanie po wskazanej lub lepszej cenie. Dla longa:{" "}
+            <em>Buy Limit</em> (poniżej rynku), dla shorta: <em>Sell Limit</em> (powyżej rynku). Kontrola ceny, ale brak gwarancji fill.
+          </li>
+          <li>
+            <strong>Stop</strong> — aktywuje się po dotknięciu ceny wyzwalającej (wejście na wybicie/momentum). Long:{" "}
+            <em>Buy Stop</em> (powyżej rynku), Short: <em>Sell Stop</em> (poniżej rynku). Pewniejsze wejście w ruch, ryzyko poślizgu.
+          </li>
+          <li>
+            <strong>Stop-Limit</strong> — hybryda: Stop wyzwala, ale do realizacji używany jest Limit (kontrola max/min ceny). Możliwy brak
+            wykonania przy szybkim ruchu.
+          </li>
+          <li>
+            <strong>OCO</strong> (One-Cancels-the-Other) — dwa zlecenia, wzajemnie się anulują. Typowo TP i SL podpięte do pozycji.
+          </li>
+        </ul>
+      </PodstawySection>
 
-          <div className="mt-4 flex items-center gap-3">
-            <button
-              onClick={toggle}
-              className={`px-4 py-2 rounded-lg font-semibold ${
-                done ? "bg-green-400 text-slate-900 hover:opacity-90" : "bg-white/10 hover:bg-white/20"
-              }`}
-              title={done ? "Oznacz jako nieukończoną" : "Oznacz jako ukończoną"}
-            >
-              {done ? "✓ Ukończono" : "Oznacz jako ukończoną"}
-            </button>
-            <Link href="/kursy/podstawy" className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">
-              ← Spis lekcji
-            </Link>
-          </div>
-        </header>
+      <PodstawySection title="Time in Force (TIF)">
+        <ul>
+          <li><strong>GTC</strong> — Good-Till-Cancelled (do odwołania).</li>
+          <li><strong>Day</strong> — ważne do końca dnia handlowego.</li>
+          <li><strong>IOC</strong> — Immediate-Or-Cancel (zrealizuj natychmiast, resztę anuluj).</li>
+          <li><strong>FOK</strong> — Fill-Or-Kill (zrealizuj w całości natychmiast albo anuluj całość).</li>
+        </ul>
+      </PodstawySection>
 
-        {/* Teoria */}
-        <section className="prose prose-invert prose-slate max-w-none">
-          <h2>Przegląd typów zleceń</h2>
-          <ul>
-            <li>
-              <strong>Market</strong> — natychmiastowa realizacja po dostępnej cenie rynkowej. Plus: pewne wykonanie. Minus: możliwy{" "}
-              <em>poślizg</em> (różnica między ceną na klik a faktycznym fill).
-            </li>
-            <li>
-              <strong>Limit</strong> — wykonanie po wskazanej lub lepszej cenie. Dla longa:{" "}
-              <em>Buy Limit</em> (poniżej rynku), dla shorta: <em>Sell Limit</em> (powyżej rynku). Kontrola ceny, ale brak gwarancji fill.
-            </li>
-            <li>
-              <strong>Stop</strong> — aktywuje się po dotknięciu ceny wyzwalającej (wejście na wybicie/momentum). Long:{" "}
-              <em>Buy Stop</em> (powyżej rynku), Short: <em>Sell Stop</em> (poniżej rynku). Pewniejsze wejście w ruch, ryzyko poślizgu.
-            </li>
-            <li>
-              <strong>Stop-Limit</strong> — hybryda: Stop wyzwala, ale do realizacji używany jest Limit (kontrola max/min ceny). Możliwy brak
-              wykonania przy szybkim ruchu.
-            </li>
-            <li>
-              <strong>OCO</strong> (One-Cancels-the-Other) — dwa zlecenia, wzajemnie się anulują. Typowo TP i SL podpięte do pozycji.
-            </li>
-          </ul>
-
-          <h3>Time in Force (TIF)</h3>
-          <ul>
-            <li><strong>GTC</strong> — Good-Till-Cancelled (do odwołania).</li>
-            <li><strong>Day</strong> — ważne do końca dnia handlowego.</li>
-            <li><strong>IOC</strong> — Immediate-Or-Cancel (zrealizuj natychmiast, resztę anuluj).</li>
-            <li><strong>FOK</strong> — Fill-Or-Kill (zrealizuj w całości natychmiast albo anuluj całość).</li>
-          </ul>
-
-          <h2>Kiedy co wybrać?</h2>
-          <ul>
+      <PodstawySection title="Kiedy co wybrać?" prose={false}>
+        <PodstawyCallout variant="accent" eyebrow="Decyzja" title="Dopasowanie zlecenia do sytuacji">
+          <ul className="list-disc space-y-2 pl-5">
             <li><em>Breakout/momentum</em> → Stop (lub Stop-Limit, gdy chcesz ograniczyć cenę).</li>
             <li><em>Pullback/mean reversion</em> → Limit (lepsza cena, ale brak gwarancji wykonania).</li>
             <li><em>Nagła potrzeba wejścia</em> (np. news, hedge) → Market (świadomie akceptujesz poślizg).</li>
           </ul>
+        </PodstawyCallout>
+      </PodstawySection>
 
-          <h3>Ryzyka praktyczne</h3>
-          <ul>
+      <PodstawySection title="Ryzyka praktyczne" prose={false}>
+        <PodstawyCallout variant="amber" eyebrow="Uwaga" title="Co może pójść nie tak">
+          <ul className="list-disc space-y-2 pl-5">
             <li><strong>Spread i poślizg</strong> zwiększają koszt wejścia — gorszy start w relacji do SL.</li>
             <li><strong>Luki</strong> (otwarcia) potrafią przeskoczyć poziom Stop/Limit → brak fill albo dużo gorsza cena.</li>
             <li><strong>Partial fill</strong> — przy niskiej płynności wypełnienie tylko części zlecenia.</li>
           </ul>
-        </section>
+        </PodstawyCallout>
+      </PodstawySection>
 
-        {/* Narzędzie: Asystent wyboru zlecenia */}
-        <section className="mt-10">
-          <h2 className="text-xl font-semibold mb-3">Asystent wyboru zlecenia</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
+      <PodstawySection
+        title="Asystent wyboru zlecenia"
+        subtitle="Ustal kierunek, scenariusz i priorytet — zobacz propozycję typu zlecenia. To narzędzie pomocnicze, nie zastępuje planu transakcyjnego."
+        prose={false}
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <div className="mb-1 text-sm text-white/70">Kierunek</div>
+            <select
+              value={side}
+              onChange={(e) => setSide(e.target.value as Side)}
+              className={inputCls}
+            >
+              <option value="long">Long (kupno)</option>
+              <option value="short">Short (sprzedaż)</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <div className="mb-1 text-sm text-white/70">Scenariusz</div>
+            <select
+              value={scenario}
+              onChange={(e) => setScenario(e.target.value as Scenario)}
+              className={inputCls}
+            >
+              <option value="breakout">Breakout / momentum (wybicie)</option>
+              <option value="pullback">Pullback / mean reversion (cofnięcie)</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <div className="mb-1 text-sm text-white/70">Priorytet</div>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as Priority)}
+              className={inputCls}
+            >
+              <option value="fill">Pewne wykonanie</option>
+              <option value="price">Kontrola ceny</option>
+            </select>
+          </label>
+
+          <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <div className="mb-1 text-sm text-white/70">Kierunek</div>
-              <select
-                value={side}
-                onChange={(e) => setSide(e.target.value as Side)}
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-              >
-                <option value="long">Long (kupno)</option>
-                <option value="short">Short (sprzedaż)</option>
-              </select>
+              <div className="mb-1 text-sm text-white/70">Bieżąca cena</div>
+              <input
+                inputMode="decimal"
+                value={current}
+                onChange={(e) => setCurrent(parseFloat(e.target.value || "0"))}
+                className={inputCls}
+              />
             </label>
-
             <label className="block">
-              <div className="mb-1 text-sm text-white/70">Scenariusz</div>
-              <select
-                value={scenario}
-                onChange={(e) => setScenario(e.target.value as Scenario)}
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-              >
-                <option value="breakout">Breakout / momentum (wybicie)</option>
-                <option value="pullback">Pullback / mean reversion (cofnięcie)</option>
-              </select>
+              <div className="mb-1 text-sm text-white/70">Cena wejścia</div>
+              <input
+                inputMode="decimal"
+                value={entry}
+                onChange={(e) => setEntry(parseFloat(e.target.value || "0"))}
+                className={inputCls}
+              />
             </label>
-
-            <label className="block">
-              <div className="mb-1 text-sm text-white/70">Priorytet</div>
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value as Priority)}
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-              >
-                <option value="fill">Pewne wykonanie</option>
-                <option value="price">Kontrola ceny</option>
-              </select>
-            </label>
-
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <div className="mb-1 text-sm text-white/70">Bieżąca cena</div>
-                <input
-                  inputMode="decimal"
-                  value={current}
-                  onChange={(e) => setCurrent(parseFloat(e.target.value || "0"))}
-                  className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-                />
-              </label>
-              <label className="block">
-                <div className="mb-1 text-sm text-white/70">Cena wejścia</div>
-                <input
-                  inputMode="decimal"
-                  value={entry}
-                  onChange={(e) => setEntry(parseFloat(e.target.value || "0"))}
-                  className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-                />
-              </label>
-            </div>
           </div>
+        </div>
 
-          <div className="mt-4 rounded-xl bg-white/5 border border-white/10 p-4">
-            <div className="text-lg">
-              Rekomendacja: <strong>{rec.type}</strong>
-            </div>
-            <div className="text-sm text-white/70 mt-1">{rec.why}</div>
-            <div className="text-xs text-white/50 mt-2">
+        <div className="mt-4">
+          <PodstawyCallout variant="accent" eyebrow="Wynik" title={`Rekomendacja: ${rec.type}`}>
+            <p>{rec.why}</p>
+            <p className="mt-2 text-xs text-slate-500">
               Uwaga: rekomendacja nie zastępuje planu transakcyjnego. Zawsze określ z góry poziomy <strong>SL</strong> i{" "}
               <strong>TP</strong> oraz liczbę lotów pod stałe <strong>1R</strong>.
-            </div>
-          </div>
-        </section>
+            </p>
+          </PodstawyCallout>
+        </div>
+      </PodstawySection>
 
-        {/* Narzędzie: koszt wejścia + R:R */}
-        <section className="mt-10">
-          <h2 className="text-xl font-semibold mb-3">Kalkulator kosztu wejścia i R:R</h2>
-          <div className="grid sm:grid-cols-3 gap-4">
-            <label className="block">
-              <div className="mb-1 text-sm text-white/70">Spread (pips)</div>
-              <input
-                inputMode="decimal"
-                value={spreadPips}
-                onChange={(e) => setSpreadPips(parseFloat(e.target.value || "0"))}
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-              />
-            </label>
-            <label className="block">
-              <div className="mb-1 text-sm text-white/70">Poślizg (pips)</div>
-              <input
-                inputMode="decimal"
-                value={slipPips}
-                onChange={(e) => setSlipPips(parseFloat(e.target.value || "0"))}
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-              />
-            </label>
-            <label className="block">
-              <div className="mb-1 text-sm text-white/70">Loty</div>
-              <input
-                inputMode="decimal"
-                value={lots}
-                onChange={(e) => setLots(parseFloat(e.target.value || "0"))}
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-              />
-            </label>
+      <PodstawySection
+        title="Kalkulator kosztu wejścia i R:R"
+        subtitle="Wpisz spread, poślizg, loty i odległości SL/TP — zobaczysz koszt wejścia, ryzyko i przybliżony R:R."
+        prose={false}
+      >
+        <div className="grid gap-4 sm:grid-cols-3">
+          <label className="block">
+            <div className="mb-1 text-sm text-white/70">Spread (pips)</div>
+            <input
+              inputMode="decimal"
+              value={spreadPips}
+              onChange={(e) => setSpreadPips(parseFloat(e.target.value || "0"))}
+              className={inputCls}
+            />
+          </label>
+          <label className="block">
+            <div className="mb-1 text-sm text-white/70">Poślizg (pips)</div>
+            <input
+              inputMode="decimal"
+              value={slipPips}
+              onChange={(e) => setSlipPips(parseFloat(e.target.value || "0"))}
+              className={inputCls}
+            />
+          </label>
+          <label className="block">
+            <div className="mb-1 text-sm text-white/70">Loty</div>
+            <input
+              inputMode="decimal"
+              value={lots}
+              onChange={(e) => setLots(parseFloat(e.target.value || "0"))}
+              className={inputCls}
+            />
+          </label>
 
-            <label className="block">
-              <div className="mb-1 text-sm text-white/70">Wartość 1 pips / 1 lot (np. 10 USD)</div>
-              <input
-                inputMode="decimal"
-                value={pipValuePerLot}
-                onChange={(e) => setPipValuePerLot(parseFloat(e.target.value || "0"))}
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-              />
-            </label>
-            <label className="block">
-              <div className="mb-1 text-sm text-white/70">Stop-Loss (pips)</div>
-              <input
-                inputMode="decimal"
-                value={slPips}
-                onChange={(e) => setSlPips(parseFloat(e.target.value || "0"))}
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-              />
-            </label>
-            <label className="block">
-              <div className="mb-1 text-sm text-white/70">Take-Profit (pips)</div>
-              <input
-                inputMode="decimal"
-                value={tpPips}
-                onChange={(e) => setTpPips(parseFloat(e.target.value || "0"))}
-                className="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-              />
-            </label>
-          </div>
+          <label className="block">
+            <div className="mb-1 text-sm text-white/70">Wartość 1 pips / 1 lot (np. 10 USD)</div>
+            <input
+              inputMode="decimal"
+              value={pipValuePerLot}
+              onChange={(e) => setPipValuePerLot(parseFloat(e.target.value || "0"))}
+              className={inputCls}
+            />
+          </label>
+          <label className="block">
+            <div className="mb-1 text-sm text-white/70">Stop-Loss (pips)</div>
+            <input
+              inputMode="decimal"
+              value={slPips}
+              onChange={(e) => setSlPips(parseFloat(e.target.value || "0"))}
+              className={inputCls}
+            />
+          </label>
+          <label className="block">
+            <div className="mb-1 text-sm text-white/70">Take-Profit (pips)</div>
+            <input
+              inputMode="decimal"
+              value={tpPips}
+              onChange={(e) => setTpPips(parseFloat(e.target.value || "0"))}
+              className={inputCls}
+            />
+          </label>
+        </div>
 
-          <div className="mt-4 rounded-xl bg-white/5 border border-white/10 p-4 space-y-1">
-            <div className="text-sm text-white/80">
+        <PodstawyCallout variant="neutral" className="mt-4" eyebrow="Podsumowanie" title="Koszt i R:R">
+          <div className="space-y-1 text-sm text-white/85">
+            <div>
               Wartość 1 pips dla {lots.toFixed(2)} lot:{" "}
               <strong>{pipValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
             </div>
-            <div className="text-sm text-white/80">
+            <div>
               Koszt wejścia (spread + poślizg):{" "}
               <strong>{entryCostCash.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
             </div>
-            <div className="text-sm text-white/80">
+            <div>
               Ryzyko kwotowo (SL): <strong>{riskCash.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
             </div>
-            <div className="text-sm text-white/80">
+            <div>
               Potencjalny zysk (TP): <strong>{rewardCash.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong>
             </div>
-            <div className="text-lg">
+            <div className="text-base text-white">
               R:R = <strong>{isFinite(rr) ? rr.toFixed(2) : "0.00"}</strong>{" "}
               • koszt wejścia = <strong>{isFinite(entryCostInR) ? entryCostInR.toFixed(2) : "0.00"} R</strong>
             </div>
-            <div className="text-xs text-white/50">
+            <p className="text-xs text-slate-500">
               Wysoki spread/poślizg potrafi „zabrać” znaczną część 1R — uwzględniaj to w planie.
-            </div>
+            </p>
           </div>
-        </section>
+        </PodstawyCallout>
+      </PodstawySection>
 
-        {/* Scenariusze, dobre praktyki */}
-        <section className="prose prose-invert prose-slate max-w-none mt-10">
-          <h2>Scenariusze</h2>
-          <ol>
-            <li>
-              <strong>Breakout powyżej oporu</strong>: zlecenie <em>Buy Stop</em> (lub Stop-Limit) kilkanaście punktów
-              powyżej poziomu, SL pod świecą wybicia, TP przy kolejnym oporze.
-            </li>
-            <li>
-              <strong>Cofnięcie do wsparcia</strong>: zlecenie <em>Buy Limit</em> na strefie popytu, SL pod strefą, TP do
-              ostatniego szczytu.
-            </li>
-            <li>
-              <strong>Wejście „tu i teraz”</strong>: <em>Market</em>, ale z mniejszą wielkością (by ograniczyć ryzyko
-              poślizgu), a reszta po potwierdzeniu (np. Stop).
-            </li>
-          </ol>
+      <PodstawySection title="Scenariusze">
+        <ol>
+          <li>
+            <strong>Breakout powyżej oporu</strong>: zlecenie <em>Buy Stop</em> (lub Stop-Limit) kilkanaście punktów
+            powyżej poziomu, SL pod świecą wybicia, TP przy kolejnym oporze.
+          </li>
+          <li>
+            <strong>Cofnięcie do wsparcia</strong>: zlecenie <em>Buy Limit</em> na strefie popytu, SL pod strefą, TP do
+            ostatniego szczytu.
+          </li>
+          <li>
+            <strong>Wejście „tu i teraz”</strong>: <em>Market</em>, ale z mniejszą wielkością (by ograniczyć ryzyko
+            poślizgu), a reszta po potwierdzeniu (np. Stop).
+          </li>
+        </ol>
+      </PodstawySection>
 
-          <h3>Checklist po lekcji</h3>
-          <ul>
-            <li>Dobieram typ zlecenia do scenariusza (breakout/pullback) i priorytetu (fill vs cena).</li>
-            <li>Znam konsekwencje spreadu i poślizgu; umiem policzyć ich koszt.</li>
-            <li>Używam OCO (TP+SL) i właściwego TIF (GTC/Day/IOC/FOK) zgodnie z planem.</li>
-          </ul>
-        </section>
-
-        {/* Nawigacja */}
-        <footer className="mt-10 flex items-center justify-between">
-          <Link
-            href="/kursy/podstawy/lekcja-2"
-            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
-          >
-            ← Poprzednia
-          </Link>
-          <Link
-            href="/kursy/podstawy/lekcja-4"
-            className="px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:opacity-90"
-          >
-            Następna →
-          </Link>
-        </footer>
-      </article>
-    </main>
+      <PodstawyChecklist>
+        <ul>
+          <li>Dobieram typ zlecenia do scenariusza (breakout/pullback) i priorytetu (fill vs cena).</li>
+          <li>Znam konsekwencje spreadu i poślizgu; umiem policzyć ich koszt.</li>
+          <li>Używam OCO (TP+SL) i właściwego TIF (GTC/Day/IOC/FOK) zgodnie z planem.</li>
+        </ul>
+      </PodstawyChecklist>
+    </PodstawyLessonShell>
   );
 }

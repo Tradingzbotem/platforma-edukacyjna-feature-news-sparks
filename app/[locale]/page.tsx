@@ -1,8 +1,20 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { CheckCircle2, Layers, ListChecks, Newspaper, Radar, Sparkles, Store } from 'lucide-react';
+import {
+  Award,
+  BookOpen,
+  CheckCircle2,
+  ClipboardCheck,
+  Layers,
+  ListChecks,
+  Newspaper,
+  Radar,
+  Sparkles,
+  Store,
+} from 'lucide-react';
 import { locales } from '@/i18n';
 import { FOUNDERS_MARKET_PRICING } from '@/lib/marketplace/foundersMarketCopy';
+import { isFoundersMarketplaceSalesPaused } from '@/lib/marketplace/offers';
 
 const cardBase =
   'rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] backdrop-blur-md p-5 sm:p-6 shadow-lg shadow-black/20';
@@ -190,12 +202,38 @@ function HeroFoundersNftCard({
   );
 }
 
+function LocalePrimaryBuyCta({
+  className,
+  labelBuy,
+  labelPaused,
+  salesPaused,
+}: {
+  className: string;
+  labelBuy: string;
+  labelPaused: string;
+  salesPaused: boolean;
+}) {
+  if (salesPaused) {
+    return (
+      <span role="status" className={`${className} cursor-not-allowed opacity-60`} title={labelPaused}>
+        {labelPaused}
+      </span>
+    );
+  }
+  return (
+    <Link href="/marketplace" className={className}>
+      {labelBuy}
+    </Link>
+  );
+}
+
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
 export default async function HomePage() {
   const t = await getTranslations('home');
+  const salesPaused = isFoundersMarketplaceSalesPaused();
 
   const benefits = [
     t('benefit_0'),
@@ -216,6 +254,35 @@ export default async function HomePage() {
     { Icon: ListChecks, title: t('pf_2_title'), desc: t('pf_2_desc') },
     { Icon: Newspaper, title: t('pf_3_title'), desc: t('pf_3_desc') },
   ];
+  const certificateCards = [
+    { Icon: ClipboardCheck, title: t('cert_c0_title'), desc: t('cert_c0_desc') },
+    { Icon: Layers, title: t('cert_c1_title'), desc: t('cert_c1_desc') },
+    { Icon: Award, title: t('cert_c2_title'), desc: t('cert_c2_desc') },
+  ];
+  const certificateBadges = [t('cert_b0'), t('cert_b1'), t('cert_b2')];
+  const pathCards = [
+    {
+      Icon: Radar,
+      title: t('path_decisions_title'),
+      desc: t('path_decisions_desc'),
+      cta: t('path_decisions_cta'),
+      href: '/konto/panel-rynkowy',
+    },
+    {
+      Icon: BookOpen,
+      title: t('path_learn_title'),
+      desc: t('path_learn_desc'),
+      cta: t('path_learn_cta'),
+      href: '/edukacja',
+    },
+    {
+      Icon: Award,
+      title: t('path_cert_title'),
+      desc: t('path_cert_desc'),
+      cta: t('path_cert_cta'),
+      href: '/konto/certyfikat',
+    },
+  ] as const;
   const nftCardLabels: HeroNftLabels = {
     ariaLabel: t('hero_nft_aria'),
     title: t('hero_nft_title'),
@@ -225,6 +292,11 @@ export default async function HomePage() {
     price: `${FOUNDERS_MARKET_PRICING.currentPriceUsd} USD`,
     priceNextLine: t('hero_nft_next_tier', { amount: FOUNDERS_MARKET_PRICING.nextPriceUsd }),
   };
+  const heroHighlights = [
+    { Icon: BookOpen, title: t('hero_highlight_0_title'), desc: t('hero_highlight_0_desc') },
+    { Icon: Award, title: t('hero_highlight_1_title'), desc: t('hero_highlight_1_desc') },
+    { Icon: Radar, title: t('hero_highlight_2_title'), desc: t('hero_highlight_2_desc') },
+  ];
 
   return (
     <main id="content" className="min-h-screen bg-slate-950 text-white">
@@ -244,13 +316,30 @@ export default async function HomePage() {
                   </span>
                 </h1>
                 <p className="mt-6 text-lg sm:text-xl text-white/85 leading-relaxed max-w-2xl">{t('subheadline')}</p>
+                <ul
+                  className="mt-6 grid max-w-2xl list-none gap-3 p-0 sm:grid-cols-3 sm:gap-4"
+                  aria-label={t('hero_highlights_aria')}
+                >
+                  {heroHighlights.map(({ Icon, title, desc }) => (
+                    <li
+                      key={title}
+                      className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 sm:px-4 sm:py-3.5"
+                    >
+                      <div className="flex items-center gap-2 text-emerald-200/90">
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">{title}</span>
+                      </div>
+                      <p className="mt-1.5 text-xs leading-snug text-white/65">{desc}</p>
+                    </li>
+                  ))}
+                </ul>
                 <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:items-center">
-                  <Link
-                    href="/marketplace"
+                  <LocalePrimaryBuyCta
+                    salesPaused={salesPaused}
+                    labelBuy={t('cta_buy')}
+                    labelPaused={t('cta_buy_paused')}
                     className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-opacity text-center"
-                  >
-                    {t('cta_buy')}
-                  </Link>
+                  />
                   <Link
                     href="/konto/panel-rynkowy"
                     className="inline-flex justify-center items-center rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 transition-colors text-center"
@@ -258,7 +347,9 @@ export default async function HomePage() {
                     {t('cta_platform')}
                   </Link>
                 </div>
-                <p className="mt-5 text-sm text-white/55 max-w-xl">{t('payment_note')}</p>
+                <p className="mt-5 text-sm text-white/55 max-w-xl">
+                  {salesPaused ? <span className="text-amber-200/85 font-medium">{t('sales_paused_note')}</span> : t('payment_note')}
+                </p>
               </div>
             </div>
             <div className="flex justify-center lg:col-span-5 lg:justify-end lg:pl-2">
@@ -268,6 +359,33 @@ export default async function HomePage() {
         </div>
         <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-cyan-500/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-emerald-600/10 blur-3xl" />
+      </section>
+
+      <section className="border-t border-white/10 bg-white/[0.02]" aria-labelledby="home-paths-heading">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
+          <h2 id="home-paths-heading" className="text-2xl sm:text-3xl font-bold tracking-tight">
+            {t('paths_title')}
+          </h2>
+          <p className="mt-3 text-white/75 max-w-2xl text-sm sm:text-base leading-relaxed">{t('paths_direction')}</p>
+          <p className="mt-2 text-white/65 max-w-2xl text-sm sm:text-base">{t('paths_sub')}</p>
+          <div className="mt-10 grid gap-4 md:grid-cols-3 items-stretch">
+            {pathCards.map(({ Icon, title, desc, cta, href }) => (
+              <div key={href} className={`${cardBase} flex h-full flex-col`}>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                  <Icon className="h-5 w-5 text-emerald-300" aria-hidden />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-white">{title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-white/70">{desc}</p>
+                <Link
+                  href={href}
+                  className="mt-6 inline-flex w-full justify-center items-center rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 transition-colors text-center sm:w-auto sm:self-start"
+                >
+                  {cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="border-t border-white/10">
@@ -323,6 +441,56 @@ export default async function HomePage() {
       </section>
 
       <section
+        id="certyfikat-fxedulab"
+        className="relative scroll-mt-24 overflow-hidden border-t border-white/10 bg-white/[0.02]"
+      >
+        <div
+          className="pointer-events-none absolute -right-24 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-amber-500/[0.06] blur-3xl"
+          aria-hidden
+        />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-200/80">{t('cert_eyebrow')}</p>
+          <h2 className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight text-white">{t('cert_title')}</h2>
+          <p className="mt-3 max-w-2xl text-sm sm:text-base leading-relaxed text-white/65">{t('cert_sub')}</p>
+          <div className="mt-10 grid gap-4 sm:grid-cols-3 items-stretch">
+            {certificateCards.map(({ Icon, title, desc }) => (
+              <div key={title} className={`${cardBase} flex h-full flex-col`}>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+                  <Icon className="h-5 w-5 text-emerald-300" aria-hidden />
+                </div>
+                <h3 className="mt-4 font-semibold text-white">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/70">{desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 flex flex-wrap gap-2">
+            {certificateBadges.map((label) => (
+              <span
+                key={label}
+                className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-white/65"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <Link
+              href="/certyfikat-fxedulab"
+              className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-opacity text-center"
+            >
+              {t('cert_cta_primary')}
+            </Link>
+            <Link
+              href="/certyfikat-fxedulab#jak-dziala-egzamin"
+              className="inline-flex justify-center items-center rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 transition-colors text-center"
+            >
+              {t('cert_cta_secondary')}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section
         id="founders-nft"
         className="scroll-mt-24 border-t border-white/10 bg-gradient-to-b from-emerald-950/20 to-transparent"
       >
@@ -339,12 +507,12 @@ export default async function HomePage() {
               {t('founders_body')}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row flex-wrap gap-3">
-              <Link
-                href="/marketplace"
+              <LocalePrimaryBuyCta
+                salesPaused={salesPaused}
+                labelBuy={t('cta_buy')}
+                labelPaused={t('cta_buy_paused')}
                 className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 text-center"
-              >
-                {t('cta_buy')}
-              </Link>
+              />
               <Link
                 href="/marketplace#offers"
                 className="inline-flex justify-center items-center rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 transition-colors text-center"
@@ -370,12 +538,12 @@ export default async function HomePage() {
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">{t('closing_title')}</h2>
             <p className="mt-4 text-white/65 text-sm sm:text-base leading-relaxed">{t('closing_desc')}</p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center sm:items-center">
-              <Link
-                href="/marketplace"
+              <LocalePrimaryBuyCta
+                salesPaused={salesPaused}
+                labelBuy={t('cta_buy')}
+                labelPaused={t('cta_buy_paused')}
                 className="inline-flex justify-center items-center rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-opacity text-center"
-              >
-                {t('cta_buy')}
-              </Link>
+              />
               <Link
                 href="/marketplace#offers"
                 className="inline-flex justify-center items-center rounded-xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-emerald-400/40 transition-colors text-center"

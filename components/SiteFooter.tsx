@@ -8,6 +8,9 @@ export default async function SiteFooter() {
   const cookieStore = await cookies();
   const lang = cookieStore.get('lang')?.value === 'en' ? 'en' : 'pl';
 
+  const linkClass =
+    'hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block';
+
   return (
     <footer className="border-t border-white/10 bg-gradient-to-b from-slate-950 to-slate-900/50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 grid md:grid-cols-4 gap-8 text-sm">
@@ -24,45 +27,99 @@ export default async function SiteFooter() {
         </div>
 
         <div>
-          <div className="font-semibold mb-4 text-white">{t(lang as any, 'navigation')}</div>
+          <div className="font-semibold mb-4 text-white">{t(lang as any, 'footer_service')}</div>
           <ul className="space-y-2.5 text-white/70">
-            <li><Link href="/kursy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'courses')}</Link></li>
-            <li><Link href="/quizy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'quizzes')}</Link></li>
-            <li><Link href="/rankingi/brokerzy" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'broker_rankings')}</Link></li>
-            <li><Link href="/symulator" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'calculator')}</Link></li>
+            <li>
+              <Link href="/kursy" className={linkClass}>
+                {t(lang as any, 'learn_nav')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/symulator" className={linkClass}>
+                {t(lang as any, 'calculator')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/news" className={linkClass}>
+                {t(lang as any, 'market_nav')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/rankingi/brokerzy" className={linkClass}>
+                {t(lang as any, 'broker_rankings')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/redakcja" className={linkClass}>
+                {t(lang as any, 'redakcja_nav')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/o-nas" className={linkClass}>
+                {t(lang as any, 'about_nav')}
+              </Link>
+            </li>
           </ul>
         </div>
 
         <div>
-          <div className="font-semibold mb-4 text-white">{t(lang as any, 'resources')}</div>
+          <div className="font-semibold mb-4 text-white">{t(lang as any, 'footer_help')}</div>
           <ul className="space-y-2.5 text-white/70">
-            <li><Link href="/zasoby/faq" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'faq')}</Link></li>
+            <li>
+              <Link href="/zasoby/faq" className={linkClass}>
+                {t(lang as any, 'faq')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/kontakt" className={linkClass}>
+                {t(lang as any, 'contact')}
+              </Link>
+            </li>
           </ul>
         </div>
 
         <div>
           <div className="font-semibold mb-4 text-white">{t(lang as any, 'legal')}</div>
           <ul className="space-y-2.5 text-white/70">
-            <li><Link href="/cennik" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'pricing')}</Link></li>
-            <li><Link href="/prawne/warunki" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'terms')}</Link></li>
-            <li><Link href="/prawne/polityka" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'privacy_policy')}</Link></li>
-            <li><Link href="/prawne/zwroty-odstapienie" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'returns')}</Link></li>
-            <li><Link href="/prawne/cookies" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'cookies')}</Link></li>
-            <li><Link href="/kontakt" className="hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/50 rounded px-1 py-0.5 transition-colors duration-150 inline-block">{t(lang as any, 'contact')}</Link></li>
+            <li>
+              <Link href="/prawne/regulamin" className={linkClass}>
+                {t(lang as any, 'terms')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/prawne/disclaimer" className={linkClass}>
+                {t(lang as any, 'legal_disclaimer')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/prawne/polityka-prywatnosci" className={linkClass}>
+                {t(lang as any, 'privacy_policy')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/cennik" className={linkClass}>
+                {t(lang as any, 'pricing')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/prawne/zwroty-odstapienie" className={linkClass}>
+                {t(lang as any, 'returns')}
+              </Link>
+            </li>
+            <li>
+              <Link href="/prawne/cookies" className={linkClass}>
+                {t(lang as any, 'cookies')}
+              </Link>
+            </li>
           </ul>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12 pt-6 border-t border-white/5 text-xs text-white/60 leading-relaxed">
-        <p className="mb-2">
-          {t(lang as any, 'compliance_disclaimer')}
-        </p>
-        <p>
-          {t(lang as any, 'risk_warning_long')}
-        </p>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12 pt-6 border-t border-white/5 text-xs text-white/60 leading-relaxed space-y-1">
+        <p>{t(lang as any, 'footer_notice_line1')}</p>
+        <p>{t(lang as any, 'footer_notice_line2')}</p>
+        <p>{t(lang as any, 'footer_notice_line3')}</p>
       </div>
     </footer>
   );
 }
-
-

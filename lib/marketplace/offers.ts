@@ -1,6 +1,16 @@
 export type OfferStatus = 'available' | 'listed' | 'sold';
 export type OfferVariant = 'standard' | 'gold' | 'support';
 
+/**
+ * Tymczasowe wstrzymanie pierwotnej sprzedaży (NFT + dostęp przez checkout).
+ * Ustaw na `false`, aby przywrócić możliwość zakupu zgodnie ze statusem oferty.
+ */
+export const FOUNDERS_MARKETPLACE_SALES_PAUSED = true;
+
+export function isFoundersMarketplaceSalesPaused(): boolean {
+  return FOUNDERS_MARKETPLACE_SALES_PAUSED;
+}
+
 export type FoundersOffer = {
   id: string;
   name: string;
@@ -83,12 +93,18 @@ export function getOfferById(id: string): FoundersOffer | undefined {
 }
 
 export function isOfferPurchasable(offer: FoundersOffer): boolean {
+  if (FOUNDERS_MARKETPLACE_SALES_PAUSED) return false;
   return offer.status === 'available' || offer.status === 'listed';
 }
 
 /** Oferty widoczne publicznie na liście — bez pozycji ze statusem „sold”. */
 export function listPurchasableOffers(): FoundersOffer[] {
   return FOUNDERS_OFFERS.filter(isOfferPurchasable);
+}
+
+/** Karty na liście marketplace (dostępne + wystawione) — także gdy sprzedaż jest wstrzymana (UI: „brak miejsc”). */
+export function listOffersForMarketplaceGrid(): FoundersOffer[] {
+  return FOUNDERS_OFFERS.filter((o) => o.status === 'available' || o.status === 'listed');
 }
 
 export function offerEditionToken(name: string, id: string): string {
