@@ -12,6 +12,7 @@ import DevBanner from "@/components/ui/DevBanner";
 import { getSession } from "@/lib/session";
 import Script from "next/script";
 import { getIsAdmin } from "@/lib/admin";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -106,6 +107,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           strategy="afterInteractive"
         />
         <SiteFooter />
+        <Analytics />
       </body>
     </html>
   );
